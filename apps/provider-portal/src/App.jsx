@@ -22,6 +22,9 @@ import ActiveTenants from "./pages/tenants/ActiveTenants";
 import TenantHistory from "./pages/tenants/TenantsHistory";
 import Bookings from "./pages/inquiries/Bookings";
 import AllRoom from "./pages/rooms/AllRoom";
+import RoomAvailability from "./pages/rooms/RoomAvailability";
+import Maintenance from "./pages/rooms/Maintenance";
+import BookingAction from "./pages/BookingAction";
 
 function App() {
   return (
@@ -51,12 +54,13 @@ function App() {
           <Route path="/rooms" element={<AllRoom />} />
           <Route
             path="/rooms/availability"
-            element={<Placeholder title="Availability Calendar" />}
+            element={<RoomAvailability />}
           />
 
           {/* Phase 1: Inquiries */}
           <Route path="/messages" element={<Placeholder title="Inbox" />} />
           <Route path="/bookings" element={<Bookings />} />
+          <Route path="/booking-action/:id" element={<BookingAction />} />
           <Route
             path="/viewings"
             element={<Placeholder title="Viewing Schedule" />}
@@ -88,6 +92,7 @@ function App() {
             path="/maintenance"
             element={<Placeholder title="Maintenance Tickets" />}
           />
+          <Route path="/rooms/maintenance" element={<Maintenance />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/settings" element={<Setting />} />
 

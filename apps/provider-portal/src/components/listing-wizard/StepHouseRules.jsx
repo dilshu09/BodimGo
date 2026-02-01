@@ -1,4 +1,6 @@
-import { Clock, Shield, Users, Utensils, Zap, Music, Sparkles, AlertTriangle, Info } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Clock, Shield, Users, Utensils, Zap, Music, Sparkles, AlertTriangle, Info, FileText } from 'lucide-react';
+import api from '../../services/api';
 
 const Toggle = ({ label, checked, onChange, subLabel }) => (
     <div className="flex items-center justify-between p-4 bg-white border border-neutral-100 rounded-2xl hover:border-primary/20 transition-all group">
@@ -72,6 +74,21 @@ const StepHouseRules = ({ data, update }) => {
             }
         });
     };
+
+    const [templates, setTemplates] = useState([]);
+    useEffect(() => {
+        const fetchTemplates = async () => {
+            try {
+                const res = await api.get('/agreements/templates');
+                if (res.data.success) {
+                    setTemplates(res.data.data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch templates", error);
+            }
+        };
+        fetchTemplates();
+    }, []);
 
     const rules = data.rules || {};
 
@@ -192,7 +209,36 @@ const StepHouseRules = ({ data, update }) => {
                 />
             </RuleSection>
 
-            {/* 5. Additional Notes */}
+            {/* 5. Agreement Template */}
+            <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 overflow-hidden mb-6">
+                <div className="bg-neutral-50/50 p-4 border-b border-neutral-100 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        <FileText size={16} />
+                    </div>
+                    <h4 className="font-bold text-neutral-800">Rental Agreement</h4>
+                </div>
+                <div className="p-5">
+                    <p className="text-sm text-neutral-500 mb-4">Select the agreement template that tenants must accept before booking.</p>
+                    <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-100">
+                        <label className="text-xs font-bold text-neutral-500 uppercase tracking-wide mb-2 block">Agreement Template</label>
+                        <select
+                            value={data.agreementTemplate || ""}
+                            onChange={(e) => update({ agreementTemplate: e.target.value || null })}
+                            className="w-full bg-white border-0 rounded-lg p-2.5 text-neutral-700 font-medium focus:ring-2 focus:ring-primary/20 shadow-sm"
+                        >
+                            <option value="">Default (Standard Terms)</option>
+                            {templates.map(t => (
+                                <option key={t._id} value={t._id}>{t.name}</option>
+                            ))}
+                        </select>
+                        <div className="mt-2 text-xs text-neutral-400">
+                            {data.agreementTemplate ? "Tenants will see your custom terms." : "Tenants will see standard platform terms."}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 6. Additional Notes */}
             <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 p-5">
                 <div className="flex items-center gap-2 mb-4">
                     <Info size={18} className="text-neutral-400" />

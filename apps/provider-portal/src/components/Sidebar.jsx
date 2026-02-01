@@ -99,7 +99,7 @@ const Sidebar = () => {
             subItems: [
                 { label: 'All Units', path: '/rooms' },
                 { label: 'Availability', path: '/rooms/availability' },
-                { label: 'Maintenance', path: '/maintenance' }
+                { label: 'Maintenance', path: '/rooms/maintenance' }
             ]
         },
         {

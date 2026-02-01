@@ -4,11 +4,11 @@ const ProviderProfileSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
   businessName: { type: String },
   bio: { type: String },
-  
-  verificationStatus: { 
-    type: String, 
-    enum: ['pending', 'verified', 'rejected', 'not_submitted'], 
-    default: 'not_submitted' 
+
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected', 'not_submitted'],
+    default: 'not_submitted'
   },
   kycDocuments: [{
     type: { type: String, enum: ['nic', 'passport', 'business_reg'] },
@@ -22,6 +22,8 @@ const ProviderProfileSchema = new mongoose.Schema({
   stripeOnboardingComplete: { type: Boolean, default: false },
   payoutSettings: {
     bankName: { type: String },
+    branchName: { type: String },
+    accountHolderName: { type: String },
     accountNumber: { type: String }
   },
 

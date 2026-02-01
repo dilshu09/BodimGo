@@ -141,7 +141,7 @@ export default function TenantHistoryPage() {
       : tenantHistory.filter((t) => t.status === filterStatus);
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-slate-900">Tenant History</h2>
         <p className="text-slate-600 mt-1">
@@ -157,11 +157,10 @@ export default function TenantHistoryPage() {
               setFilterStatus(status);
               setSelectedTenant(null);
             }}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              filterStatus === status
+            className={`px-4 py-2 rounded-lg font-medium transition-all ${filterStatus === status
                 ? "bg-red-500 text-white"
                 : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
+              }`}
           >
             {status}
           </button>
@@ -180,22 +179,20 @@ export default function TenantHistoryPage() {
               <button
                 key={tenant.id}
                 onClick={() => setSelectedTenant(tenant.id)}
-                className={`w-full text-left p-4 transition-colors hover:bg-slate-50 ${
-                  selectedTenant === tenant.id
+                className={`w-full text-left p-4 transition-colors hover:bg-slate-50 ${selectedTenant === tenant.id
                     ? "bg-red-50 border-l-4 border-red-500"
                     : ""
-                }`}
+                  }`}
               >
                 <p className="font-medium text-slate-900">
                   {tenant.tenantName}
                 </p>
                 <p className="text-sm text-slate-600">{tenant.room}</p>
                 <p
-                  className={`text-xs mt-1 font-medium ${
-                    tenant.status === "Current"
+                  className={`text-xs mt-1 font-medium ${tenant.status === "Current"
                       ? "text-green-600"
                       : "text-slate-600"
-                  }`}
+                    }`}
                 >
                   {tenant.status}
                 </p>
@@ -222,11 +219,10 @@ export default function TenantHistoryPage() {
                           <p className="text-slate-600">{tenant?.room}</p>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                            tenant?.status === "Current"
+                          className={`px-3 py-1 rounded-full text-sm font-semibold ${tenant?.status === "Current"
                               ? "bg-green-100 text-green-700"
                               : "bg-slate-100 text-slate-700"
-                          }`}
+                            }`}
                         >
                           {tenant?.status}
                         </span>

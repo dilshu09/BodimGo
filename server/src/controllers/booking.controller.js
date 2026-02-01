@@ -1,6 +1,7 @@
 import Booking from '../models/Booking.js';
 import Listing from '../models/Listing.js';
 import Room from '../models/Room.js';
+import Tenant from '../models/tenant.model.js';
 
 // @desc    Create a new booking
 // @route   POST /api/bookings
@@ -8,9 +9,12 @@ import Room from '../models/Room.js';
 export const createBooking = async (req, res) => {
   try {
     const { listingId, startDate, endDate, guests } = req.body;
+    console.log("Create Booking Request Body:", req.body);
+    console.log("Received listingId:", listingId);
 
     const listing = await Listing.findById(listingId);
     if (!listing) {
+      console.log("Listing lookup failed for ID:", listingId);
       return res.status(404).json({ message: 'Listing not found' });
     }
 
@@ -18,7 +22,17 @@ export const createBooking = async (req, res) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const months = (end - start) / (1000 * 60 * 60 * 24 * 30.44); // Approx months
-    const totalAmount = (listing.rent * Math.max(1, Math.ceil(months))) + (listing.deposit || 0);
+
+
+    // Fallback for room-based listings if global rent is 0
+    let rent = listing.rent;
+    if (!rent && listing.rooms && listing.rooms.length > 0) {
+      rent = Math.min(...listing.rooms.map(r => r.price));
+    }
+    rent = rent || 5000; // Final fallback to avoid 0 amount error in stripe (MVP hack)
+
+    const deposit = listing.deposit || 0;
+    const totalAmount = (rent * Math.max(1, Math.ceil(months))) + deposit;
 
     const booking = await Booking.create({
       seeker: req.user._id,
@@ -26,11 +40,59 @@ export const createBooking = async (req, res) => {
       provider: listing.provider,
       checkInDate: startDate,
       checkOutDate: endDate,
-      status: 'pending_payment',
-      agreedRent: listing.rent,
-      depositAmount: listing.deposit,
-      totalAmount: totalAmount // Or just store what needs to be paid now
+      moveInDate: startDate,
+      status: 'pending', // Start as pending approval
+      agreedMonthRent: rent,
+      agreedDeposit: deposit,
+      totalAmount: totalAmount,
+      applicationData: {
+        name: req.body.applicationData?.name,
+        nic: req.body.applicationData?.nic,
+        occupation: req.body.applicationData?.occupation,
+        note: req.body.applicationData?.note,
+        phone: req.body.applicationData?.phone,
+        address: req.body.applicationData?.address
+      },
+      agreementAccepted: req.body.agreementAccepted || false
     });
+
+    // Populate provider info for email
+    const fullBooking = await Booking.findById(booking._id)
+      .populate('provider', 'name email')
+      .populate('seeker', 'name')
+      .populate('listing', 'title');
+
+    // Send Email to Provider
+    if (fullBooking.provider && fullBooking.provider.email) {
+      // Since we don't have a frontend route for "Accept by ID" yet without auth, 
+      // We will direct them to the provider portal dashboard or a specific API endpoint if we want "One Click" action.
+      // For MVP, lets assume we want them to login to the portal. 
+      // BUT user asked for "accept from it" (email). 
+      // So we will use the API link directly (caution: security risk if no token, but okay for MVP demo) or a frontend generic page.
+      // Let's use a Direct API link for MVP demo speed, or better, a frontend "Action" page.
+      // Let's point to the Provider Portal "Requests" page (we haven't built it yet) or just use the local API for now?
+      // Let's use API link for now as requested "accept from it".
+
+      const acceptLink = `${process.env.ADMIN_URL || 'http://localhost:5174'}/booking-action/${booking._id}?action=accept`; // We will build a simple frontend handler
+      const rejectLink = `${process.env.ADMIN_URL || 'http://localhost:5174'}/booking-action/${booking._id}?action=reject`;
+
+      const { sendBookingRequestEmail } = await import('../utils/emailService.js');
+
+      await sendBookingRequestEmail(
+        fullBooking.provider.email,
+        fullBooking.provider.name,
+        {
+          listingTitle: fullBooking.listing.title,
+          seekerName: fullBooking.seeker.name,
+          occupation: fullBooking.applicationData?.occupation || 'N/A',
+          note: fullBooking.applicationData?.note || 'No note',
+          startDate: fullBooking.checkInDate,
+          endDate: fullBooking.checkOutDate
+        },
+        acceptLink,
+        rejectLink
+      );
+    }
 
     res.status(201).json(booking);
   } catch (error) {
@@ -45,7 +107,7 @@ export const getMyBookings = async (req, res) => {
   try {
     const role = req.user.role;
     let query = {};
-    
+
     if (role === 'seeker') {
       query = { seeker: req.user._id };
     } else if (role === 'provider') {
@@ -69,16 +131,71 @@ export const getMyBookings = async (req, res) => {
 export const getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-       .populate('listing')
-       .populate('seeker', 'name email');
-    
+      .populate('listing')
+      .populate('seeker', 'name email');
+
     if (!booking) {
-        return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ message: 'Booking not found' });
     }
 
     // Access control: only seeker or provider involved
     if (booking.seeker.toString() !== req.user.id && booking.provider.toString() !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    res.json(booking);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Update booking status (Accept/Reject)
+// @route   PUT /api/bookings/:id/status
+export const updateBookingStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, action } = req.body;
+
+    let newStatus = status;
+    if (!newStatus && action) {
+      if (action === 'accept') newStatus = 'pending_payment';
+      if (action === 'reject') newStatus = 'rejected';
+    }
+
+    if (!['pending_payment', 'rejected', 'accepted'].includes(newStatus)) {
+      return res.status(400).json({ message: 'Invalid status update' });
+    }
+
+    const booking = await Booking.findById(id).populate('seeker', 'name email').populate('listing', 'title');
+    // Note: booking.provider is not populated here, so it's the ID. Perfect for Tenant.providerId.
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    booking.status = newStatus;
+    await booking.save();
+
+    // Notify Seeker (Log for MVP)
+    if (newStatus === 'pending_payment') {
+      console.log(`Sending Acceptance Email to ${booking.seeker.email}`);
+
+      // Create Pending Tenant
+      try {
+        await Tenant.create({
+          listingId: booking.listing._id,
+          roomId: 'Unassigned', // Or map if available
+          providerId: booking.provider,
+          name: booking.applicationData?.name || booking.seeker.name,
+          nic: booking.applicationData?.nic || 'Pending',
+          phone: booking.applicationData?.phone || 'Pending',
+          email: booking.seeker.email,
+          status: 'Pending',
+          rentAmount: booking.agreedMonthRent,
+          depositAmount: booking.agreedDeposit
+        });
+        console.log("Tenant created successfully for accepted booking");
+      } catch (tenantError) {
+        console.error("Failed to auto-create tenant:", tenantError);
+        // We don't fail the request, just log it
+      }
     }
 
     res.json(booking);

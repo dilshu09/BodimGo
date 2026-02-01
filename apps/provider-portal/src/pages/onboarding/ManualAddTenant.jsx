@@ -28,22 +28,31 @@ const ManualAddTenant = () => {
         email: '',
         nic: ''
     });
+
     const [signingLink, setSigningLink] = useState('');
+    const [agreementTemplates, setAgreementTemplates] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState('');
 
     useEffect(() => {
-        const loadListings = async () => {
+        const loadInitialData = async () => {
             try {
-                // Fetch Published listings only for selection
-                const res = await api.get('/listings');
-                // Assume backend returns all, filter logic might be needed if API doesn't filter
-                setListings(res.data.data.filter(l => l.status === 'Published') || []);
+                // Fetch Published listings
+                const resListings = await api.get('/listings/my');
+                setListings(resListings.data.data.filter(l => l.status === 'Published') || []);
+
+                // Fetch Agreement Templates
+                const resTemplates = await api.get('/agreement-templates');
+                setAgreementTemplates(resTemplates.data.data || []);
             } catch (err) {
                 console.error(err);
-                toast.error("Failed to load properties.");
+                toast.error("Failed to load initial data.");
             }
         };
-        loadListings();
+        loadInitialData();
     }, []);
+
+    // Get rooms for selected listing
+    const availableRooms = listings.find(l => l._id === selectedListing)?.rooms || [];
 
     const handleNext = async () => {
         if (step === 1 && (!selectedListing || !selectedRoom)) {
@@ -83,7 +92,9 @@ const ManualAddTenant = () => {
         if (step === 3) {
             setLoading(true);
             try {
-                const res = await api.post(`/tenants/${tenantData._id}/agreement`);
+                const res = await api.post(`/tenants/${tenantData._id}/agreement`, {
+                    templateId: selectedTemplate
+                });
                 if (res.data.success) {
                     setSigningLink(res.data.data.signingLink);
                     setStep(4);
@@ -149,9 +160,12 @@ const ManualAddTenant = () => {
                                         value={selectedRoom}
                                         onChange={e => setSelectedRoom(e.target.value)}
                                     >
-                                        <option value="">-- Select --</option>
-                                        <option value="room1">Standard Room (2 Beds Free)</option>
-                                        <option value="room2">Master Room (Full)</option>
+                                        <option value="">-- Select Room --</option>
+                                        {availableRooms.map(r => (
+                                            <option key={r._id} value={r._id}>
+                                                {r.name} ({r.type}) - LKR {r.price}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
                             )}
@@ -194,18 +208,26 @@ const ManualAddTenant = () => {
                                 You can choose to sign it now (if tenant is present) or send a link.
                             </p>
 
-                            <div className="flex justify-center gap-4 mt-8">
-                                <button
-                                    className="bg-neutral-100 hover:bg-neutral-200 text-neutral-800 px-6 py-3 rounded-xl font-semibold"
-                                    onClick={() => handleNext()}
+                            <div className="max-w-md mx-auto mb-6 text-left">
+                                <label className="block text-sm font-medium mb-2">Select Agreement Template</label>
+                                <select
+                                    className="w-full input-field"
+                                    value={selectedTemplate}
+                                    onChange={(e) => setSelectedTemplate(e.target.value)}
                                 >
-                                    Sign on Device
-                                </button>
+                                    <option value="">-- Use Default Template --</option>
+                                    {agreementTemplates.map(t => (
+                                        <option key={t._id} value={t._id}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex justify-center gap-4 mt-8">
                                 <button
                                     className="btn-primary px-6 py-3 shadow-lg shadow-primary/25"
                                     onClick={() => handleNext()}
                                 >
-                                    {loading ? 'Generating...' : 'Generate Link'}
+                                    {loading ? 'Generating...' : 'Generate & Send Link'}
                                 </button>
                             </div>
                         </div>

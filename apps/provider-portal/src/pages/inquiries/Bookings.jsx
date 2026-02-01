@@ -55,7 +55,7 @@ const bookings = [
 
 export default function BookingsPage() {
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-3xl font-bold text-slate-900">Bookings</h2>
@@ -153,13 +153,12 @@ export default function BookingsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${
-                        booking.status === "Confirmed"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${booking.status === "Confirmed"
                           ? "bg-green-100 text-green-700"
                           : booking.status === "Pending Confirmation"
                             ? "bg-yellow-100 text-yellow-700"
                             : "bg-red-100 text-red-700"
-                      }`}
+                        }`}
                     >
                       {booking.status === "Confirmed" && (
                         <CheckCircle size={14} />
@@ -170,13 +169,12 @@ export default function BookingsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        booking.paymentStatus === "Paid"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.paymentStatus === "Paid"
                           ? "bg-green-100 text-green-700"
                           : booking.paymentStatus === "Pending"
                             ? "bg-yellow-100 text-yellow-700"
                             : "bg-slate-100 text-slate-700"
-                      }`}
+                        }`}
                     >
                       {booking.paymentStatus}
                     </span>

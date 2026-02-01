@@ -1,19 +1,38 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Star, Heart } from "lucide-react";
 import api from "../services/api";
 
-const ListingCard = ({ listing }) => {
+
+const ListingCard = ({ listing, isSaved: initialSaved = false, onToggleWishlist }) => {
+  const [isSaved, setIsSaved] = useState(initialSaved);
+
+  // Sync state if prop changes
+  useEffect(() => {
+    setIsSaved(initialSaved);
+  }, [initialSaved]);
+
   const handleWishlist = async (e) => {
-    e.preventDefault(); // stop Link navigation
-    e.stopPropagation(); // stop bubbling
+    e.preventDefault();
+    e.stopPropagation();
 
     try {
-      await api.post("/seekers/wishlist", {
-        listingId: listing._id,
-      });
-      alert("Added to wishlist ❤️");
+      if (onToggleWishlist) {
+        // Let parent handle state (e.g., Wishlist page removing item)
+        await onToggleWishlist(listing._id);
+      } else {
+        // Default behavior (Home page toggling)
+        if (isSaved) {
+          await api.delete(`/seekers/wishlist/${listing._id}`);
+          setIsSaved(false);
+        } else {
+          await api.post("/seekers/wishlist", { listingId: listing._id });
+          setIsSaved(true);
+        }
+      }
     } catch (err) {
-      alert("Please login to save listings");
+      console.error(err);
+      alert("Please login to manage wishlist");
     }
   };
 
@@ -39,9 +58,13 @@ const ListingCard = ({ listing }) => {
         {/* ❤️ WISHLIST BUTTON */}
         <button
           onClick={handleWishlist}
-          className="absolute top-3 right-3 text-white/70 hover:text-white hover:scale-110 transition-all"
+          className="absolute top-3 right-3 hover:scale-110 transition-all z-10"
         >
-          <Heart size={24} fill="rgba(0,0,0,0.2)" />
+          <Heart
+            size={24}
+            className={isSaved ? "fill-[#E51D54] text-white" : "fill-black/50 text-white"}
+            strokeWidth={2}
+          />
         </button>
       </div>
 
@@ -51,7 +74,10 @@ const ListingCard = ({ listing }) => {
         </h3>
         <div className="flex items-center gap-1 text-sm">
           <Star size={14} className="text-black fill-black" />
-          <span>4.9</span>
+          <span>
+            {listing.stats?.averageRating > 0 ? listing.stats.averageRating : "New"}
+            {listing.stats?.reviewCount > 0 && ` (${listing.stats.reviewCount})`}
+          </span>
         </div>
       </div>
 
@@ -67,13 +93,13 @@ const ListingCard = ({ listing }) => {
 
       <div className="flex items-baseline gap-1 mt-1">
         <span className="font-bold text-neutral-900 text-lg">
-          {listing?.rent != null
-            ? Number(listing.rent).toLocaleString()
-            : "5000"}
+          {listing.rooms && listing.rooms.length > 0
+            ? Math.min(...listing.rooms.map(r => r.price)).toLocaleString()
+            : "Contact for Price"}
         </span>
         <span className="text-neutral-900">month</span>
       </div>
-    </Link>
+    </Link >
   );
 };
 

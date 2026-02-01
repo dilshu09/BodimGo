@@ -6,14 +6,25 @@ import api from '../services/api';
 
 const Home = () => {
     const [listings, setListings] = useState([]);
+    const [wishlistParams, setWishlistParams] = useState(new Set());
     const [loading, setLoading] = useState(true);
 
     const fetchListings = async (filters = {}) => {
         setLoading(true);
         try {
             const params = new URLSearchParams(filters).toString();
-            const res = await api.get(`/listings?${params}`);
-            setListings(res.data);
+            // Fetch listings and wishlist status in parallel
+            const [listingsRes, wishlistRes] = await Promise.all([
+                api.get(`/listings?${params}`),
+                api.get('/seekers/wishlist').catch(() => ({ data: { savedListings: [] } })) // Optional: Ignore error if not logged in
+            ]);
+
+            setListings(listingsRes.data);
+
+            // Map saved listing objects to a Set of IDs for O(1) lookup
+            const savedIds = new Set(wishlistRes.data?.savedListings?.map(l => l._id) || []);
+            setWishlistParams(savedIds);
+
         } catch (err) {
             console.error(err);
         } finally {
@@ -43,7 +54,11 @@ const Home = () => {
                 ) : listings.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
                         {listings.map(listing => (
-                            <ListingCard key={listing._id} listing={listing} />
+                            <ListingCard
+                                key={listing._id}
+                                listing={listing}
+                                isSaved={wishlistParams.has(listing._id)}
+                            />
                         ))}
                     </div>
                 ) : (

@@ -19,6 +19,8 @@ import uploadRoutes from "./routes/upload.routes.js";
 import tenantRoutes from "./routes/tenant.routes.js";
 import agreementTemplateRoutes from "./routes/agreementTemplate.routes.js";
 import seekerRoutes from "./routes/seeker.routes.js";
+import reviewRoutes from "./routes/review.routes.js";
+import reportRoutes from "./routes/report.routes.js";
 
 dotenv.config();
 
@@ -72,6 +74,8 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/tenants", tenantRoutes);
 app.use("/api/agreements/templates", agreementTemplateRoutes);
 app.use("/api/seekers", seekerRoutes);
+app.use("/api/reviews", reviewRoutes);
+app.use("/api/reports", reportRoutes);
 // Basic Route
 app.get("/", (req, res) => {
   res.send("BodimGo API Server Running");

@@ -47,6 +47,11 @@ const Navbar = () => {
                                 <Link to="/register" className="block px-4 py-3 font-bold text-neutral-800 hover:bg-neutral-50">Sign up</Link>
                                 <Link to="/login" className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Log in</Link>
                             </div>
+                            <div className="py-2 border-b border-neutral-100">
+                                <Link to="/wishlist" className="block px-4 py-3 text-neutral-800 hover:bg-neutral-50 font-semibold">
+                                    Wishlist <span className="text-primary">❤️</span>
+                                </Link>
+                            </div>
                             <div className="py-2">
                                 <a href="http://localhost:5175" className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Host your home</a>
                                 <Link to="#" className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Help Center</Link>

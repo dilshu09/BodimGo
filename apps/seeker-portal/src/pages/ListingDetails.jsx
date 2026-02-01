@@ -2,13 +2,21 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import api from "../services/api";
-import { MapPin, User, Check, ShieldCheck } from "lucide-react";
+import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare } from "lucide-react";
+import ReviewModal from "../components/ReviewModal";
+import ReportModal from "../components/ReportModal";
+import BookingWizard from "../components/BookingWizard";
 
 const ListingDetails = () => {
   const { id } = useParams();
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showProvider, setShowProvider] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [showBookingWizard, setShowBookingWizard] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -21,30 +29,53 @@ const ListingDetails = () => {
         setLoading(false);
       }
     };
+
+    const fetchReviews = async () => {
+      try {
+        const res = await api.get(`/reviews/listing/${id}`);
+        setReviews(res.data.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // Fetch user profile for Wiz pre-fill
+    const fetchProfile = async () => {
+      try {
+        // New endpoint we might need or use existing. 
+        // Assuming /auth/me or similar exists, OR /seekers/profile.
+        // Based on previous logs, we have /seekers/profile (from wishlist logic finding SeekerProfile).
+        // But SeekerProfile is for preferences. User model has name/email.
+        // Let's try /users/me which is standard, or just rely on SeekerProfile + populate user.
+        // If /seekers/profile doesn't exist, we might fail.
+        // Let's assume we can GET /seekers/profile mentioned in previous turn logic.
+        // Using /auth/profile as seen in auth.routes.js
+        const res = await api.get('/auth/profile').catch(() => null);
+        if (res && res.data) setUserProfile(res.data);
+      } catch (err) {
+        // Not logged in, Ignore
+      }
+    };
+
     fetchDetails();
+    fetchReviews();
+    fetchProfile();
   }, [id]);
 
   const navigate = useNavigate();
 
-  const handleReserve = async () => {
-    // Basic hardcoded dates for MVP demo
-    const startDate = new Date().toISOString();
-    const endDate = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000,
-    ).toISOString(); // +30 days
-
-    try {
-      const res = await api.post("/bookings", {
-        listingId: listing._id,
-        startDate,
-        endDate,
-        guests: 1,
-      });
-      navigate(`/checkout/${res.data._id}`);
-    } catch (err) {
-      alert("Please login to reserve");
-      // prompt login or redirect
+  const handleRequestBook = () => {
+    if (!userProfile) {
+      navigate('/login');
+      return;
     }
+    setShowBookingWizard(true);
+  };
+
+  const onSuccessRequest = () => {
+    setShowBookingWizard(false);
+    alert("Request Sent! The provider will review it shortly.");
+    // Maybe navigate to a "Requests" page? For now, stay here.
   };
 
   if (loading) return <div>Loading...</div>;
@@ -53,13 +84,13 @@ const ListingDetails = () => {
   return (
     <div className="min-h-screen bg-white pb-20">
       <Navbar />
-      <div className="max-w-6xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-neutral-900 mb-4">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-neutral-900 mb-6">
           {listing.title}
         </h1>
 
         {/* Images Grid (Mock for MVP: just one Main or placeholder) */}
-        <div className="h-[400px] bg-neutral-200 rounded-2xl overflow-hidden mb-8 grid grid-cols-4 grid-rows-2 gap-2 relative">
+        <div className="h-[400px] bg-neutral-200 rounded-2xl overflow-hidden mb-12 grid grid-cols-4 grid-rows-2 gap-2 relative">
           <div className="col-span-2 row-span-2 bg-neutral-300">
             {/* Main Image */}
             {listing.images?.[0] && (
@@ -78,7 +109,7 @@ const ListingDetails = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative">
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-8">
             <div className="flex justify-between items-center border-b border-neutral-200 pb-6">
@@ -140,21 +171,132 @@ const ListingDetails = () => {
                 ))}
               </div>
             </div>
+
+            {/* Location Section */}
+            {listing.location && (
+              <div className="border-t border-neutral-200 pt-8">
+                <h3 className="text-xl font-bold text-neutral-800 mb-4">
+                  Where you'll be
+                </h3>
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="bg-neutral-100 p-3 rounded-full">
+                    <MapPin size={24} className="text-neutral-700" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-neutral-900 text-lg">
+                      {listing.location.city}, {listing.location.district}
+                    </p>
+                    <p className="text-neutral-500">
+                      {listing.location.address || "Exact location provided after booking"}
+                    </p>
+                  </div>
+                </div>
+
+                {listing.location.coordinates && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${listing.location.coordinates.lat},${listing.location.coordinates.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 border border-neutral-900 text-neutral-900 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-50 transition-colors"
+                  >
+                    <MapPin size={18} />
+                    Show on Google Maps
+                  </a>
+                )}
+              </div>
+            )}
+
+
+            {/* Reviews Section */}
+            <div id="reviews-section">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-neutral-800 flex items-center gap-2">
+                  <StarIcon className="fill-black text-black" size={20} />
+                  {reviews.length > 0
+                    ? `${(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)} · ${reviews.length} reviews`
+                    : "No reviews yet"}
+                </h3>
+                <button
+                  onClick={() => setShowReviewModal(true)}
+                  className="text-black underline font-semibold hover:text-neutral-600"
+                >
+                  Write a review
+                </button>
+              </div>
+
+              {reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {reviews.map((review) => (
+                    <div key={review._id} className="border-b border-neutral-100 pb-6 last:border-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="h-10 w-10 bg-neutral-200 rounded-full flex items-center justify-center overflow-hidden">
+                          {review.author?.profileImage ? (
+                            <img src={review.author.profileImage} className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={20} />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-neutral-900">{review.author?.name || 'User'}</p>
+                          <p className="text-xs text-neutral-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <StarIcon key={i} size={14} className={i < review.rating ? "fill-black text-black" : "text-neutral-300"} />
+                        ))}
+                      </div>
+                      <p className="text-neutral-700">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-neutral-500 italic">No reviews yet.</p>
+              )}
+            </div>
+
+            {/* Report (Mobile/Bottom backup) */}
+            <div className="block lg:hidden pt-6 border-t border-neutral-200">
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center gap-2 text-neutral-500 hover:text-red-600 transition-colors text-sm font-semibold underline"
+              >
+                <Flag size={16} />
+                Report this listing
+              </button>
+            </div>
           </div>
 
           {/* Booking Card */}
-          <div className="relative">
-            <div className="sticky top-28 bg-white border border-neutral-200 shadow-xl rounded-2xl p-6">
-              <div className="flex justify-between items-baseline mb-6">
+          <div className="hidden lg:block relative">
+            <div className="sticky top-28 bg-white border border-neutral-200 shadow-[0_6px_16px_rgba(0,0,0,0.12)] rounded-xl p-6">
+              <div className="flex justify-between items-start mb-6">
                 <div>
                   <span className="text-2xl font-bold text-neutral-900">
-                    Rs {(listing.rent ?? 0).toLocaleString()}
+                    Rs {listing.rooms && listing.rooms.length > 0
+                      ? Math.min(...listing.rooms.map(r => r.price)).toLocaleString()
+                      : (listing.rent ?? "N/A")}
                   </span>
                   <span className="text-neutral-500"> month</span>
                 </div>
+                {/* Review Mini-Summary in Card */}
+                <div className="flex items-center gap-1 text-sm font-semibold">
+                  <StarIcon size={14} className="fill-black text-black" />
+                  {reviews.length > 0 ? (
+                    <>
+                      <span>{(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)}</span>
+                      <span className="text-neutral-400">·</span>
+                      <a href="#reviews-section" className="text-neutral-500 underline hover:text-black transition">
+                        {reviews.length} reviews
+                      </a>
+                    </>
+                  ) : (
+                    <span className="text-neutral-400">New</span>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 mb-4">
                 <div className="border border-neutral-400 rounded-lg p-3">
                   <div className="text-xs font-bold uppercase text-neutral-800">
                     Check-in
@@ -162,73 +304,122 @@ const ListingDetails = () => {
                   <div className="text-sm text-neutral-600">Today</div>
                 </div>
                 <button
-                  onClick={handleReserve}
-                  className="w-full btn-primary py-3 text-lg"
+                  onClick={handleRequestBook}
+                  className="w-full bg-[#E51D54] hover:bg-[#d41b4e] text-white font-bold py-3.5 rounded-lg text-lg transition-transform active:scale-[0.98]"
                 >
-                  Reserve
+                  Request to Book
                 </button>
               </div>
 
-              <p className="text-center text-xs text-neutral-500 mt-4">
+              <p className="text-center text-sm text-neutral-500 mb-6">
                 You won't be charged yet
               </p>
+
+              <div className="flex justify-between items-center text-neutral-600 text-sm pt-4 border-t border-neutral-200">
+                <button className="underline hover:text-black">Share</button>
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="flex items-center gap-2 hover:text-red-600 transition-colors underline"
+                >
+                  <Flag size={14} />
+                  Report this listing
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {showProvider && listing.provider && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-xl">
-            {/* Close button */}
-            <button
-              onClick={() => setShowProvider(false)}
-              className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700"
-            >
-              ✕
-            </button>
 
-            {/* Provider Info */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-14 w-14 bg-neutral-200 rounded-full flex items-center justify-center">
-                <User size={28} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-neutral-900">
-                  {listing.provider.name}
-                </h3>
-                <p className="text-sm text-neutral-500">Boarding Provider</p>
-              </div>
-            </div>
+      {
+        showProvider && listing.provider && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-xl">
+              {/* Close button */}
+              <button
+                onClick={() => setShowProvider(false)}
+                className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700"
+              >
+                ✕
+              </button>
 
-            {/* Details */}
-            <div className="space-y-3 mb-6">
-              <div>
-                <p className="text-xs font-semibold text-neutral-500 uppercase">
-                  Email
-                </p>
-                <p className="text-neutral-800">{listing.provider.email}</p>
-              </div>
-
-              {listing.provider.isVerified && (
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                  <ShieldCheck size={16} />
-                  Verified Provider
+              {/* Provider Info */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="h-14 w-14 bg-neutral-200 rounded-full flex items-center justify-center">
+                  <User size={28} />
                 </div>
-              )}
-            </div>
+                <div>
+                  <h3 className="text-lg font-bold text-neutral-900">
+                    {listing.provider.name}
+                  </h3>
+                  <p className="text-sm text-neutral-500">Boarding Provider</p>
+                </div>
+              </div>
 
-            {/* Contact Button */}
-            <a
-              href={`mailto:${listing.provider.email}?subject=Inquiry about ${listing.title}`}
-              className="block w-full text-center bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary-hover transition"
-            >
-              Contact Provider
-            </a>
+              {/* Details */}
+              <div className="space-y-3 mb-6">
+                <div>
+                  <p className="text-xs font-semibold text-neutral-500 uppercase">
+                    Email
+                  </p>
+                  <p className="text-neutral-800">{listing.provider.email}</p>
+                </div>
+
+                {listing.provider.isVerified && (
+                  <div className="flex items-center gap-2 text-sm text-green-600">
+                    <ShieldCheck size={16} />
+                    Verified Provider
+                  </div>
+                )}
+              </div>
+
+              {/* Contact Button */}
+              <a
+                href={`mailto:${listing.provider.email}?subject=Inquiry about ${listing.title}`}
+                className="block w-full text-center bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary-hover transition"
+              >
+                Contact Provider
+              </a>
+            </div>
           </div>
-        </div>
+        )
+      }
+
+      {/* Modals */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => setShowReviewModal(false)}
+        listingId={id}
+        onReviewAdded={() => {
+          // Reload reviews
+          const fetchReviews = async () => {
+            try {
+              const res = await api.get(`/reviews/listing/${id}`);
+              setReviews(res.data.data);
+              // Also refresh listing to get updated stats
+              const resList = await api.get(`/listings/${id}`);
+              setListing(resList.data);
+            } catch (err) { console.error(err); }
+          };
+          fetchReviews();
+        }}
+      />
+
+      <ReportModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        listingId={id}
+      />
+
+      {showBookingWizard && (
+        <BookingWizard
+          listing={listing}
+          onClose={() => setShowBookingWizard(false)}
+          onSuccess={onSuccessRequest}
+          user={userProfile}
+        />
       )}
-    </div>
+    </div >
   );
 };
 

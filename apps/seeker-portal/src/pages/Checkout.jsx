@@ -86,7 +86,10 @@ const Checkout = () => {
             return api.post('/payments/create-intent', { bookingId });
         }).then(res => {
             setClientSecret(res.data.clientSecret);
-        }).catch(err => console.error(err));
+        }).catch(err => {
+            console.error(err);
+            alert(err.response?.data?.message || "Failed to load checkout");
+        });
     }, [bookingId]);
 
     if (!booking || !clientSecret) return <div className="p-10 text-center">Loading Checkout...</div>;

@@ -152,7 +152,7 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await bcrypt.compare(password, user.passwordHash))) {
-      
+
       if (!user.isVerified) {
         return res.status(401).json({ message: 'Email not verified. Please verify your email first.' });
       }
@@ -197,16 +197,242 @@ export const logout = (req, res) => {
 // @desc    Get profile
 // @route   GET /api/auth/profile
 export const getProfile = async (req, res) => {
-  const user = await User.findById(req.user._id);
-  if (user) {
-    res.json({
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let profileData = {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
       role: user.role,
+      role: user.role,
+      isVerified: user.isVerified,
+      twoFactorEnabled: user.twoFactorEnabled || false
+    };
+
+    if (user.role === 'provider') {
+      const providerProfile = await ProviderProfile.findOne({ user: user._id });
+      if (providerProfile) {
+        profileData = {
+          ...profileData,
+          businessName: providerProfile.businessName,
+          bio: providerProfile.bio, // Using 'bio' as Address/Desc based on UI
+          payoutSettings: providerProfile.payoutSettings,
+          stripeAccountId: providerProfile.stripeAccountId,
+          stripeOnboardingComplete: providerProfile.stripeOnboardingComplete
+        };
+      }
+    }
+
+    res.json(profileData);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Update profile
+// @route   PUT /api/auth/profile
+export const updateProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update User fields
+    user.name = req.body.name || user.name;
+    user.phone = req.body.phone || user.phone;
+
+    // Check if email is being changed (might require specialized verification logic usually, skipping for now)
+    // if (req.body.email && req.body.email !== user.email) user.email = req.body.email; 
+
+    await user.save();
+
+    let updatedProfile = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role
+    };
+
+    // Update Provider Profile fields
+    if (user.role === 'provider') {
+      let providerProfile = await ProviderProfile.findOne({ user: user._id });
+
+      // Create if doesn't exist (safety net)
+      if (!providerProfile) {
+        providerProfile = new ProviderProfile({ user: user._id });
+      }
+
+      if (req.body.businessName) providerProfile.businessName = req.body.businessName;
+      if (req.body.bio) providerProfile.bio = req.body.bio; // storing Address in bio/desc
+
+      // Update Bank Details
+      if (req.body.bankName || req.body.accountNumber || req.body.branchName || req.body.accountHolderName) {
+        providerProfile.payoutSettings = {
+          bankName: req.body.bankName || providerProfile.payoutSettings?.bankName,
+          branchName: req.body.branchName || providerProfile.payoutSettings?.branchName,
+          accountHolderName: req.body.accountHolderName || providerProfile.payoutSettings?.accountHolderName,
+          accountNumber: req.body.accountNumber || providerProfile.payoutSettings?.accountNumber
+        };
+      }
+
+      await providerProfile.save();
+
+      updatedProfile = {
+        ...updatedProfile,
+        businessName: providerProfile.businessName,
+        bio: providerProfile.bio,
+        payoutSettings: providerProfile.payoutSettings
+      };
+    }
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedProfile
     });
-  } else {
-    res.status(404).json({ message: 'User not found' });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Request Password Change OTP
+// @route   POST /api/auth/password-otp
+export const requestPasswordOtp = async (req, res) => {
+  const { currentPassword } = req.body;
+
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ message: 'Invalid current password' });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = otp;
+    user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    await sendEmail(user.email, 'Security Verification Code', `Your verification code for password change is: ${otp}`);
+
+    res.json({ success: true, message: 'Verification code sent' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Request OTP for Enabling/Disabling 2FA
+// @route   POST /api/auth/2fa-otp
+export const requestTwoFactorOtp = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = otp;
+    user.otpExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await sendEmail(user.email, '2FA Verification Code', `Your verification code for Two-Factor Authentication is: ${otp}`);
+
+    res.json({ success: true, message: 'Verification code sent' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Verify OTP and Toggle 2FA
+// @route   POST /api/auth/2fa-toggle
+export const toggleTwoFactor = async (req, res) => {
+  const { otp, enabled } = req.body; // enabled: true = enable, false = disable
+
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.otp || user.otp !== otp) {
+      return res.status(400).json({ message: 'Invalid code' });
+    }
+
+    if (user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: 'Code expired' });
+    }
+
+    user.twoFactorEnabled = enabled;
+    user.otp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+    res.json({ success: true, message: `Two-Factor Authentication ${enabled ? 'enabled' : 'disabled'} successfully`, twoFactorEnabled: user.twoFactorEnabled });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Change Password with Conditional OTP
+// @route   PUT /api/auth/password
+export const changePassword = async (req, res) => {
+  const { currentPassword, newPassword, otp } = req.body;
+
+  try {
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!(await bcrypt.compare(currentPassword, user.passwordHash))) {
+      return res.status(401).json({ message: 'Invalid current password' });
+    }
+
+    // Only check OTP if 2FA is ENABLED
+    if (user.twoFactorEnabled) {
+      if (!user.otp || user.otp !== otp) {
+        return res.status(400).json({ message: 'Invalid code' });
+      }
+
+      if (user.otpExpires < Date.now()) {
+        return res.status(400).json({ message: 'Code expired' });
+      }
+
+      // Clear OTP after successful use
+      user.otp = undefined;
+      user.otpExpires = undefined;
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated successfully' });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
   }
 };
 
@@ -224,7 +450,7 @@ export const forgotPassword = async (req, res) => {
 
     // Generate Verification Code (OTP style for simplicity)
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
-    
+
     // Store hashed version? For simplicity now we store direct or temporary field
     // We can reuse 'otp' field logic or add 'resetPasswordToken' in User model
     // Let's use 'otp' field for simplicity as it serves same verification purpose

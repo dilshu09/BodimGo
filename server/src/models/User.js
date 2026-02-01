@@ -40,6 +40,10 @@ const UserSchema = new mongoose.Schema({
   otpExpires: {
     type: Date,
   },
+  twoFactorEnabled: {
+    type: Boolean,
+    default: false,
+  },
   refreshToken: {
     type: String,
   },

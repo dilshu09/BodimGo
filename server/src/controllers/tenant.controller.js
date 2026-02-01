@@ -19,8 +19,8 @@ export const createTenant = async (req, res, next) => {
         }
 
         // 2. Validate Room
-        const room = listing.rooms.find(r => r._id.toString() === roomId || r.name === roomId); 
-        
+        const room = listing.rooms.find(r => r._id.toString() === roomId || r.name === roomId);
+
         let rentAmount = 0;
         if (room) {
             rentAmount = room.price || 0;
@@ -46,8 +46,8 @@ export const createTenant = async (req, res, next) => {
         });
     } catch (err) {
         // next(err); // Assuming next error handler is set up, fallback to manual for safety
-         console.error(err);
-         res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
     }
 };
 
@@ -57,21 +57,32 @@ export const generateAgreement = async (req, res, next) => {
     try {
         const tenant = await Tenant.findById(req.params.id);
         if (!tenant) {
-             return res.status(404).json({ success: false, message: "Tenant not found" });
+            return res.status(404).json({ success: false, message: "Tenant not found" });
         }
 
         // Check if agreement already exists
         let agreement = await Agreement.findOne({ tenantId: tenant._id });
-        
+
         if (!agreement) {
+            let agreementContent = "Standard Lease Agreement Content Placeholder...";
+
+            // If templateId provided, fetch content
+            if (req.body.templateId) {
+                const AgreementTemplate = (await import('../models/agreementTemplate.model.js')).default;
+                const template = await AgreementTemplate.findById(req.body.templateId);
+                if (template) {
+                    agreementContent = template.content;
+                }
+            }
+
             agreement = await Agreement.create({
                 tenantId: tenant._id,
                 listingId: tenant.listingId,
                 providerId: req.user._id,
-                content: "Standard Lease Agreement Content Placeholder...",
+                content: agreementContent,
                 status: 'Pending Signature'
             });
-            
+
             tenant.agreementStatus = 'Sent';
             await tenant.save();
         }
@@ -88,7 +99,7 @@ export const generateAgreement = async (req, res, next) => {
         });
 
     } catch (err) {
-         console.error(err);
-         res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
     }
 };

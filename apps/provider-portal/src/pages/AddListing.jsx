@@ -57,7 +57,8 @@ const INITIAL_DATA = {
     },
     facilities: [],
     images: [],
-    rooms: []
+    rooms: [],
+    agreementTemplate: null
 };
 
 const SuccessModal = ({ isOpen, onClose, onView }) => {

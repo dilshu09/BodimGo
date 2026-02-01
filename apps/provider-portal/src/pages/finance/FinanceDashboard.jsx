@@ -91,7 +91,7 @@ const recentTransactions = [
 
 export default function FinanceDashboard() {
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-slate-900">Finance Dashboard</h2>
         <p className="text-slate-600 mt-1">
@@ -152,11 +152,10 @@ export default function FinanceDashboard() {
                       {tx.amount}
                     </p>
                     <span
-                      className={`text-xs font-semibold px-2 py-1 rounded mt-1 inline-block ${
-                        tx.status === "Completed"
+                      className={`text-xs font-semibold px-2 py-1 rounded mt-1 inline-block ${tx.status === "Completed"
                           ? "bg-green-100 text-green-700"
                           : "bg-yellow-100 text-yellow-700"
-                      }`}
+                        }`}
                     >
                       {tx.status}
                     </span>

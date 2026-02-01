@@ -5,6 +5,7 @@ import Checkout from './pages/Checkout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import VerifyOtp from './pages/VerifyOtp';
+import Wishlist from './pages/Wishlist';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/verify" element={<VerifyOtp />} />
         <Route path="/listings/:id" element={<ListingDetails />} />
         <Route path="/checkout/:bookingId" element={<Checkout />} />
