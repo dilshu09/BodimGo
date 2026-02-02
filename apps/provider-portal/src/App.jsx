@@ -25,6 +25,7 @@ import AllRoom from "./pages/rooms/AllRoom";
 import RoomAvailability from "./pages/rooms/RoomAvailability";
 import Maintenance from "./pages/rooms/Maintenance";
 import BookingAction from "./pages/BookingAction";
+import BookingDetails from "./pages/BookingDetails";
 
 function App() {
   return (
@@ -60,6 +61,7 @@ function App() {
           {/* Phase 1: Inquiries */}
           <Route path="/messages" element={<Placeholder title="Inbox" />} />
           <Route path="/bookings" element={<Bookings />} />
+          <Route path="/bookings/:id" element={<BookingDetails />} />
           <Route path="/booking-action/:id" element={<BookingAction />} />
           <Route
             path="/viewings"

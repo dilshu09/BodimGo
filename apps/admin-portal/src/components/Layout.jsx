@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, ShieldAlert, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, ShieldAlert, LogOut, Bell, X } from "lucide-react";
+import { useState, useEffect } from "react";
 import clsx from "clsx";
 import api from "../services/api";
 import logo from "../assets/logo.png";
@@ -7,6 +8,34 @@ import logo from "../assets/logo.png";
 const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Notification Logic
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      setNotifications(res.data.data);
+      setUnreadCount(res.data.unreadCount);
+    } catch (err) { }
+  };
+
+  const markAsRead = async (id, link) => {
+    try {
+      await api.put(`/notifications/${id}/read`);
+      fetchNotifications();
+      // Admin might just view the list, or we could link to reports if implemented
+      // e.g., if (link) navigate(link);
+    } catch (err) { }
+  };
 
   const handleLogout = async () => {
     await api.post("/auth/logout");
@@ -104,22 +133,58 @@ const Layout = () => {
               </svg>
             </div>
 
-            <button className="relative p-2 rounded-full hover:bg-neutral-100 transition-colors group">
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-              <svg
-                className="w-6 h-6 text-neutral-600 group-hover:text-neutral-900 transition-colors"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
+            {/* NOTIFICATION BELL */}
+            <div className="relative">
+              <button
+                className="relative p-2 hover:bg-neutral-100 rounded-full transition-colors"
+                onClick={() => setShowNotifications(!showNotifications)}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-            </button>
+                <Bell size={20} className="text-neutral-600" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 h-2.5 w-2.5 bg-red-500 rounded-full border border-white" />
+                )}
+              </button>
+
+              {/* Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-neutral-100 overflow-hidden z-50">
+                  <div className="p-3 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
+                    <h3 className="font-bold text-sm text-neutral-900">Notifications</h3>
+                    <button onClick={() => setShowNotifications(false)} className="text-neutral-400 hover:text-black">
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length > 0 ? (
+                      notifications.map(notif => (
+                        <div
+                          key={notif._id}
+                          className={`p-4 border-b border-neutral-50 hover:bg-neutral-50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
+                          onClick={() => markAsRead(notif._id, null)} // TODO: Admin actions
+                        >
+                          <div className="flex gap-3">
+                            <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-blue-500' : 'bg-transparent'}`} />
+                            <div>
+                              <h4 className={`text-sm ${!notif.isRead ? 'font-bold text-neutral-900' : 'font-medium text-neutral-700'}`}>
+                                {notif.title}
+                              </h4>
+                              <p className="text-xs text-neutral-500 mt-1 line-clamp-2">{notif.message}</p>
+                              <div className="text-[10px] text-neutral-400 mt-2">
+                                {new Date(notif.createdAt).toLocaleDateString()} • {new Date(notif.createdAt).toLocaleTimeString()}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-8 text-center text-neutral-400 text-sm">
+                        No notifications
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center gap-3 pl-6 border-l border-neutral-200">
               <div className="text-right hidden md:block">

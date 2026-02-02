@@ -13,7 +13,6 @@ const Dashboard = () => {
             {/* Header & Quick Actions */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-neutral-800 tracking-tight">Command Center</h1>
                     <div className="flex items-center gap-2 mt-1">
                         <span className="text-neutral-500 text-sm">Viewing:</span>
                         <div className="relative group">

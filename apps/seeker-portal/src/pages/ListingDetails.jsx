@@ -172,6 +172,66 @@ const ListingDetails = () => {
               </div>
             </div>
 
+            {/* Available Rooms Section */}
+            {listing.rooms && listing.rooms.length > 0 && (
+              <div className="border-t border-neutral-200 pt-8 mt-8">
+                <h3 className="text-xl font-bold text-neutral-800 mb-6">
+                  Available Rooms
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {listing.rooms.map((room) => (
+                    <div key={room._id} className="border border-neutral-200 rounded-xl overflow-hidden flex flex-col">
+                      {/* Room Image */}
+                      <div className="h-48 bg-neutral-100 relative">
+                        {room.images && room.images.length > 0 ? (
+                          <img
+                            src={typeof room.images[0] === 'string' ? room.images[0] : room.images[0].url}
+                            className="w-full h-full object-cover"
+                            alt={room.name}
+                          />
+                        ) : (
+                          // Fallback to listing main image or placeholder
+                          listing.images && listing.images[0] ? (
+                            <img src={listing.images[0]} className="w-full h-full object-cover opacity-50" alt="Room" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm">No Image</div>
+                          )
+                        )}
+                        <div className={`absolute top-3 right-3 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide
+                          ${room.status === 'Available' ? 'bg-green-500 text-white' : 'bg-neutral-500 text-white'}`}>
+                          {room.status}
+                        </div>
+                      </div>
+
+                      {/* Room Details */}
+                      <div className="p-4 flex flex-col flex-1">
+                        <div className="flex justify-between items-start mb-2">
+                          <h4 className="font-bold text-neutral-900">{room.name}</h4>
+                          <span className="font-bold text-neutral-900">
+                            Rs {room.price?.toLocaleString()} <span className="text-xs text-neutral-500 font-normal">/mo</span>
+                          </span>
+                        </div>
+                        <div className="text-sm text-neutral-500 mb-4 flex items-center gap-2">
+                          <User size={14} /> {room.capacity} Person(s)
+                          {room.occupancyMode === 'Entire Room' ? ' • Entire Room' : ' • Shared'}
+                        </div>
+
+                        {/* Features */}
+                        <div className="flex flex-wrap gap-2 mt-auto">
+                          {room.features?.bathroomType && (
+                            <span className="text-xs bg-neutral-100 text-neutral-600 px-2 py-1 rounded">{room.features.bathroomType} Bath</span>
+                          )}
+                          {room.features?.furnishing?.map((f, i) => (
+                            <span key={i} className="text-xs bg-neutral-100 text-neutral-600 px-2 py-1 rounded">{f}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Location Section */}
             {listing.location && (
               <div className="border-t border-neutral-200 pt-8">

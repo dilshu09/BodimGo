@@ -20,6 +20,22 @@ export const createReport = async (req, res) => {
             description
         });
 
+        // --- NOTIFICATION TRIGGER ---
+        const { createNotification } = await import('./notification.controller.js');
+        // Find Admins (Naive approach: find all users with role 'admin')
+        const User = (await import('../models/User.js')).default;
+        const admins = await User.find({ role: 'admin' });
+
+        for (const admin of admins) {
+            await createNotification({
+                recipient: admin._id,
+                type: 'report_filed',
+                title: 'New Report Filed',
+                message: `A report has been filed against a listing for: ${reason}`,
+                data: { reportId: report._id, listingId: listingId }
+            });
+        }
+
         res.status(201).json({
             success: true,
             message: 'Report submitted successfully',

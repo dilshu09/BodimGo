@@ -36,12 +36,13 @@ const MyListings = () => {
     return (
         <div className="p-8 max-w-7xl mx-auto">
             {/* Header */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-neutral-800">My Listings</h1>
-                    <p className="text-neutral-500 mt-1">Manage your properties and track performance.</p>
+                    <h1 className="text-3xl font-bold text-neutral-800 tracking-tight">My Listings</h1>
+                    <p className="text-neutral-500 mt-2">Manage your diverse portfolio of boarding places.</p>
                 </div>
-                <Link to="/add-listing" className="btn-primary flex items-center gap-2 shadow-lg shadow-primary/25">
+                <Link to="/add-listing" className="btn-primary flex items-center gap-2 shadow-lg shadow-primary/25 h-10 px-6">
                     <Plus size={18} />
                     Create New Listing
                 </Link>

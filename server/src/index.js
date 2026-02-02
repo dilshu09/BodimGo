@@ -76,6 +76,8 @@ app.use("/api/agreements/templates", agreementTemplateRoutes);
 app.use("/api/seekers", seekerRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/reports", reportRoutes);
+import notificationRoutes from "./routes/notification.routes.js";
+app.use("/api/notifications", notificationRoutes);
 // Basic Route
 app.get("/", (req, res) => {
   res.send("BodimGo API Server Running");

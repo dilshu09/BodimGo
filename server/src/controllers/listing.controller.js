@@ -78,28 +78,78 @@ export const createListing = async (req, res) => {
 // @desc    Get all listings (Public Search)
 // @route   GET /api/listings
 // @access  Public
+// @desc    Get all listings (Public Search)
+// @route   GET /api/listings
+// @access  Public
 export const getListings = async (req, res) => {
   try {
-    const { city, minRent, maxRent, type } = req.query;
+    const { search, gender, minPrice, maxPrice, type, city } = req.query;
 
-    let query = { status: 'Published' }; // Default to Published only
+    let matchStage = { status: 'Published' };
 
-    if (city) {
-      query['location.city'] = { $regex: city, $options: 'i' };
+    // 1. Text Search (Location OR Title)
+    // If 'search' is provided, it matches EITHER city OR title
+    if (search) {
+      matchStage['$or'] = [
+        { 'location.city': { $regex: search, $options: 'i' } },
+        { 'title': { $regex: search, $options: 'i' } }
+      ];
+    } else if (city) {
+      // Fallback for legacy city-only search if needed
+      matchStage['location.city'] = { $regex: city, $options: 'i' };
     }
-    if (minRent || maxRent) {
-      query['rooms.price'] = {}; // Search rooms price? Or Listing price range? Schema has 'rent' in rooms.
-      // Schema structure: rooms array. Querying array fields is tricky for range.
-      // Often better to flatten price to listing level or use aggregate.
-      // For now, keep simple:
-    }
+
+    // 2. Type Filter
     if (type) {
-      query.type = type;
+      matchStage.type = type;
     }
 
-    const listings = await Listing.find(query)
-      .populate('provider', 'name isVerified')
-      .sort({ createdAt: -1 });
+    // 3. Gender Filter
+    if (gender) {
+      // Matching strict enum values: 'Girls only', 'Boys only', 'Mixed'
+      matchStage.genderPolicy = gender;
+    }
+
+    // 4. Price Filter (Advanced)
+    // Filtering by room price. We want listings where AT LEAST ONE room fits the budget.
+    if (minPrice || maxPrice) {
+      const min = parseInt(minPrice) || 0;
+      const max = parseInt(maxPrice) || 1000000;
+      matchStage['rooms.price'] = { $gte: min, $lte: max };
+    }
+
+    const listings = await Listing.aggregate([
+      { $match: matchStage },
+      {
+        $addFields: {
+          // Check if ANY room has status 'Available'
+          hasAvailability: {
+            $cond: {
+              if: { $in: ['Available', '$rooms.status'] },
+              then: 1,
+              else: 0
+            }
+          }
+        }
+      },
+      {
+        $sort: {
+          hasAvailability: -1, // Available (1) first, then Occupied (0)
+          createdAt: -1        // Then newest first
+        }
+      },
+      // Lookup Provider (Populate replacement)
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'provider',
+          foreignField: '_id',
+          as: 'provider',
+          pipeline: [{ $project: { name: 1, isVerified: 1 } }]
+        }
+      },
+      { $unwind: '$provider' }
+    ]);
 
     res.json(listings);
   } catch (error) {

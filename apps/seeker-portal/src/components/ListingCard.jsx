@@ -55,6 +55,7 @@ const ListingCard = ({ listing, isSaved: initialSaved = false, onToggleWishlist 
           </div>
         )}
 
+        {/* REMOVED ABSOLUTE BADGE */}
         {/* ❤️ WISHLIST BUTTON */}
         <button
           onClick={handleWishlist}
@@ -91,13 +92,24 @@ const ListingCard = ({ listing, isSaved: initialSaved = false, onToggleWishlist 
         {listing.type === "entire_place" ? "Entire Unit" : "Private Room"}
       </p>
 
-      <div className="flex items-baseline gap-1 mt-1">
-        <span className="font-bold text-neutral-900 text-lg">
-          {listing.rooms && listing.rooms.length > 0
-            ? Math.min(...listing.rooms.map(r => r.price)).toLocaleString()
-            : "Contact for Price"}
-        </span>
-        <span className="text-neutral-900">month</span>
+      <div className="flex items-center justify-between mt-1">
+        <div className="flex items-baseline gap-1">
+          <span className="font-bold text-neutral-900 text-lg">
+            {listing.rooms && listing.rooms.length > 0
+              ? Math.min(...listing.rooms.map(r => r.price)).toLocaleString()
+              : "Contact for Price"}
+          </span>
+          <span className="text-neutral-900">month</span>
+        </div>
+
+        {/* Availability Badge next to Price */}
+        <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide
+          ${listing.rooms?.some(r => r.status === 'Available')
+            ? 'bg-green-100 text-green-700 border border-green-200'
+            : 'bg-neutral-100 text-neutral-500 border border-neutral-200'}`}
+        >
+          {listing.rooms?.some(r => r.status === 'Available') ? 'Available' : 'No Vacancy'}
+        </div>
       </div>
     </Link >
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, CheckCircle, XCircle } from "lucide-react";
+import { Eye, CheckCircle, XCircle, ChevronDown, Download } from "lucide-react";
 
 const bookings = [
   {
@@ -58,9 +58,9 @@ export default function BookingsPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">Bookings</h2>
-          <p className="text-slate-600 mt-1">
-            Manage all guest bookings and reservations
+          <h2 className="text-3xl font-bold text-neutral-900 tracking-tight">Bookings</h2>
+          <p className="text-neutral-500 mt-2">
+            Track and manage all your incoming reservations.
           </p>
         </div>
       </div>
@@ -154,10 +154,10 @@ export default function BookingsPage() {
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${booking.status === "Confirmed"
-                          ? "bg-green-100 text-green-700"
-                          : booking.status === "Pending Confirmation"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-red-100 text-red-700"
+                        ? "bg-green-100 text-green-700"
+                        : booking.status === "Pending Confirmation"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-red-100 text-red-700"
                         }`}
                     >
                       {booking.status === "Confirmed" && (
@@ -170,10 +170,10 @@ export default function BookingsPage() {
                   <td className="px-6 py-4">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.paymentStatus === "Paid"
-                          ? "bg-green-100 text-green-700"
-                          : booking.paymentStatus === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-slate-100 text-slate-700"
+                        ? "bg-green-100 text-green-700"
+                        : booking.paymentStatus === "Pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-slate-100 text-slate-700"
                         }`}
                     >
                       {booking.paymentStatus}

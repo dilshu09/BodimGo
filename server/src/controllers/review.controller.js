@@ -83,3 +83,29 @@ export const getListingReviews = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
+
+// @desc    Get reviews for logged in provider's listings
+// @route   GET /api/reviews/provider
+// @access  Private (Provider)
+export const getProviderReviews = async (req, res) => {
+    try {
+        // 1. Find all listings owned by the provider
+        const listings = await Listing.find({ provider: req.user.id }).select('_id');
+        const listingIds = listings.map(l => l._id);
+
+        // 2. Find reviews for these listings
+        const reviews = await Review.find({ targetListing: { $in: listingIds } })
+            .populate('author', 'name profileImage')
+            .populate('targetListing', 'title')
+            .sort({ createdAt: -1 });
+
+        res.json({
+            success: true,
+            count: reviews.length,
+            data: reviews
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};

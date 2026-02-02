@@ -62,6 +62,17 @@ export const createBooking = async (req, res) => {
       .populate('seeker', 'name')
       .populate('listing', 'title');
 
+    // --- NOTIFICATION TRIGGER ---
+    const { createNotification } = await import('./notification.controller.js');
+    await createNotification({
+      recipient: fullBooking.provider._id,
+      type: 'booking_request',
+      title: 'New Booking Request',
+      message: `You have received a booking request from ${fullBooking.seeker.name} for ${fullBooking.listing.title}`,
+      data: { bookingId: booking._id }
+    });
+
+
     // Send Email to Provider
     if (fullBooking.provider && fullBooking.provider.email) {
       // Since we don't have a frontend route for "Accept by ID" yet without auth, 
@@ -173,9 +184,31 @@ export const updateBookingStatus = async (req, res) => {
     booking.status = newStatus;
     await booking.save();
 
+    // --- NOTIFICATION TRIGGER (REJECTED) ---
+    if (newStatus === 'rejected') {
+      const { createNotification } = await import('./notification.controller.js');
+      await createNotification({
+        recipient: booking.seeker._id,
+        type: 'booking_rejected',
+        title: 'Booking Update',
+        message: `Your booking for ${booking.listing.title} was declined.`,
+        data: { bookingId: booking._id }
+      });
+    }
+
     // Notify Seeker (Log for MVP)
     if (newStatus === 'pending_payment') {
       console.log(`Sending Acceptance Email to ${booking.seeker.email}`);
+
+      // --- NOTIFICATION TRIGGER (ACCEPTED) ---
+      const { createNotification } = await import('./notification.controller.js');
+      await createNotification({
+        recipient: booking.seeker._id, // Seeker ID
+        type: 'booking_accepted',
+        title: 'Booking Accepted! 🎉',
+        message: `Your booking for ${booking.listing.title} has been accepted! Please complete payment.`,
+        data: { bookingId: booking._id }
+      });
 
       // Create Pending Tenant
       try {
