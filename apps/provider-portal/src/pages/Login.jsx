@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import api from '../services/api';
@@ -12,6 +12,13 @@ const Login = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            navigate('/dashboard');
+        }
+    }, [navigate]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -22,7 +29,7 @@ const Login = () => {
             if (res.data.role === 'provider') {
                 localStorage.setItem('token', res.data.token);
                 // Optional: Store user info if needed
-                localStorage.setItem('user', JSON.stringify(res.data.user));
+                localStorage.setItem('user', JSON.stringify(res.data));
                 navigate('/dashboard');
             } else {
                 setError('Please use the Seeker portal for seeker accounts.');

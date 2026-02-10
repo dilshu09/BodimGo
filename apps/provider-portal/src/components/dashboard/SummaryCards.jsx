@@ -13,35 +13,36 @@ const Card = ({ title, value, subtext, icon: Icon, color }) => (
     </div>
 );
 
-const SummaryCards = () => {
-    // Dummy Data
+const SummaryCards = ({ stats }) => {
+    if (!stats) return null;
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card
-                title="Total Occupancy"
-                value="85%"
-                subtext="+5% from last month"
+                title="Occupancy Rate"
+                value={`${stats.occupancyRate}%`}
+                subtext={`${stats.vacantBeds} beds available`}
                 icon={Users}
                 color="bg-blue-500"
             />
             <Card
                 title="Vacant Beds"
-                value="12"
-                subtext="3 Rooms available"
+                value={stats.vacantBeds}
+                subtext="Ready to move in"
                 icon={BedDouble}
                 color="bg-orange-400"
             />
             <Card
                 title="Expected Income"
-                value="LKR 450k"
-                subtext="For Jan 2026"
+                value={`LKR ${(stats.expectedIncome || 0).toLocaleString()}`}
+                subtext="From active tenants"
                 icon={DollarSign}
                 color="bg-green-500"
             />
             <Card
                 title="Pending Actions"
-                value="5"
-                subtext="3 Approvals, 2 Overdue"
+                value={stats.pendingCount}
+                subtext={`${stats.pendingCount} Booking Requests`}
                 icon={AlertCircle}
                 color="bg-red-500"
             />

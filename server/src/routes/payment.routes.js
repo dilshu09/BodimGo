@@ -1,17 +1,27 @@
 import express from 'express';
-import { createPaymentIntent, confirmPayment } from '../controllers/payment.controller.js';
-import { protect } from '../middleware/auth.middleware.js';
+import {
+    createPaymentIntent,
+    confirmPayment,
+    createConnectAccount,
+    getAccountLink,
+    getPaymentStatus,
+    getPaymentHistory,
+    getPaymentStats
+} from '../controllers/payment.controller.js';
+import { protect, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.use(protect);
-
-router.post('/create-intent', createPaymentIntent);
-router.post('/confirm', confirmPayment);
+router.post('/create-intent', protect, createPaymentIntent);
+router.post('/confirm', protect, confirmPayment);
 
 // Stripe Connect
-router.post('/connect/create-account', (await import('../controllers/payment.controller.js')).createConnectAccount);
-router.post('/connect/onboarding-link', (await import('../controllers/payment.controller.js')).getAccountLink);
-router.get('/connect/status', (await import('../controllers/payment.controller.js')).getPaymentStatus);
+router.post('/connect/create-account', protect, authorize('provider'), createConnectAccount);
+router.post('/connect/onboarding-link', protect, authorize('provider'), getAccountLink);
+router.get('/connect/status', protect, authorize('provider'), getPaymentStatus);
+
+// Analytics & History
+router.get('/history', protect, authorize('provider'), getPaymentHistory);
+router.get('/stats', protect, authorize('provider'), getPaymentStats);
 
 export default router;

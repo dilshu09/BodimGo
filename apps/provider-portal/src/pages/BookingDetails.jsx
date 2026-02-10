@@ -57,10 +57,16 @@ const BookingDetails = () => {
                         <h1 className="text-2xl font-bold text-neutral-900 mb-1">Booking Request</h1>
                         <p className="text-neutral-500 text-sm">Created on {new Date(booking.createdAt).toLocaleDateString()}</p>
                     </div>
-                    <div className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide 
+                    <div className="flex gap-2">
+                        <div className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide 
+                        ${booking.paymentStatus === 'paid' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
+                            {booking.paymentStatus || 'Unpaid'}
+                        </div>
+                        <div className={`px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide 
                         ${booking.status === 'confirmed' || booking.status === 'accepted' ? 'bg-green-100 text-green-700' :
-                            booking.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                        {booking.status}
+                                booking.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {booking.status}
+                        </div>
                     </div>
                 </div>
 
@@ -83,9 +89,31 @@ const BookingDetails = () => {
                             </div>
 
                             {applicationData?.occupation && (
-                                <div className="flex items-center gap-3 text-neutral-700">
-                                    <Briefcase size={18} className="text-neutral-400" />
-                                    <span>{applicationData.occupation}</span>
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-3 text-neutral-700">
+                                        <Briefcase size={18} className="text-neutral-400" />
+                                        <span className="font-medium">{applicationData.occupation}</span>
+                                    </div>
+                                    {applicationData.organization && (
+                                        <div className="pl-8 text-sm text-neutral-600">
+                                            <span className="font-bold">Institute:</span> {applicationData.organization}
+                                        </div>
+                                    )}
+                                    {applicationData.faculty && (
+                                        <div className="pl-8 text-sm text-neutral-600">
+                                            <span className="font-bold">Faculty:</span> {applicationData.faculty}
+                                        </div>
+                                    )}
+                                    {applicationData.workplace && (
+                                        <div className="pl-8 text-sm text-neutral-600">
+                                            <span className="font-bold">Workplace:</span> {applicationData.workplace}
+                                        </div>
+                                    )}
+                                    {applicationData.otherDescription && (
+                                        <div className="pl-8 text-sm text-neutral-600">
+                                            <span className="font-bold">Details:</span> {applicationData.otherDescription}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

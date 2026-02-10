@@ -6,6 +6,8 @@ import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare
 import ReviewModal from "../components/ReviewModal";
 import ReportModal from "../components/ReportModal";
 import BookingWizard from "../components/BookingWizard";
+import ViewingRequestModal from "../components/ViewingRequestModal";
+import MessageModal from "../components/MessageModal";
 
 const ListingDetails = () => {
   const { id } = useParams();
@@ -17,6 +19,8 @@ const ListingDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showViewingModal, setShowViewingModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -65,7 +69,11 @@ const ListingDetails = () => {
   const navigate = useNavigate();
 
   const handleRequestBook = () => {
+    // If no user profile loaded (guest) OR user is not a seeker (admin/provider viewing as guest)
     if (!userProfile) {
+      // We can also check if they are logged in but as wrong role by trying to fetch profile again or just let Login page handle it.
+      // Since Navbar sets user=null for wrong roles, userProfile will be null here.
+      // Redirect to login.
       navigate('/login');
       return;
     }
@@ -126,11 +134,20 @@ const ListingDetails = () => {
               </div>
               <button
                 onClick={() => setShowProvider(true)}
-                className="h-12 w-12 bg-neutral-200 rounded-full flex items-center justify-center hover:bg-neutral-300 transition"
+                className="h-12 w-12 bg-neutral-200 rounded-full flex items-center justify-center hover:bg-neutral-300 transition overflow-hidden"
               >
-                <User size={24} />
+                {listing.provider?.profileImage ? (
+                  <img
+                    src={listing.provider.profileImage}
+                    alt={listing.provider.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={24} />
+                )}
               </button>
             </div>
+
 
             {listing.provider?.isVerified && (
               <div className="flex items-center gap-4 border-b border-neutral-200 pb-6">
@@ -160,7 +177,7 @@ const ListingDetails = () => {
                 What this place offers
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                {listing.facilities.map((facility) => (
+                {listing.facilities?.map((facility) => (
                   <div
                     key={facility}
                     className="flex items-center gap-3 text-neutral-600"
@@ -327,6 +344,9 @@ const ListingDetails = () => {
             </div>
           </div>
 
+
+
+
           {/* Booking Card */}
           <div className="hidden lg:block relative">
             <div className="sticky top-28 bg-white border border-neutral-200 shadow-[0_6px_16px_rgba(0,0,0,0.12)] rounded-xl p-6">
@@ -362,124 +382,156 @@ const ListingDetails = () => {
                     Check-in
                   </div>
                   <div className="text-sm text-neutral-600">Today</div>
+                  <button
+                    onClick={handleRequestBook}
+                    className="w-full bg-[#E51D54] hover:bg-[#d41b4e] text-white font-bold py-3.5 rounded-lg text-lg transition-transform active:scale-[0.98]"
+                  >
+                    Request to Book
+                  </button>
+                  <button
+                    onClick={() => setShowViewingModal(true)}
+                    className="w-full border border-neutral-300 text-neutral-700 font-bold py-3.5 rounded-lg text-lg hover:bg-neutral-50 transition-transform active:scale-[0.98]"
+                  >
+                    Schedule Viewing
+                  </button>
                 </div>
-                <button
-                  onClick={handleRequestBook}
-                  className="w-full bg-[#E51D54] hover:bg-[#d41b4e] text-white font-bold py-3.5 rounded-lg text-lg transition-transform active:scale-[0.98]"
-                >
-                  Request to Book
-                </button>
-              </div>
 
-              <p className="text-center text-sm text-neutral-500 mb-6">
-                You won't be charged yet
-              </p>
+                <p className="text-center text-sm text-neutral-500 mb-6">
+                  You won't be charged yet
+                </p>
 
-              <div className="flex justify-between items-center text-neutral-600 text-sm pt-4 border-t border-neutral-200">
-                <button className="underline hover:text-black">Share</button>
-                <button
-                  onClick={() => setShowReportModal(true)}
-                  className="flex items-center gap-2 hover:text-red-600 transition-colors underline"
-                >
-                  <Flag size={14} />
-                  Report this listing
-                </button>
+                <div className="flex justify-between items-center text-neutral-600 text-sm pt-4 border-t border-neutral-200">
+                  <button className="underline hover:text-black">Share</button>
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="flex items-center gap-2 hover:text-red-600 transition-colors underline"
+                  >
+                    <Flag size={14} />
+                    Report this listing
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
 
-      {
-        showProvider && listing.provider && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-xl">
-              {/* Close button */}
-              <button
-                onClick={() => setShowProvider(false)}
-                className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700"
-              >
-                ✕
-              </button>
+        {
+          showProvider && listing.provider && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+              <div className="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-xl">
+                {/* Close button */}
+                <button
+                  onClick={() => setShowProvider(false)}
+                  className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700"
+                >
+                  ✕
+                </button>
 
-              {/* Provider Info */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="h-14 w-14 bg-neutral-200 rounded-full flex items-center justify-center">
-                  <User size={28} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-neutral-900">
-                    {listing.provider.name}
-                  </h3>
-                  <p className="text-sm text-neutral-500">Boarding Provider</p>
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="space-y-3 mb-6">
-                <div>
-                  <p className="text-xs font-semibold text-neutral-500 uppercase">
-                    Email
-                  </p>
-                  <p className="text-neutral-800">{listing.provider.email}</p>
-                </div>
-
-                {listing.provider.isVerified && (
-                  <div className="flex items-center gap-2 text-sm text-green-600">
-                    <ShieldCheck size={16} />
-                    Verified Provider
+                {/* Provider Info */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-14 w-14 bg-neutral-200 rounded-full flex items-center justify-center overflow-hidden">
+                    {listing.provider?.profileImage ? (
+                      <img
+                        src={listing.provider.profileImage}
+                        alt={listing.provider.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User size={28} />
+                    )}
                   </div>
-                )}
+                  <div>
+                    <h3 className="text-lg font-bold text-neutral-900">
+                      {listing.provider.name}
+                    </h3>
+                    <p className="text-sm text-neutral-500">Boarding Provider</p>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-3 mb-6">
+                  <div>
+                    <p className="text-xs font-semibold text-neutral-500 uppercase">
+                      Email
+                    </p>
+                    <p className="text-neutral-800">{listing.provider.email}</p>
+                  </div>
+
+                  {listing.provider.isVerified && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <ShieldCheck size={16} />
+                      Verified Provider
+                    </div>
+                  )}
+                </div>
+
+                {/* Contact Button */}
+                <button
+                  onClick={() => {
+                    setShowProvider(false);
+                    setShowMessageModal(true);
+                  }}
+                  className="block w-full text-center bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary-hover transition"
+                >
+                  Contact Provider
+                </button>
               </div>
-
-              {/* Contact Button */}
-              <a
-                href={`mailto:${listing.provider.email}?subject=Inquiry about ${listing.title}`}
-                className="block w-full text-center bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary-hover transition"
-              >
-                Contact Provider
-              </a>
             </div>
-          </div>
-        )
-      }
+          )
+        }
 
-      {/* Modals */}
-      <ReviewModal
-        isOpen={showReviewModal}
-        onClose={() => setShowReviewModal(false)}
-        listingId={id}
-        onReviewAdded={() => {
-          // Reload reviews
-          const fetchReviews = async () => {
-            try {
-              const res = await api.get(`/reviews/listing/${id}`);
-              setReviews(res.data.data);
-              // Also refresh listing to get updated stats
-              const resList = await api.get(`/listings/${id}`);
-              setListing(resList.data);
-            } catch (err) { console.error(err); }
-          };
-          fetchReviews();
-        }}
-      />
-
-      <ReportModal
-        isOpen={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        listingId={id}
-      />
-
-      {showBookingWizard && (
-        <BookingWizard
-          listing={listing}
-          onClose={() => setShowBookingWizard(false)}
-          onSuccess={onSuccessRequest}
-          user={userProfile}
+        {/* Modals */}
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          listingId={id}
+          onReviewAdded={() => {
+            // Reload reviews
+            const fetchReviews = async () => {
+              try {
+                const res = await api.get(`/reviews/listing/${id}`);
+                setReviews(res.data.data);
+                // Also refresh listing to get updated stats
+                const resList = await api.get(`/listings/${id}`);
+                setListing(resList.data);
+              } catch (err) { console.error(err); }
+            };
+            fetchReviews();
+          }}
         />
-      )}
-    </div >
+
+        <ReportModal
+          isOpen={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          listingId={id}
+        />
+
+        {
+          showBookingWizard && (
+            <BookingWizard
+              listing={listing}
+              onClose={() => setShowBookingWizard(false)}
+              onSuccess={onSuccessRequest}
+              user={userProfile}
+            />
+          )
+        }
+
+        <ViewingRequestModal
+          isOpen={showViewingModal}
+          onClose={() => setShowViewingModal(false)}
+          listingId={id}
+          providerName={listing.provider?.name}
+        />
+
+        <MessageModal
+          isOpen={showMessageModal}
+          onClose={() => setShowMessageModal(false)}
+          providerName={listing.provider?.name}
+        />
+      </div>
+    </div>
   );
 };
 

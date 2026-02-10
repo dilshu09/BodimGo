@@ -26,6 +26,11 @@ const UserSchema = new mongoose.Schema({
     enum: ['seeker', 'provider', 'admin'],
     default: 'seeker',
   },
+  status: {
+    type: String,
+    enum: ['active', 'suspended', 'inactive'],
+    default: 'active',
+  },
   profileImage: {
     type: String,
     default: '',
@@ -55,6 +60,21 @@ const UserSchema = new mongoose.Schema({
   },
   resetPasswordToken: String,
   resetPasswordExpire: Date,
+  warningCount: {
+    type: Number,
+    default: 0
+  },
+  warningHistory: [{
+    reason: String,
+    date: {
+      type: Date,
+      default: Date.now
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }]
 }, {
   timestamps: true,
 });

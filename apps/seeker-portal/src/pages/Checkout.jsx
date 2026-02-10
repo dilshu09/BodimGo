@@ -5,8 +5,8 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 
-// Initialize Stripe (Replace with your actual Publishable Key)
-const stripePromise = loadStripe('pk_test_51Q5b6bP9...');
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const CheckoutForm = ({ booking, clientSecret }) => {
     const stripe = useStripe();
@@ -79,6 +79,10 @@ const Checkout = () => {
     const [booking, setBooking] = useState(null);
 
     useEffect(() => {
+        // Reset state on ID change
+        setClientSecret('');
+        setBooking(null);
+
         // 1. Fetch Booking Details
         api.get(`/bookings/${bookingId}`).then(res => {
             setBooking(res.data);

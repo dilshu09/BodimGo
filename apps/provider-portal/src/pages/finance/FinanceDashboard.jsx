@@ -6,90 +6,95 @@ import {
   DollarSign,
   AlertCircle,
 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
 
-const stats = [
-  {
-    label: "Total Revenue (This Month)",
-    value: "675,000",
-    change: "+12.5%",
-    icon: DollarSign,
-    trend: "up",
-    bg: "bg-blue-50",
-    textColor: "text-blue-600",
-  },
-  {
-    label: "Total Expenses",
-    value: "125,000",
-    change: "-5.2%",
-    icon: TrendingDown,
-    trend: "down",
-    bg: "bg-red-50",
-    textColor: "text-red-600",
-  },
-  {
-    label: "Net Profit",
-    value: "550,000",
-    change: "+18.3%",
-    icon: TrendingUp,
-    trend: "up",
-    bg: "bg-green-50",
-    textColor: "text-green-600",
-  },
-  {
-    label: "Outstanding Payments",
-    value: "65,000",
-    change: "From 2 tenants",
-    icon: AlertCircle,
-    trend: "none",
-    bg: "bg-yellow-50",
-    textColor: "text-yellow-600",
-  },
-];
-
-const recentTransactions = [
-  {
-    id: 1,
-    type: "Income",
-    description: "Rent - Room 102 (Ahmed Khan)",
-    amount: "+35,000",
-    date: "2024-01-10",
-    status: "Completed",
-  },
-  {
-    id: 2,
-    type: "Income",
-    description: "Rent - Room 105 (Fatima Ahmed)",
-    amount: "+45,000",
-    date: "2024-01-08",
-    status: "Completed",
-  },
-  {
-    id: 3,
-    type: "Expense",
-    description: "Water & Electricity Bill",
-    amount: "-25,000",
-    date: "2024-01-07",
-    status: "Completed",
-  },
-  {
-    id: 4,
-    type: "Income",
-    description: "Rent - Room 301 (Sara Khan)",
-    amount: "+35,000",
-    date: "2024-01-12",
-    status: "Completed",
-  },
-  {
-    id: 5,
-    type: "Expense",
-    description: "Maintenance - Room 104",
-    amount: "-8,000",
-    date: "2024-01-06",
-    status: "Pending",
-  },
-];
+const API_URL = "http://localhost:5000/api";
 
 export default function FinanceDashboard() {
+  const [statsData, setStatsData] = useState({
+    currentMonthRevenue: 0,
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netProfit: 0
+  });
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFinanceData();
+  }, []);
+
+  const fetchFinanceData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const [statsRes, historyRes] = await Promise.all([
+        axios.get(`${API_URL}/payments/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API_URL}/payments/history`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      setStatsData(statsRes.data);
+
+      // Map history to recent transactions (take first 5)
+      setRecentTransactions(historyRes.data.slice(0, 5).map(tx => ({
+        id: tx.transactionId || tx._id,
+        type: "Income", // Assumption for now
+        description: `Payment from ${tx.payer?.name || 'Unknown'}`,
+        amount: `+${tx.amount.toLocaleString()}`,
+        date: new Date(tx.createdAt).toLocaleDateString(),
+        status: tx.status === 'completed' ? 'Completed' : 'Pending'
+      })));
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching finance data:", error);
+      toast.error("Failed to load finance dashboard");
+      setLoading(false);
+    }
+  };
+
+  const stats = [
+    {
+      label: "Total Revenue (This Month)",
+      value: statsData.currentMonthRevenue.toLocaleString(),
+      change: "Current",
+      icon: DollarSign,
+      trend: "up",
+      bg: "bg-blue-50",
+      textColor: "text-blue-600",
+    },
+    {
+      label: "Total Expenses",
+      value: statsData.totalExpenses.toLocaleString(),
+      change: "0%",
+      icon: TrendingDown,
+      trend: "down",
+      bg: "bg-red-50",
+      textColor: "text-red-600",
+    },
+    {
+      label: "Net Profit",
+      value: statsData.netProfit.toLocaleString(),
+      change: "+100%",
+      icon: TrendingUp,
+      trend: "up",
+      bg: "bg-green-50",
+      textColor: "text-green-600",
+    },
+    {
+      label: "Outstanding Payments",
+      value: "0",
+      change: "All Good",
+      icon: AlertCircle,
+      trend: "none",
+      bg: "bg-yellow-50",
+      textColor: "text-yellow-600",
+    },
+  ];
+
+  if (loading) return <div className="p-8 text-center text-slate-500">Loading dashboard...</div>;
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
@@ -153,8 +158,8 @@ export default function FinanceDashboard() {
                     </p>
                     <span
                       className={`text-xs font-semibold px-2 py-1 rounded mt-1 inline-block ${tx.status === "Completed"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
                         }`}
                     >
                       {tx.status}
@@ -162,6 +167,9 @@ export default function FinanceDashboard() {
                   </div>
                 </div>
               ))}
+              {recentTransactions.length === 0 && (
+                <div className="p-8 text-center text-slate-500">No recent transactions.</div>
+              )}
             </div>
           </div>
         </div>

@@ -24,7 +24,13 @@ const BookingSchema = new mongoose.Schema({
     occupation: { type: String, enum: ['Student', 'Working Professional', 'Other'] },
     note: { type: String },
     phone: { type: String },
-    address: { type: String }
+    address: { type: String },
+    gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
+    // Occupation Details
+    organization: { type: String }, // For Student (Uni) or Worker (Company) - keeping generic or specific? User said "Organization" for student, "Where work" for pro.
+    faculty: { type: String }, // For Student
+    workplace: { type: String }, // For Professional
+    otherDescription: { type: String } // For Other
   },
   agreementAccepted: { type: Boolean, default: false },
 

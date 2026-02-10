@@ -7,6 +7,7 @@ import api from "../services/api";
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   // Profile Form Data
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ export default function SettingsPage() {
     phone: "",
     businessName: "",
     bio: "",
+    profileImage: "",
     stripeAccountId: "",
     stripeOnboardingComplete: false,
     twoFactorEnabled: false
@@ -50,6 +52,7 @@ export default function SettingsPage() {
         phone: data.phone || "",
         businessName: data.businessName || "",
         bio: data.bio || "",
+        profileImage: data.profileImage || "",
         stripeAccountId: data.stripeAccountId || "",
         stripeOnboardingComplete: data.stripeOnboardingComplete || false,
         twoFactorEnabled: data.twoFactorEnabled || false
@@ -114,12 +117,23 @@ export default function SettingsPage() {
   };
 
   const saveProfile = async () => {
+    setSaving(true);
     try {
-      await api.put("/auth/profile", formData);
+      const res = await api.put("/auth/profile", formData);
+      // Update local storage
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const updatedUser = { ...currentUser, ...res.data.data };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+
+      // Dispatch event for Header to catch
+      window.dispatchEvent(new Event('user-updated'));
+
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error(error);
       toast.error(error.response?.data?.message || "Failed to update profile");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -255,74 +269,159 @@ export default function SettingsPage() {
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
         {activeTab === "profile" && (
           <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
-              />
+
+            {/* Profile Picture Section */}
+            <div className="flex items-center gap-6 pb-6 border-b border-slate-100">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-slate-100 flex items-center justify-center">
+                  {formData.profileImage ? (
+                    <img
+                      src={formData.profileImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl text-slate-300 font-bold">
+                      {formData.name ? formData.name.charAt(0).toUpperCase() : "?"}
+                    </span>
+                  )}
+                </div>
+                <label
+                  htmlFor="profile-upload"
+                  className="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full shadow-sm cursor-pointer hover:bg-primary/90 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </label>
+              </div>
+
+              <div className="flex-1">
+                <h3 className="font-semibold text-slate-900">Profile Picture</h3>
+                <p className="text-sm text-slate-500 mb-3">Update your profile photo to personalize your account.</p>
+
+                <input
+                  type="file"
+                  id="profile-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+
+                    const uploadData = new FormData();
+                    uploadData.append('image', file);
+
+                    try {
+                      const loadId = toast.loading("Uploading image...");
+                      const res = await api.post('/upload', uploadData, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                      });
+                      setFormData(prev => ({ ...prev, profileImage: res.data.url }));
+                      toast.dismiss(loadId);
+                      toast.success("Image uploaded successfully");
+                    } catch (err) {
+                      console.error(err);
+                      toast.dismiss();
+                      toast.error("Failed to upload image");
+                    }
+                  }}
+                />
+
+                <div className="flex gap-3">
+                  <label
+                    htmlFor="profile-upload"
+                    className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors shadow-sm"
+                  >
+                    Upload New
+                  </label>
+                  {formData.profileImage && (
+                    <button
+                      onClick={() => setFormData(prev => ({ ...prev, profileImage: "" }))}
+                      className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                disabled
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  disabled
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                  Boarding Name
+                </label>
+                <input
+                  type="text"
+                  name="businessName"
+                  value={formData.businessName}
+                  onChange={handleInputChange}
+                  placeholder="Business Name"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                />
+              </div>
+
+
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                  Address / Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  placeholder="Your Address"
+                  rows={3}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                ></textarea>
+              </div>
+              <div className="flex items-end justify-end relative z-10">
+                <button
+                  type="button"
+                  onClick={saveProfile}
+                  disabled={saving}
+                  className={`px-8 py-2.5 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all font-bold shadow-lg shadow-primary/20 h-fit ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">
-                Boarding Name
-              </label>
-              <input
-                type="text"
-                name="businessName"
-                value={formData.businessName}
-                onChange={handleInputChange}
-                placeholder="Business Name"
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-slate-900 mb-2">
-                Address / Bio
-              </label>
-              <textarea
-                name="bio"
-                value={formData.bio}
-                onChange={handleInputChange}
-                placeholder="Your Address"
-                rows={3}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
-              ></textarea>
-            </div>
-            <button
-              onClick={saveProfile}
-              className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium"
-            >
-              Save Changes
-            </button>
           </div>
         )}
 

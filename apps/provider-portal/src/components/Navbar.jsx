@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, UserCircle } from 'lucide-react';
 import api from '../services/api';
 import logo from '../assets/logo.png';
 
@@ -10,12 +10,30 @@ const Navbar = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [showNotifications, setShowNotifications] = useState(false);
 
+    const [user, setUser] = useState(null);
+
     useEffect(() => {
         fetchNotifications();
+        fetchProfile();
         // Poll every 30 seconds for new notifications
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
     }, []);
+
+    const fetchProfile = async () => {
+        try {
+            const res = await api.get('/auth/profile');
+            // Enforce Role Check
+            if (res.data.role !== 'provider') {
+                console.warn('Logged in user is not a provider. Logging out...');
+                await handleLogout();
+                return;
+            }
+            setUser(res.data);
+        } catch (err) {
+            console.error("Failed to fetch profile", err);
+        }
+    };
 
     const fetchNotifications = async () => {
         try {
@@ -37,13 +55,13 @@ const Navbar = () => {
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await api.post('/auth/logout');
-            navigate('/login');
-        } catch (err) {
-            console.error('Logout failed', err);
-        }
+    const handleLogout = () => {
+        // Fire and forget logout request
+        api.post('/auth/logout').catch(err => console.error('Logout failed', err));
+
+        localStorage.removeItem('token');
+        // Force full page reload to clear any application state
+        window.location.href = '/login';
     };
 
     return (
@@ -113,12 +131,30 @@ const Navbar = () => {
                     <Link to="/add-listing" className="text-sm font-medium hover:text-primary transition-colors">
                         Create Listing
                     </Link>
-                    <button
-                        onClick={handleLogout}
-                        className="text-sm text-neutral-500 hover:text-neutral-800 transition-colors"
-                    >
-                        Log out
-                    </button>
+                    {/* User Profile */}
+                    <div className="flex items-center gap-3 pl-4 border-l border-neutral-200">
+                        <div className="text-right block">
+                            <p className="text-sm font-bold text-neutral-900 leading-none">
+                                {user?.name || 'Provider'}
+                            </p>
+                            <p className="text-xs text-neutral-500 mt-1">
+                                {user?.email || ''}
+                            </p>
+                        </div>
+                        <div className="h-10 w-10 bg-neutral-100 rounded-full flex items-center justify-center text-primary border border-neutral-200">
+                            {user?.profileImage ? (
+                                <img src={user.profileImage} alt="Profile" className="h-full w-full rounded-full object-cover" />
+                            ) : (
+                                <UserCircle size={24} />
+                            )}
+                        </div>
+                        <button
+                            onClick={handleLogout}
+                            className="text-xs font-medium text-red-500 hover:text-red-700 transition-colors ml-2"
+                        >
+                            Log out
+                        </button>
+                    </div>
                 </div>
             </div>
         </nav>

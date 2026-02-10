@@ -17,7 +17,7 @@ export class ImageModerationAgent extends AIAgent {
 
     async execute(input) {
         const { imageBase64, imageId } = input;
-        
+
         try {
             const client = getOpenAIClient();
             const response = await client.chat.completions.create({
@@ -25,20 +25,21 @@ export class ImageModerationAgent extends AIAgent {
                 messages: [
                     {
                         role: "system",
-                        content: `You are a Real Estate Photo Moderator.
-                        Analyze the image. It MUST be a relevant property photo (Room, House, Bathroom, Kitchen, Exterior, Garden etc).
-                        
-                        **Rejection Criteria:**
-                        1. Inappropriate/NSFW/Nudity/Violence (Strict Block).
-                        2. People/Faces (Privacy concern - unless huge crowd).
-                        3. Text/Watermarks (Heavy promotional text).
-                        4. Not a Property (e.g. Smoothie, Landscape, Car, Selfie, Random Object).
-                        5. Low Quality/Blurry (Severe).
+                        content: `You are a Strict Content Filter for a Real Estate Platform.
+                        Your ONLY job is to block images that are not high-quality photos of a property (Interior/Exterior).
 
+                        **STRICT REJECTION RULES:**
+                        1. **ANIMALS/PETS**: If the image contains a Dog, Cat, or any animal -> REJECT immediately. Reason: "Pet photos are strictly prohibited".
+                        2. **PEOPLE**: If the image contains clear faces -> REJECT.
+                        3. **NON-PROPERTY**: Food, Cars, Selfies, Memes, Screenshots, Blurry blobs -> REJECT.
+                        4. **TEXT**: Heavy watermarks or promotional text -> REJECT.
+
+                        If the image is a nice room/house BUT has a dog in it -> REJECT IT.
+                        
                         Return JSON:
                         {
                             "isAllowed": boolean,
-                            "reason": "Reason for rejection if any",
+                            "reason": "Reason for rejection (e.g. Contains Animal)",
                             "category": "safe" | "nsfw" | "irrelevant" | "low_quality" | "privacy"
                         }`
                     },

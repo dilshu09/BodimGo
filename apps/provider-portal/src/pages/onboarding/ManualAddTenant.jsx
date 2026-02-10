@@ -41,7 +41,7 @@ const ManualAddTenant = () => {
                 setListings(resListings.data.data.filter(l => l.status === 'Published') || []);
 
                 // Fetch Agreement Templates
-                const resTemplates = await api.get('/agreement-templates');
+                const resTemplates = await api.get('/agreements/templates');
                 setAgreementTemplates(resTemplates.data.data || []);
             } catch (err) {
                 console.error(err);

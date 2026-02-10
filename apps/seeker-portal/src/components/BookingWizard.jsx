@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, ChevronRight, Check } from 'lucide-react';
 import api from '../services/api';
@@ -13,12 +12,44 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
         note: '',
         phone: user?.phone || '',
         address: user?.address || '',
-        agreementAccepted: false
+        gender: '',
+        agreementAccepted: false,
+        // New Fields
+        organization: '', // University/Institute
+        faculty: '',      // Faculty/Course
+        workplace: '',    // Company
+        otherDescription: '' // Other
     });
 
     const totalSteps = 3;
 
+    const validateStep1 = () => {
+        if (!formData.name.trim()) return "Full Name is required";
+        if (!formData.gender) return "Gender is required";
+        if (!formData.phone.trim()) return "Phone Number is required";
+        if (!formData.address.trim()) return "Address is required";
+
+        // Occupation Specific Validation
+        if (formData.occupation === 'Student') {
+            if (!formData.organization.trim()) return "University/Institute is required";
+            if (!formData.faculty.trim()) return "Faculty/Course is required";
+        } else if (formData.occupation === 'Working Professional') {
+            if (!formData.workplace.trim()) return "Workplace is required";
+        } else if (formData.occupation === 'Other') {
+            if (!formData.otherDescription.trim()) return "Please describe your occupation";
+        }
+
+        return null;
+    };
+
     const handleNext = () => {
+        if (step === 1) {
+            const error = validateStep1();
+            if (error) {
+                alert(error);
+                return;
+            }
+        }
         if (step === 2 && !formData.agreementAccepted) {
             alert("You must accept the agreement to proceed.");
             return;
@@ -31,21 +62,12 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            // Calculate rent logic identical to ListingDetails (simplified here for request)
             const rent = listing.rooms && listing.rooms.length > 0
                 ? Math.min(...listing.rooms.map(r => r.price))
                 : (listing.rent || 0);
 
             await api.post('/bookings', {
                 listingId: listing._id,
-                startDate: new Date(), // MVP: Assuming immediate start or default logic (User didn't specify date picker in wizard request, reusing existing flow?)
-                // wait, ListingDetails usually has dates selected. We should props them in if available. 
-                // For this wizard, users usually pick dates on the main page. 
-                // Let's assume startDate/endDate are passed or we use Defaults. 
-                // Ideally, BookingWizard should wrap the DATE SELECTION too or take it as props.
-                // Assuming ListingDetails has dates in state, we need to pass them.
-                // For MVP without context of specific dates from parent, I will use TODAY + 1 Month.
-                // CORRECT APPROACH: Receive dates from parent ListingDetails. For now, default to dummy or today.
                 startDate: new Date(),
                 endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
                 applicationData: {
@@ -54,14 +76,21 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                     occupation: formData.occupation,
                     note: formData.note,
                     phone: formData.phone,
-                    address: formData.address
+                    address: formData.address,
+                    gender: formData.gender,
+                    // Send specific fields
+                    organization: formData.occupation === 'Student' ? formData.organization : undefined,
+                    faculty: formData.occupation === 'Student' ? formData.faculty : undefined,
+                    workplace: formData.occupation === 'Working Professional' ? formData.workplace : undefined,
+                    otherDescription: formData.occupation === 'Other' ? formData.otherDescription : undefined,
                 },
                 agreementAccepted: formData.agreementAccepted
             });
             onSuccess();
         } catch (err) {
             console.error(err);
-            alert("Failed to send request. Please try again.");
+            const msg = err.response?.data?.message || "Failed to send request.";
+            alert(msg);
         } finally {
             setLoading(false);
         }
@@ -88,7 +117,7 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                             <h3 className="font-bold text-lg">Tell the provider about yourself</h3>
 
                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name <span className="text-red-500">*</span></label>
                                 <input
                                     type="text"
                                     className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
@@ -97,6 +126,111 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                                     placeholder="Enter your full name"
                                 />
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1">Gender <span className="text-red-500">*</span></label>
+                                <select
+                                    className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] focus:border-transparent outline-none"
+                                    value={formData.gender}
+                                    onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                                >
+                                    <option value="">Select Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone Number <span className="text-red-500">*</span></label>
+                                <input
+                                    type="tel"
+                                    className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
+                                    value={formData.phone}
+                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                    placeholder="+94 7X XXX XXXX"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1">Address <span className="text-red-500">*</span></label>
+                                <input
+                                    type="text"
+                                    className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                    placeholder="Your permanent address"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-1">Occupation <span className="text-red-500">*</span></label>
+                                <select
+                                    className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] focus:border-transparent outline-none"
+                                    value={formData.occupation}
+                                    onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
+                                >
+                                    <option value="Student">Student</option>
+                                    <option value="Working Professional">Working Professional</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+
+                            {/* Conditional Fields */}
+                            {formData.occupation === 'Student' && (
+                                <div className="pl-4 border-l-2 border-[#E51D54] space-y-4 animate-in fade-in slide-in-from-top-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">University / Institute <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
+                                            value={formData.organization}
+                                            onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                                            placeholder="e.g. SLIIT, NSBM, UOM"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">Faculty / Course <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
+                                            value={formData.faculty}
+                                            onChange={(e) => setFormData({ ...formData, faculty: e.target.value })}
+                                            placeholder="e.g. IT Faculty, Engineering"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.occupation === 'Working Professional' && (
+                                <div className="pl-4 border-l-2 border-[#E51D54] animate-in fade-in slide-in-from-top-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">Workplace / Company <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
+                                            value={formData.workplace}
+                                            onChange={(e) => setFormData({ ...formData, workplace: e.target.value })}
+                                            placeholder="e.g. Virtusa, IFS"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {formData.occupation === 'Other' && (
+                                <div className="pl-4 border-l-2 border-[#E51D54] animate-in fade-in slide-in-from-top-2">
+                                    <div>
+                                        <label className="block text-sm font-medium text-neutral-700 mb-1">Please Describe <span className="text-red-500">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
+                                            value={formData.otherDescription}
+                                            onChange={(e) => setFormData({ ...formData, otherDescription: e.target.value })}
+                                            placeholder="Describe your occupation or reason for stay"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
 
                             <div>
                                 <label className="block text-sm font-medium text-neutral-700 mb-1">National ID (NIC)</label>
@@ -110,48 +244,13 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-1">Occupation</label>
-                                <select
-                                    className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] focus:border-transparent outline-none"
-                                    value={formData.occupation}
-                                    onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-                                >
-                                    <option value="Student">Student</option>
-                                    <option value="Working Professional">Working Professional</option>
-                                    <option value="Other">Other</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone Number</label>
-                                <input
-                                    type="tel"
-                                    className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    placeholder="+94 7X XXX XXXX"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-1">Address</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
-                                    value={formData.address}
-                                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                    placeholder="Your permanent address"
-                                />
-                            </div>
-
-                            <div>
                                 <label className="block text-sm font-medium text-neutral-700 mb-1">Message to Provider</label>
                                 <textarea
                                     rows={4}
                                     className="w-full p-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-[#E51D54] outline-none"
                                     value={formData.note}
                                     onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                                    placeholder="Introduce yourself, mention request for study environment, etc..."
+                                    placeholder="Introduce yourself..."
                                 />
                             </div>
                         </div>

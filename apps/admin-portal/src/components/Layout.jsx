@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Users, ShieldAlert, LogOut, Bell, X } from "lucide-react";
+import { LayoutDashboard, Users, ShieldAlert, LogOut, Bell, X, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import clsx from "clsx";
 import api from "../services/api";
@@ -33,12 +33,17 @@ const Layout = () => {
       await api.put(`/notifications/${id}/read`);
       fetchNotifications();
       // Admin might just view the list, or we could link to reports if implemented
-      // e.g., if (link) navigate(link);
+
     } catch (err) { }
   };
 
   const handleLogout = async () => {
-    await api.post("/auth/logout");
+    try {
+      await api.post("/auth/logout");
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+    localStorage.removeItem("token");
     navigate("/login");
   };
 
@@ -46,6 +51,7 @@ const Layout = () => {
     { name: "Dashboard", path: "/", icon: LayoutDashboard },
     { name: "User Management", path: "/users", icon: Users },
     { name: "Moderation Queue", path: "/listings", icon: ShieldAlert },
+    { name: "Messages", path: "/messages", icon: MessageSquare },
   ];
 
   return (

@@ -14,7 +14,7 @@ const agents = {
 
 export const runAgent = async (agentName, input, entityContext) => {
   const agent = agents[agentName];
-  
+
   if (!agent) {
     throw new Error(`Agent ${agentName} not found`);
   }
@@ -29,7 +29,7 @@ export const runAgent = async (agentName, input, entityContext) => {
       actionType: 'moderation',
       entityType: entityContext.type,
       entityId: entityContext.id,
-      inputHash: JSON.stringify(input), // In real prod, hash this
+      inputHash: JSON.stringify(input),
       outputResult: result,
       riskScore: result.severity === 'high' ? 100 : result.severity === 'medium' ? 50 : 0,
       decision: result.action

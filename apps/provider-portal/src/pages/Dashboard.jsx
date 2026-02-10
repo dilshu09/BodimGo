@@ -1,12 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, UserPlus, FileText, ChevronDown } from 'lucide-react';
 import SummaryCards from '../components/dashboard/SummaryCards';
 import TaskCenter from '../components/dashboard/TaskCenter';
 
 const Dashboard = () => {
-    // Property Switcher State (Mock)
+    // Property Switcher State
     const [selectedProperty, setSelectedProperty] = useState("All Properties");
+    const [stats, setStats] = useState(null);
+    const [pendingApprovals, setPendingApprovals] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    const API_URL = "http://localhost:5000/api";
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_URL}/listings/dashboard/stats`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    setStats(data.stats);
+                    setPendingApprovals(data.pendingApprovals);
+                }
+            } catch (error) {
+                console.error("Error fetching dashboard stats:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
+
+    if (loading) {
+        return <div className="p-8 max-w-7xl mx-auto">Loading dashboard...</div>;
+    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
@@ -57,10 +89,10 @@ const Dashboard = () => {
             </div>
 
             {/* Metrics */}
-            <SummaryCards />
+            <SummaryCards stats={stats} />
 
             {/* Task Center */}
-            <TaskCenter />
+            <TaskCenter pendingApprovals={pendingApprovals} />
 
             {/* Recent Activity / Graph (Placeholder for Phase 2) */}
             <div className="mt-8 bg-white rounded-2xl border border-neutral-100 p-8 text-center">

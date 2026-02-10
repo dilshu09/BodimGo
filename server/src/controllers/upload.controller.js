@@ -4,13 +4,13 @@ import fs from 'fs';
 
 // Ensure uploads directory exists
 const uploadDir = 'uploads/';
-if (!fs.existsSync(uploadDir)){
+if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 
 const storage = multer.diskStorage({
     destination(req, file, cb) {
-        cb(null, uploadDir); 
+        cb(null, uploadDir);
     },
     filename(req, file, cb) {
         // Sanitize filename to avoid issues
@@ -34,20 +34,33 @@ function checkFileType(file, cb) {
 export const upload = multer({
     storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB Limit
-    fileFilter: function(req, file, cb) {
+    fileFilter: function (req, file, cb) {
         checkFileType(file, cb);
     }
 });
 
-export const uploadFile = (req, res) => {
+import { uploadToCloudinary } from '../utils/cloudinary.js';
+
+export const uploadFile = async (req, res) => {
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
-    
-    // Construct dynamic URL based on server request
-    // This handles port changes and remote access automatically
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const url = `${baseUrl}/uploads/${req.file.filename}`;
-    
-    res.json({ url });
+
+    try {
+        // Construct dynamic URL based on server request for local reference
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const localUrl = `${baseUrl}/uploads/${req.file.filename}`;
+
+        // Upload to Cloudinary
+        // The utility expects a full URL or path, but let's check what it expects.
+        // Reading cloudinary.js: "Uploads a local file ... takes localUrl"
+        // It slices the filename from localUrl and finds it in uploads folder.
+
+        const cloudinaryUrl = await uploadToCloudinary(localUrl);
+
+        res.json({ url: cloudinaryUrl });
+    } catch (error) {
+        console.error("Upload Error:", error);
+        res.status(500).send("Failed to upload image");
+    }
 };

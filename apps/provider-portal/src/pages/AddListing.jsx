@@ -61,7 +61,7 @@ const INITIAL_DATA = {
     agreementTemplate: null
 };
 
-const SuccessModal = ({ isOpen, onClose, onView }) => {
+const SuccessModal = ({ isOpen, onClose, onView, isFlagged }) => {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -70,12 +70,17 @@ const SuccessModal = ({ isOpen, onClose, onView }) => {
                 animate={{ scale: 1, opacity: 1 }}
                 className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl"
             >
-                <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle size={40} strokeWidth={3} />
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isFlagged ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                    {isFlagged ? <CheckCircle size={40} strokeWidth={3} /> : <CheckCircle size={40} strokeWidth={3} />}
                 </div>
-                <h2 className="text-2xl font-bold text-neutral-800 mb-2">Listing Published!</h2>
+                <h2 className="text-2xl font-bold text-neutral-800 mb-2">
+                    {isFlagged ? 'Submitted for Review' : 'Listing Published!'}
+                </h2>
                 <p className="text-neutral-500 mb-8">
-                    Your property is now live and visible to seekers. You can manage it from your dashboard.
+                    {isFlagged
+                        ? "Your listing contains content flagged by our safety system. It will be reviewed by an admin shortly."
+                        : "Your property is now live and visible to seekers. You can manage it from your dashboard."
+                    }
                 </p>
                 <div className="flex flex-col gap-3">
                     <button
@@ -113,6 +118,10 @@ const AddListing = () => {
     const [formData, setFormData] = useState(INITIAL_DATA);
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+
+    // Track if listing is flagged by AI
+    const [isFlagged, setIsFlagged] = useState(false);
+    const [flagDetails, setFlagDetails] = useState([]); // Store specific reasons for Admin
 
     // --- Edit Mode Logic ---
     useEffect(() => {
@@ -185,14 +194,72 @@ const AddListing = () => {
         if (currentStep === 6 && newData.images) setStep6Verified(false);
     };
 
-    // --- Verification Functions (Simplified for Fix) ---
-    // (You can copy full verification logic if needed, but for brevity/safety in overwrite I will keep it clean)
-    // Actually, verification logic is critical. I should include it.
+    // --- Verification Functions  ---
+
 
     const verifyStep1 = async () => {
         if (!formData.title || !formData.description) { toast.error("Please fill title/desc"); return; }
-        setStep1Verified(true);
-        setCurrentStep(2);
+
+        try {
+            setVerifying(true);
+            const t = toast.loading("AI Agent verifying content...");
+
+            // Call Backend AI Agent
+            const res = await api.post('/ai/validate-text', {
+                text: formData.description,
+                field: 'description' // Context for AI
+            });
+
+            toast.dismiss(t);
+
+            if (!res.data.isValid) {
+                // Handle AI Rejection - NON-BLOCKING FLOW
+                const errorMsg = res.data.errors?.[0] || "Content flagged by AI safety guidelines.";
+
+                // Mark as flagged but allow proceeding
+                setIsFlagged(true);
+                setFlagDetails(prev => [...prev, {
+                    action: 'flagged',
+                    reason: `Description: ${errorMsg}`,
+                    aiFlag: true,
+                    timestamp: new Date()
+                }]);
+
+                setStep1Errors({
+                    ...step1Errors,
+                    description: `⚠️ Note: ${errorMsg}`
+                });
+
+                toast((t) => (
+                    <span>
+                        <b>AI Notice:</b> {errorMsg}
+                        <br />
+                        <span className="text-xs">Listing will require manual review.</span>
+                    </span>
+                ), { icon: '⚠️', duration: 5000 });
+
+                // Proceed anyway
+                setStep1Verified(true);
+                setVerifying(false);
+                setTimeout(() => setCurrentStep(2), 2000); // Give time to read
+                return;
+            }
+
+            // Success (Clean)
+            setStep1Errors({ title: '', description: '' });
+            setStep1Verified(true);
+            setVerifying(false);
+            toast.success("AI Verification Passed!");
+            setTimeout(() => setCurrentStep(2), 500);
+
+        } catch (err) {
+            console.error("AI Validation Failed:", err);
+            toast.dismiss();
+            toast.error("AI Service Unavailable. Proceeding...");
+            setStep1Verified(true); // Allow proceed on error
+            setVerifying(false);
+            setTimeout(() => setCurrentStep(2), 1000);
+        }
     };
     const verifyStep2 = async () => {
         if (!formData.location.city) { toast.error("Please fill location"); return; }
@@ -201,7 +268,63 @@ const AddListing = () => {
     };
     const verifyStep6 = async () => {
         if (!formData.images.length) { toast.error("Please upload photos"); return; }
-        setStep6Verified(true);
+
+        try {
+            setVerifying(true);
+            const t = toast.loading("AI Agent analyzing photos...");
+
+            const res = await api.post('/ai/validate-images', {
+                images: formData.images
+            });
+
+            toast.dismiss(t);
+
+            if (!res.data.isValid) {
+                // Handle AI Rejection - NON-BLOCKING FLOW
+                const flagged = res.data.flaggedImages;
+
+                setIsFlagged(true);
+
+                // Add specific reasons
+                const newFlags = flagged.map(f => ({
+                    action: 'flagged',
+                    reason: `Image: ${f.reason || 'Content Violation'} (${f.category})`,
+                    aiFlag: true,
+                    timestamp: new Date()
+                }));
+                setFlagDetails(prev => [...prev, ...newFlags]);
+
+                setStep6Errors({ flaggedImages: flagged });
+
+                toast((t) => (
+                    <span>
+                        <b>AI Notice:</b> {flagged.length} photo(s) flagged.
+                        <br />
+                        <span className="text-xs">Listing will require manual review.</span>
+                    </span>
+                ), { icon: '⚠️', duration: 5000 });
+
+                setStep6Verified(true); // Allow proceed
+                setVerifying(false);
+                setTimeout(() => setCurrentStep(7), 2000);
+                return;
+            }
+
+            // Success
+            setStep6Errors({});
+            setStep6Verified(true);
+            setVerifying(false);
+            toast.success("AI Photo Verification Passed!");
+            setTimeout(() => setCurrentStep(7), 500);
+
+        } catch (err) {
+            console.error("AI Image Check Failed:", err);
+            toast.dismiss();
+            toast.error("AI Service Unavailable. Processing...");
+            setStep6Verified(true);
+            setVerifying(false);
+            setTimeout(() => setCurrentStep(7), 1000);
+        }
     };
     const verifyStep7 = async () => {
         if (!formData.rooms.length) { toast.error("Add a room"); return; }
@@ -211,16 +334,24 @@ const AddListing = () => {
 
     const handlePublish = async () => {
         setLoading(true);
-        const tId = toast.loading(editId ? 'Updating listing...' : 'Publishing listing...');
+        const tId = toast.loading(editId ? 'Updating listing...' : 'Submitting...');
         const payload = sanitizeDataBeforeSubmit();
+
+        // Determine Final Status
+        const finalStatus = isFlagged ? 'hidden_by_audit' : 'active';
+
+        // Attach Audit Log if flagged
+        if (isFlagged) {
+            payload.auditLog = flagDetails;
+        }
 
         try {
             if (editId) {
-                await api.put(`/listings/${editId}`, { ...payload, status: 'Published' });
+                await api.put(`/listings/${editId}`, { ...payload, status: finalStatus });
                 toast.success("Listing Updated!");
             } else {
-                await api.post('/listings', { ...payload, status: 'Published' });
-                toast.success("Listing Published!");
+                await api.post('/listings', { ...payload, status: finalStatus });
+                toast.success("Listing Submitted!");
             }
             toast.dismiss(tId);
             setShowSuccess(true);
@@ -264,9 +395,12 @@ const AddListing = () => {
                         isOpen={showSuccess}
                         onClose={() => navigate('/dashboard')}
                         onView={() => navigate('/dashboard')}
+                        isFlagged={isFlagged}
                     />
                 )}
             </AnimatePresence>
+
+
 
             <div className="max-w-5xl mx-auto px-4 py-8">
                 {/* Progress Bar */}

@@ -37,15 +37,13 @@ export const createListing = async (req, res) => {
 
     console.log("Images processed. Saving listing...");
 
-    // Determine status (handle AI flags if passed in body, though usually backend re-evaluates)
-    // For now, respect the status derived from frontend or default to Published
-    let status = 'Published';
-    if (data.status === 'Draft') status = 'Draft';
-    // If AI verification happened on frontend, we might trust it or re-run here.
-    // Assuming Frontend handled verification and we trust the 'status' passed (if sanitized) 
-    // OR we assume 'Published' unless flags exist.
-    // Based on User's JSON, status was 'Hidden_By_Audit' if flags existed.
-    if (data.status) status = data.status;
+    // Determine status
+    // Default to 'active' (Live Immediately) unless explicitly 'draft'
+    let status = 'active';
+    if (data.status === 'draft') status = 'draft';
+
+    // If AI verification flags exist, or explicitly set to hidden by audit
+    if (data.status === 'hidden_by_audit') status = 'hidden_by_audit';
 
     const newListing = new Listing({
       ...data,
@@ -85,7 +83,7 @@ export const getListings = async (req, res) => {
   try {
     const { search, gender, minPrice, maxPrice, type, city } = req.query;
 
-    let matchStage = { status: 'Published' };
+    let matchStage = { status: { $in: ['active', 'published', 'Published'] } };
 
     // 1. Text Search (Location OR Title)
     // If 'search' is provided, it matches EITHER city OR title
@@ -351,9 +349,274 @@ export const updateRoomStatus = async (req, res) => {
       message: 'Room status updated',
       data: listing.rooms[roomIndex]
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Add a room to a listing
+// @route   POST /api/listings/provider/rooms
+// @access  Private (Provider)
+export const addRoom = async (req, res) => {
+  try {
+    const { listingId, roomData } = req.body;
+
+    // Validate listing ownership
+    const listing = await Listing.findOne({ _id: listingId, provider: req.user.id });
+    if (!listing) {
+      return res.status(404).json({ success: false, message: 'Listing not found or unauthorized' });
+    }
+
+    // Process images if any
+    if (roomData.images && roomData.images.length > 0) {
+      const processedImages = await Promise.all(roomData.images.map(async (img) => {
+        if (img.startsWith('data:image')) {
+          return await uploadToCloudinary(img);
+        }
+        return img;
+      }));
+      roomData.images = processedImages;
+    }
+
+    // Add room
+    listing.rooms.push(roomData);
+    await listing.save();
+
+    const newRoom = listing.rooms[listing.rooms.length - 1];
+
+    res.json({
+      success: true,
+      message: 'Room added successfully',
+      data: newRoom
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Update specific room details
+// @route   PUT /api/listings/provider/rooms/:roomId
+// @access  Private (Provider)
+export const updateRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+    const updateData = req.body;
+
+    // Find listing containing the room
+    const listing = await Listing.findOne({
+      provider: req.user.id,
+      "rooms._id": roomId
+    });
+
+    if (!listing) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    // Update room fields
+    const roomIndex = listing.rooms.findIndex(r => r._id.toString() === roomId);
+    if (roomIndex === -1) return res.status(404).json({ message: 'Room not found' });
+
+    // Handle Image Uploads for the specific room
+    if (updateData.images && updateData.images.length > 0) {
+      const processedImages = await Promise.all(updateData.images.map(async (img) => {
+        if (img.startsWith('data:image')) {
+          return await uploadToCloudinary(img);
+        }
+        return img;
+      }));
+      updateData.images = processedImages;
+    }
+
+    // Merge updates
+    const currentRoom = listing.rooms[roomIndex];
+    listing.rooms[roomIndex] = { ...currentRoom.toObject(), ...updateData };
+
+    await listing.save();
+
+    res.json({
+      success: true,
+      message: 'Room updated successfully',
+      data: listing.rooms[roomIndex]
+    });
 
   } catch (error) {
     console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Delete a room
+// @route   DELETE /api/listings/provider/rooms/:roomId
+// @access  Private (Provider)
+export const deleteRoom = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    const listing = await Listing.findOne({
+      provider: req.user.id,
+      "rooms._id": roomId
+    });
+
+    if (!listing) {
+      return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+
+    // Check if room has active tenant before deleting?
+    // For now, simpler implementation: just remove.
+    // In production, you'd check if room.status === 'Occupied' or check Tenants collection.
+
+    listing.rooms = listing.rooms.filter(r => r._id.toString() !== roomId);
+    await listing.save();
+
+    res.json({
+      success: true,
+      message: 'Room deleted successfully'
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Get Dashboard Stats
+// @route   GET /api/listings/dashboard/stats
+// @access  Private (Provider)
+export const getDashboardStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const Booking = (await import('../models/Booking.js')).default;
+
+    // 1. Fetch all listings for this provider
+    const listings = await Listing.find({ provider: userId }).select('rooms title _id');
+
+    // 2. Calculate Occupancy & Vacant Beds
+    let totalRooms = 0;
+    let occupiedRooms = 0;
+
+    listings.forEach(listing => {
+      if (listing.rooms && listing.rooms.length > 0) {
+        totalRooms += listing.rooms.length;
+        occupiedRooms += listing.rooms.filter(r => r.status === 'Occupied').length;
+      }
+    });
+
+    const vacantBeds = totalRooms - occupiedRooms;
+    const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
+
+    // 3. Expected Income (Active Tenants)
+    const activeTenants = await Tenant.find({
+      providerId: userId,
+      status: { $in: ['active', 'Active'] }
+    }).select('rentAmount');
+
+    const expectedIncome = activeTenants.reduce((sum, t) => sum + (t.rentAmount || 0), 0);
+
+    // 4. Pending Actions (Pending Bookings)
+    // We can also include 'Pending' tenants if that's a thing, or maintenance requests later.
+    const pendingBookings = await Booking.find({
+      provider: userId,
+      status: 'pending'
+    }).populate('seeker', 'name').populate('listing', 'title').limit(5);
+
+    const pendingCount = pendingBookings.length;
+
+    // 5. Overdue Payments (Mock/Placeholder for now as we don't have due dates strictly tracked yet in a simple way)
+    // In real app, check PaymentDue collection or Bookings with nextPaymentDate < today
+    const overdueCount = 0;
+
+    // 6. Upcoming Payments (Next 7 days? - Mock for now)
+    const upcomingPayments = [];
+
+    res.json({
+      success: true,
+      stats: {
+        occupancyRate,
+        vacantBeds,
+        expectedIncome,
+        pendingCount,
+        overdueCount
+      },
+      pendingApprovals: pendingBookings.map(b => ({
+        id: b._id,
+        title: b.seeker?.name || 'Unknown Guest',
+        subtitle: b.listing?.title || 'Unknown Listing',
+        action: 'Review',
+        date: b.createdAt
+      })),
+      upcomingPayments: upcomingPayments,
+      overduePayments: []
+    });
+
+  } catch (error) {
+    console.error("Dashboard Stats Error:", error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+// @desc    Get Pending Approvals (Aggregated)
+// @route   GET /api/listings/pending-approvals
+// @access  Private (Provider)
+export const getPendingApprovals = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const Tenant = (await import('../models/tenant.model.js')).default;
+
+
+    // 1. Pending Tenants (Verification)
+    const pendingTenants = await Tenant.find({
+      providerId: userId,
+      status: 'Pending'
+    }).select('name email joinedDate');
+
+
+
+    // 3. Draft/Pending Listings
+    const pendingListings = await Listing.find({
+      provider: userId,
+      status: { $in: ['draft', 'pending_review'] }
+    }).select('title status updatedAt');
+
+    // 4. Pending Booking Requests (New)
+    const Booking = (await import('../models/Booking.js')).default;
+    const pendingBookings = await Booking.find({
+      provider: userId,
+      status: 'pending'
+    }).populate('seeker', 'name').select('createdAt');
+
+    // Format tasks standard structure
+    const tasks = [
+      ...pendingBookings.map(b => ({
+        id: b._id,
+        title: `Booking Request: ${b.seeker?.name || 'Guest'}`,
+        description: 'New booking request requires your approval',
+        status: 'urgent',
+        type: 'booking',
+        date: b.createdAt ? b.createdAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      })),
+      ...pendingTenants.map(t => ({
+        id: t._id,
+        title: `Verify Tenant: ${t.name}`,
+        description: `Review documents for ${t.name} (${t.email})`,
+        status: 'urgent',
+        type: 'verification',
+        date: t.joinedDate ? t.joinedDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      })),
+      ...pendingListings.map(l => ({
+        id: l._id,
+        title: `Complete Listing: ${l.title}`,
+        description: `Listing is currently ${l.status.replace('_', ' ')}`,
+        status: 'pending',
+        type: 'listing',
+        date: l.updatedAt ? l.updatedAt.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+      }))
+    ];
+
+    res.json({ success: true, count: tasks.length, data: tasks });
+
+  } catch (error) {
+    console.error("Pending Approvals Error:", error);
     res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };

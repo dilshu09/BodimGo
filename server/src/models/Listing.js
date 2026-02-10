@@ -182,6 +182,15 @@ const ListingSchema = new mongoose.Schema({
     }]
   },
 
+  // Audit Log for Admin Review
+  auditLog: [{
+    action: { type: String, enum: ['flagged', 'approved', 'rejected', 'changes_requested'] },
+    reason: String,
+    adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // If manual
+    aiFlag: Boolean, // If auto-flagged
+    timestamp: { type: Date, default: Date.now }
+  }],
+
   // --- 7. Verification & Agreements ---
   agreementTemplate: { type: mongoose.Schema.Types.ObjectId, ref: 'AgreementTemplate' },
   verificationStatus: { type: String, enum: ['Pending', 'Verified', 'Rejected'], default: 'Pending' },
@@ -189,8 +198,8 @@ const ListingSchema = new mongoose.Schema({
 
   status: {
     type: String,
-    enum: ['Draft', 'Pending Review', 'Published', 'Changes Requested', 'Archived', 'Hidden_By_Audit', 'Flagged'],
-    default: 'Draft',
+    enum: ['draft', 'pending_review', 'published', 'changes_requested', 'archived', 'hidden_by_audit', 'flagged', 'rejected', 'active'],
+    default: 'draft',
     index: true
   },
 

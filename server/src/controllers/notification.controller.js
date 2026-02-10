@@ -5,6 +5,7 @@ import Notification from '../models/Notification.js';
 // @access  Private
 export const getNotifications = async (req, res) => {
     try {
+        console.log(`[DEBUG] Fetching notifications for User ID: ${req.user.id}`);
         const notifications = await Notification.find({ recipient: req.user.id })
             .sort({ createdAt: -1 })
             .limit(50); // Limit to last 50

@@ -26,6 +26,12 @@ import RoomAvailability from "./pages/rooms/RoomAvailability";
 import Maintenance from "./pages/rooms/Maintenance";
 import BookingAction from "./pages/BookingAction";
 import BookingDetails from "./pages/BookingDetails";
+import Inbox from "./pages/inquiries/Inbox";
+import Viewings from "./pages/inquiries/Viewings";
+import PendingApprovals from "./pages/onboarding/PendingApprovals";
+import PaymentHistory from "./pages/finance/PaymentHistory";
+import Support from "./pages/Support";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -39,67 +45,67 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Provider Portal (With Sidebar) */}
-        <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/add-listing" element={<AddListing />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/add-listing" element={<AddListing />} />
 
-          {/* Phase 1: Listings */}
-          <Route path="/listings" element={<MyListings />} />
-          <Route path="/listings/:id" element={<ListingManagement />} />
-          <Route
-            path="/listings/media"
-            element={<Placeholder title="Media Manager" />}
-          />
+            {/* Phase 1: Listings */}
+            <Route path="/listings" element={<MyListings />} />
+            <Route path="/listings/:id" element={<ListingManagement />} />
 
-          {/* Phase 1: Rooms */}
-          <Route path="/rooms" element={<AllRoom />} />
-          <Route
-            path="/rooms/availability"
-            element={<RoomAvailability />}
-          />
 
-          {/* Phase 1: Inquiries */}
-          <Route path="/messages" element={<Placeholder title="Inbox" />} />
-          <Route path="/bookings" element={<Bookings />} />
-          <Route path="/bookings/:id" element={<BookingDetails />} />
-          <Route path="/booking-action/:id" element={<BookingAction />} />
-          <Route
-            path="/viewings"
-            element={<Placeholder title="Viewing Schedule" />}
-          />
+            {/* Phase 1: Rooms */}
+            <Route path="/rooms" element={<AllRoom />} />
+            <Route
+              path="/rooms/availability"
+              element={<RoomAvailability />}
+            />
 
-          {/* Phase 2: Onboarding */}
-          <Route
-            path="/approvals"
-            element={<Placeholder title="Pending Approvals" />}
-          />
-          <Route path="/agreements" element={<AgreementTemplates />} />
-          <Route path="/agreements" element={<AgreementTemplates />} />
-          <Route path="/agreements/new" element={<AgreementBuilder />} />
-          <Route path="/agreements/edit/:id" element={<AgreementBuilder />} />
-          <Route path="/tenants/add" element={<ManualAddTenant />} />
+            {/* Phase 1: Inquiries */}
+            <Route path="/messages" element={<Inbox />} />
+            <Route path="/bookings" element={<Bookings />} />
+            <Route path="/bookings/:id" element={<BookingDetails />} />
+            <Route path="/booking-action/:id" element={<BookingAction />} />
+            <Route
+              path="/viewings"
+              element={<Viewings />}
+            />
 
-          {/* Phase 3: Tenants & Finance */}
-          <Route path="/tenants" element={<ActiveTenants />} />
-          <Route path="/tenants/history" element={<TenantHistory />} />
-          <Route path="/finance" element={<FinanceDashboard />} />
-          <Route path="/finance/invoices" element={<Invoices />} />
-          <Route
-            path="/finance/payments"
-            element={<Placeholder title="Payment History" />}
-          />
-          <Route path="/finance/reports" element={<Reports />} />
+            {/* Phase 2: Onboarding */}
+            <Route
+              path="/approvals"
+              element={<PendingApprovals />}
+            />
+            <Route path="/agreements" element={<AgreementTemplates />} />
+            <Route path="/agreements" element={<AgreementTemplates />} />
+            <Route path="/agreements/new" element={<AgreementBuilder />} />
+            <Route path="/agreements/edit/:id" element={<AgreementBuilder />} />
+            <Route path="/tenants/add" element={<ManualAddTenant />} />
 
-          <Route
-            path="/maintenance"
-            element={<Placeholder title="Maintenance Tickets" />}
-          />
-          <Route path="/rooms/maintenance" element={<Maintenance />} />
-          <Route path="/reviews" element={<Reviews />} />
-          <Route path="/settings" element={<Setting />} />
+            {/* Phase 3: Tenants & Finance */}
+            <Route path="/tenants" element={<ActiveTenants />} />
+            <Route path="/tenants/history" element={<TenantHistory />} />
+            <Route path="/finance" element={<FinanceDashboard />} />
+            <Route path="/finance/invoices" element={<Invoices />} />
+            <Route
+              path="/finance/payments"
+              element={<PaymentHistory />}
+            />
+            <Route path="/finance/reports" element={<Reports />} />
 
-          {/* Default Redirect */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route
+              path="/rooms/maintenance"
+              element={<Maintenance />}
+            />
+            <Route path="/room-management" element={<AllRoom />} />
+            <Route path="/reviews" element={<Reviews />} />
+            <Route path="/support" element={<Support />} />
+            <Route path="/settings" element={<Setting />} />
+
+            {/* Default Redirect */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

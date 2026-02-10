@@ -149,7 +149,9 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                             type="text"
                             value={citySearch}
                             onChange={(e) => {
-                                setCitySearch(e.target.value);
+                                const val = e.target.value;
+                                setCitySearch(val);
+                                update({ location: { ...data.location, city: val } }); // Fix: Sync to parent
                                 setIsDropdownOpen(true);
                             }}
                             onFocus={() => setIsDropdownOpen(true)}

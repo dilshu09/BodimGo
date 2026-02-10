@@ -1,6 +1,6 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, UserCircle } from 'lucide-react';
 import api from '../services/api';
 
 const Header = () => {
@@ -9,6 +9,25 @@ const Header = () => {
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [showNotifications, setShowNotifications] = useState(false);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        const loadUser = () => {
+            const storedUser = localStorage.getItem('user');
+            if (storedUser && storedUser !== 'undefined') {
+                try {
+                    setUser(JSON.parse(storedUser));
+                } catch (error) {
+                    console.error('Failed to parse user data:', error);
+                    localStorage.removeItem('user');
+                }
+            }
+        };
+
+        loadUser();
+        window.addEventListener('user-updated', loadUser);
+        return () => window.removeEventListener('user-updated', loadUser);
+    }, []);
 
     useEffect(() => {
         fetchNotifications();
@@ -72,7 +91,7 @@ const Header = () => {
                                         <div
                                             key={notif._id}
                                             className={`p-4 border-b border-neutral-50 hover:bg-neutral-50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/30' : ''}`}
-                                            onClick={() => markAsRead(notif._id, notif.data?.bookingId ? `/bookings/${notif.data.bookingId}` : null)}
+                                            onClick={() => markAsRead(notif._id, notif.data?.bookingId ? `/bookings/${notif.data.bookingId}` : notif.data?.viewingRequestId ? '/viewings' : null)}
                                         >
                                             <div className="flex gap-3">
                                                 <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-blue-500' : 'bg-transparent'}`} />
@@ -98,13 +117,22 @@ const Header = () => {
                     )}
                 </div>
 
-                {/* User Profile Indicator (Visual Anchor) */}
+                {/* User Profile Indicator */}
                 <div className="flex items-center gap-3 pl-6 border-l border-neutral-200">
                     <div className="text-right hidden md:block">
-                        <p className="text-sm font-bold text-neutral-900">Provider</p>
+                        <p className="text-sm font-bold text-neutral-900 leading-none">
+                            {user?.name || 'Provider'}
+                        </p>
+                        <p className="text-xs text-neutral-500 mt-1">
+                            {user?.email || ''}
+                        </p>
                     </div>
-                    <div className="h-9 w-9 bg-primary/10 text-primary rounded-full flex items-center justify-center font-bold text-sm">
-                        P
+                    <div className="h-10 w-10 bg-neutral-100 rounded-full flex items-center justify-center overflow-hidden border border-neutral-200">
+                        {user?.profileImage ? (
+                            <img src={user.profileImage} alt="Profile" className="h-full w-full object-cover" />
+                        ) : (
+                            <UserCircle size={24} className="text-neutral-400" />
+                        )}
                     </div>
                 </div>
             </div>

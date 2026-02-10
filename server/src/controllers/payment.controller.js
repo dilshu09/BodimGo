@@ -19,10 +19,10 @@ export const createPaymentIntent = async (req, res) => {
     }
 
     // Amount in cents (LKR usually supported, or USD)
-    // Stripe accepts smallest currency unit. For LKR it is cents. 100 LKR = 10000 cents.
-    // Ensure amount is integer.
     const amount = Math.round(booking.totalAmount * 100);
 
+    // Create a NEW PaymentIntent every time for now to avoid "succeeded" state issues on retry
+    // In production, you might want to reuse pending intents.
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
       currency: 'lkr',
@@ -65,16 +65,59 @@ export const confirmPayment = async (req, res) => {
         await booking.save();
 
         // Create Payment Record
-        await Payment.create({
+        const newPayment = await Payment.create({
           payer: req.user._id,
           payee: booking.provider,
-          booking: booking._id,
+          // booking: booking._id, 
           amount: paymentIntent.amount / 100,
-          currency: paymentIntent.currency,
-          method: 'card', // or retrieve from intent
+          method: 'stripe',
           status: 'completed',
-          transactionId: paymentIntent.id
+          stripePaymentId: paymentIntent.id
         });
+
+        // --- NEW: Auto-Create Tenant ---
+        try {
+          const Tenant = (await import('../models/tenant.model.js')).default;
+          // Check if tenant already exists to avoid duplicates
+          const existingTenant = await Tenant.findOne({ email: req.user.email, listingId: booking.listing });
+
+          if (!existingTenant) {
+            await Tenant.create({
+              listingId: booking.listing,
+              roomId: booking.room ? booking.room.toString() : "Unassigned", // Handle if room is populated or ID
+              providerId: booking.provider,
+              name: req.user.name,
+              nic: "N/A", // Placeholder, seeker profile might not have it yet
+              phone: req.user.phone || "N/A",
+              email: req.user.email,
+              status: 'Active',
+              agreementStatus: 'Not Generated',
+              rentAmount: booking.agreedMonthRent,
+              depositAmount: booking.agreedDeposit,
+              joinedDate: new Date()
+            });
+          }
+        } catch (err) {
+          console.error("Failed to auto-create tenant:", err);
+          // Don't fail the request, just log it
+        }
+
+        // --- NEW: Update Room Availability ---
+        try {
+          if (booking.room) {
+            const Room = (await import('../models/Room.js')).default;
+            const roomDoc = await Room.findById(booking.room);
+            if (roomDoc) {
+              roomDoc.availableBeds = Math.max(0, roomDoc.availableBeds - 1);
+              if (roomDoc.availableBeds === 0) {
+                roomDoc.status = 'full';
+              }
+              await roomDoc.save();
+            }
+          }
+        } catch (err) {
+          console.error("Failed to update room availability:", err);
+        }
 
         res.json({ success: true, message: 'Booking confirmed' });
       } else {
@@ -187,6 +230,77 @@ export const getPaymentStatus = async (req, res) => {
 
   } catch (error) {
     console.error('Stripe Status Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get Payment History for Provider
+// @route   GET /api/payments/history
+// @access  Private (Provider)
+export const getPaymentHistory = async (req, res) => {
+  try {
+    const payments = await Payment.find({ payee: req.user._id })
+      .populate('payer', 'name email')
+      .populate('booking', 'room') // Assuming booking has room info, or populate listing
+      .sort({ createdAt: -1 });
+
+    res.json(payments);
+  } catch (error) {
+    console.error('Get Payment History Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get Finance Stats for Provider
+// @route   GET /api/payments/stats
+// @access  Private (Provider)
+export const getPaymentStats = async (req, res) => {
+  try {
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+    // Total Revenue (All time or current month? Let's do current month for the card)
+    const currentMonthRevenue = await Payment.aggregate([
+      {
+        $match: {
+          payee: req.user._id,
+          status: 'completed',
+          createdAt: { $gte: startOfMonth }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    // Total Revenue All Time
+    const totalRevenue = await Payment.aggregate([
+      {
+        $match: {
+          payee: req.user._id,
+          status: 'completed'
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    res.json({
+      currentMonthRevenue: currentMonthRevenue[0]?.total || 0,
+      totalRevenue: totalRevenue[0]?.total || 0,
+      // Mocking expenses/net profit as we don't track expenses yet
+      totalExpenses: 0,
+      netProfit: totalRevenue[0]?.total || 0
+    });
+
+  } catch (error) {
+    console.error('Get Payment Stats Error:', error);
     res.status(500).json({ message: error.message });
   }
 };

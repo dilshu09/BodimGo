@@ -6,7 +6,8 @@ const NotificationSchema = new mongoose.Schema({
     type: String,
     enum: [
       'booking_request', 'booking_accepted', 'payment_success', 'rent_due', 'new_message',
-      'review_received', 'security_alert', 'system_update', 'report_filed'
+      'review_received', 'security_alert', 'system_update', 'report_filed',
+      'viewing_request', 'viewing_update', 'viewing_reply'
     ],
     required: true
   },

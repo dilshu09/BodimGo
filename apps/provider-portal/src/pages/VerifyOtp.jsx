@@ -25,8 +25,11 @@ const VerifyOtp = () => {
         setError('');
 
         try {
-            await api.post('/auth/verify-otp', { email, otp });
-            // On success, backend sets cookie. We can redirect to dashboard.
+            const res = await api.post('/auth/verify-otp', { email, otp });
+            // Store token and user data
+            localStorage.setItem('token', res.data.token);
+            localStorage.setItem('user', JSON.stringify(res.data));
+
             navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Verification failed');

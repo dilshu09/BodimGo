@@ -33,22 +33,7 @@ const TaskPanel = ({ title, items, icon: Icon, color, link }) => (
     </div>
 );
 
-const TaskCenter = () => {
-    // Dummy Data
-    const pendingApprovals = [
-        { title: "Kasun Perera", subtitle: "Standard Room", action: "Review" },
-        { title: "Amaya Silva", subtitle: "Shared Annex", action: "Review" }
-    ];
-
-    const upcomingPayments = [
-        { title: "Tenant #402", subtitle: "Due in 2 days", action: "LKR 15k" },
-        { title: "Tenant #301", subtitle: "Due in 5 days", action: "LKR 12k" }
-    ];
-
-    const overdue = [
-        { title: "Tenant #105", subtitle: "Overdue 14 days", action: "Alert" }
-    ];
-
+const TaskCenter = ({ pendingApprovals = [], upcomingPayments = [], overdue = [] }) => {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <TaskPanel
@@ -56,7 +41,7 @@ const TaskCenter = () => {
                 items={pendingApprovals}
                 icon={CheckCircle}
                 color="bg-blue-500 text-blue-600"
-                link="/approvals"
+                link="/bookings"
             />
             <TaskPanel
                 title="Payments Due Soon"

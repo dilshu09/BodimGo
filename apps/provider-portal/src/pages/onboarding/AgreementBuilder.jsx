@@ -76,13 +76,29 @@ const AgreementBuilder = () => {
 
         try {
             setLoading(true);
+
+            // Mock AI Validation
+            // Simulating a check where certain keywords trigger rejection
+            const isSafe = !formData.content.toLowerCase().includes("unsafe");
+            const status = isSafe ? "Approved" : "Rejected";
+
+            // Artificial delay for "AI Analysis"
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const payload = { ...formData, status };
+
             if (isEditMode) {
-                await api.put(`/agreements/templates/${id}`, formData);
-                toast.success('Template updated successfully');
+                await api.put(`/agreements/templates/${id}`, payload);
             } else {
-                await api.post('/agreements/templates', formData);
-                toast.success('Template created successfully');
+                await api.post('/agreements/templates', payload);
             }
+
+            if (status === "Approved") {
+                toast.success('Agreement approved by AI system!');
+            } else {
+                toast.error('Agreement rejected: Contains prohibited terms.');
+            }
+
             navigate('/agreements');
         } catch (error) {
             console.error(error);
@@ -225,7 +241,8 @@ const AgreementBuilder = () => {
                             className="flex items-center gap-2 px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save size={20} />
-                            {loading ? 'Saving...' : (isEditMode ? 'Update Template' : 'Save Template')}
+                            <Save size={20} />
+                            {loading ? 'Analyzing...' : (isEditMode ? 'Update & Review' : 'Save & Review')}
                         </button>
                     </div>
                 </div>

@@ -7,7 +7,7 @@ const tenantSchema = new mongoose.Schema({
     required: true
   },
   roomId: {
-    type: String, 
+    type: String,
     required: true
   },
   providerId: {
@@ -29,6 +29,11 @@ const tenantSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
+  },
+  address: {
+    type: String,
+    trim: true,
+    default: '' // Can be manually added or fetched from profile
   },
   email: {
     type: String,

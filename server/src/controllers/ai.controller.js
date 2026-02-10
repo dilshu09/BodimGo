@@ -5,73 +5,73 @@ import path from 'path';
 
 // --- Text Validation Controller ---
 export const validateText = async (req, res) => {
-  try {
-    const { text, field } = req.body; // field: 'title' or 'description'
+    try {
+        const { text, field } = req.body; // field: 'title' or 'description'
 
-    if (!text) return res.json({ isValid: true });
+        if (!text) return res.json({ isValid: true });
 
-    // 1. Run Abusive/PII Check
-    const abusiveCheck = runAgent('AbusiveWordsCheckAgent', {
-      text,
-      context: { userId: req.user?._id || new mongoose.Types.ObjectId() }
-    }, { 
-        type: 'validation', 
-        id: new mongoose.Types.ObjectId() 
-    });
-    
-    // Legacy Regex (Backup)
-    const phoneRegex = /(?:\\+94|0)?7[0-9]{8}/;
-    const nicRegex = /[0-9]{9}[vVxX]|[0-9]{12}/;
-    const regexPII = phoneRegex.test(text) || nicRegex.test(text);
+        // 1. Run Abusive/PII Check
+        const abusiveCheck = runAgent('AbusiveWordsCheckAgent', {
+            text,
+            context: { userId: req.user?._id || new mongoose.Types.ObjectId() }
+        }, {
+            type: 'validation',
+            id: new mongoose.Types.ObjectId()
+        });
 
-    const checkResult = await abusiveCheck;
+        // Legacy Regex (Backup)
+        const phoneRegex = /(?:\\+94|0)?7[0-9]{8}/;
+        const nicRegex = /[0-9]{9}[vVxX]|[0-9]{12}/;
+        const regexPII = phoneRegex.test(text) || nicRegex.test(text);
 
-    const errors = [];
-    
-    // Abusive/Safety content
-    if (checkResult.categories?.includes('abuse') || checkResult.categories?.includes('hate') || checkResult.categories?.includes('sexual')) {
-         errors.push("Contains inappropriate or unsafe language.");
+        const checkResult = await abusiveCheck;
+
+        const errors = [];
+
+        // Abusive/Safety content
+        if (checkResult.categories?.includes('abuse') || checkResult.categories?.includes('hate') || checkResult.categories?.includes('sexual')) {
+            errors.push("Contains inappropriate or unsafe language.");
+        }
+
+        // PII Detection (AI + Regex)
+        if (field === 'description' && (checkResult.pii_detected || checkResult.categories?.includes('pii_leak') || regexPII)) {
+            errors.push("Phone numbers/PII are not allowed in the public description.");
+        }
+
+        // General blocking behavior
+        if (errors.length === 0 && checkResult.action === 'block') {
+            errors.push(checkResult.reason || "Content flagged by safety guidelines.");
+        }
+
+        res.json({
+            isValid: errors.length === 0,
+            errors
+        });
+
+    } catch (error) {
+        console.error("AI Controller Error:", error);
+        res.status(500).json({ message: error.message });
     }
-    
-    // PII Detection (AI + Regex)
-    if (field === 'description' && (checkResult.pii_detected || checkResult.categories?.includes('pii_leak') || regexPII)) {
-         errors.push("Phone numbers/PII are not allowed in the public description.");
-    }
-    
-    // General blocking behavior
-    if (errors.length === 0 && checkResult.action === 'block') {
-         errors.push(checkResult.reason || "Content flagged by safety guidelines.");
-    }
-    
-    res.json({
-      isValid: errors.length === 0,
-      errors
-    });
-
-  } catch (error) {
-    console.error("AI Controller Error:", error);
-    res.status(500).json({ message: error.message });
-  }
 };
 
 // --- Location Verification Controller ---
 export const verifyLocation = async (req, res) => {
     try {
         const { province, district, city, address, coordinates } = req.body;
-        
+
         // Basic Validation
         if (!province || !district || !city || !address) {
-            return res.json({ 
-                isValid: false, 
-                errors: { general: "All location fields are required." } 
+            return res.json({
+                isValid: false,
+                errors: { general: "All location fields are required." }
             });
         }
 
         const agentResult = await runAgent('AddressVerificationAgent', {
             province, district, city, address, coordinates
-        }, { 
-            type: 'validation', 
-            id: new mongoose.Types.ObjectId() 
+        }, {
+            type: 'validation',
+            id: new mongoose.Types.ObjectId()
         });
 
         res.json(agentResult);
@@ -87,9 +87,17 @@ export const verifyLocation = async (req, res) => {
 export const validateImages = async (req, res) => {
     try {
         const { images } = req.body; // Array of image URLs or Base64 strings
-        
+
+        try {
+            const debugMsg = `\n[ENTRY] Validating ${images?.length} images at ${new Date().toISOString()}\n`;
+            fs.appendFileSync(path.join(process.cwd(), 'logs', 'ai_debug.log'), debugMsg);
+        } catch (e) { console.error("Log Error", e); }
+
         if (!images || !Array.isArray(images) || images.length === 0) {
-             return res.json({ isValid: true, flaggedImages: [] });
+            try {
+                fs.appendFileSync(path.join(process.cwd(), 'logs', 'ai_debug.log'), `[EXIT] No images provided. Returning valid.\n`);
+            } catch (e) { }
+            return res.json({ isValid: true, flaggedImages: [] });
         }
 
         const flaggedImages = [];
@@ -98,12 +106,16 @@ export const validateImages = async (req, res) => {
         const checks = images.map(async (img) => {
             try {
                 let base64 = '';
-                
+                const debugImgSnippet = img.substring(0, 100);
+                try {
+                    fs.appendFileSync(path.join(process.cwd(), 'logs', 'ai_debug.log'), `[PROCESS] Processing image: ${debugImgSnippet}...\n`);
+                } catch (e) { }
+
                 // Case A: Base64 String
                 if (img.startsWith('data:image')) {
                     // Remove header (e.g., "data:image/jpeg;base64,")
                     base64 = img.split(',')[1];
-                } 
+                }
                 // Case B: Local File URL (Legacy support for Wizard)
                 else if (img.includes('/uploads/')) {
                     const filename = img.split('/').pop();
@@ -113,9 +125,15 @@ export const validateImages = async (req, res) => {
                         base64 = bitmap.toString('base64');
                     }
                 }
-                // Case C: Cloudinary URL (Already verified or skip)
-                else if (img.includes('cloudinary')) {
-                    return null; // Assume trusted/already checked
+                // Case C: Remote URL (Cloudinary etc) - FETCH IT!
+                else if (img.startsWith('http')) {
+                    try {
+                        const response = await fetch(img);
+                        const arrayBuffer = await response.arrayBuffer();
+                        base64 = Buffer.from(arrayBuffer).toString('base64');
+                    } catch (fetchErr) {
+                        console.error("Failed to fetch remote image:", fetchErr);
+                    }
                 }
 
                 if (base64) {
@@ -137,6 +155,11 @@ export const validateImages = async (req, res) => {
 
         const results = await Promise.all(checks);
         const failures = results.filter(r => r !== null);
+
+        try {
+            const resultMsg = `\n[RESULT] Flagged: ${failures.length}\nFailures: ${JSON.stringify(failures, null, 2)}\nFull Results: ${JSON.stringify(results, null, 2)}\n--------------------------------------------------\n`;
+            fs.appendFileSync(path.join(process.cwd(), 'logs', 'ai_debug.log'), resultMsg);
+        } catch (e) { console.error("Log Error", e); }
 
         res.json({
             isValid: failures.length === 0,

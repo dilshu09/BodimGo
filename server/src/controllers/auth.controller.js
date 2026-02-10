@@ -96,7 +96,7 @@ export const verifyEmail = async (req, res) => {
     res.cookie('jwt', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV !== 'development',
-      sameSite: 'strict',
+      sameSite: 'Lax',
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
@@ -105,6 +105,7 @@ export const verifyEmail = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      profileImage: user.profileImage,
       token
     });
 
@@ -162,7 +163,7 @@ export const login = async (req, res) => {
       res.cookie('jwt', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== 'development',
-        sameSite: 'strict',
+        sameSite: 'Lax',
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
 
@@ -174,6 +175,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        profileImage: user.profileImage,
         token
       });
     } else {
@@ -190,6 +192,8 @@ export const logout = (req, res) => {
   res.cookie('jwt', '', {
     httpOnly: true,
     expires: new Date(0),
+    secure: process.env.NODE_ENV !== 'development',
+    sameSite: 'Lax',
   });
   res.status(200).json({ message: 'Logged out successfully' });
 };
@@ -210,7 +214,9 @@ export const getProfile = async (req, res) => {
       email: user.email,
       phone: user.phone,
       role: user.role,
+      phone: user.phone,
       role: user.role,
+      profileImage: user.profileImage,
       isVerified: user.isVerified,
       twoFactorEnabled: user.twoFactorEnabled || false
     };
@@ -249,6 +255,7 @@ export const updateProfile = async (req, res) => {
     // Update User fields
     user.name = req.body.name || user.name;
     user.phone = req.body.phone || user.phone;
+    if (req.body.profileImage) user.profileImage = req.body.profileImage;
 
     // Check if email is being changed (might require specialized verification logic usually, skipping for now)
     // if (req.body.email && req.body.email !== user.email) user.email = req.body.email; 
@@ -260,7 +267,8 @@ export const updateProfile = async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      role: user.role
+      role: user.role,
+      profileImage: user.profileImage
     };
 
     // Update Provider Profile fields

@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import api from '../services/api';
 import {
     LayoutDashboard,
     FileText,
@@ -13,7 +14,9 @@ import {
     Settings,
     ChevronDown,
     ChevronRight,
-    LogOut
+
+    LogOut,
+    HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo.png';
@@ -77,9 +80,25 @@ const SidebarItem = ({ item, isExpanded, onToggle, isActive }) => {
 
 const Sidebar = () => {
     const location = useLocation();
+    const navigate = useNavigate();
 
     // Config
-    const sections = [
+    const [profile, setProfile] = useState(null);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const res = await api.get('/auth/profile');
+                setProfile(res.data);
+            } catch (error) {
+                console.error("Failed to fetch profile for sidebar customization", error);
+            }
+        };
+        fetchProfile();
+    }, []);
+
+    // Config
+    const baseSections = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
         {
             id: 'listings',
@@ -88,7 +107,7 @@ const Sidebar = () => {
             subItems: [
                 { label: 'My Listings', path: '/listings' },
                 { label: 'Create Listing', path: '/add-listing' },
-                { label: 'Manage Media', path: '/listings/media' },
+
                 { label: 'Agreements', path: '/agreements' }
             ]
         },
@@ -143,8 +162,19 @@ const Sidebar = () => {
             ]
         },
         { id: 'reviews', label: 'Reviews', icon: Star, path: '/reviews' },
+        { id: 'support', label: 'Help & Support', icon: HelpCircle, path: '/support' },
         { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' }
     ];
+
+    const sections = baseSections.map(section => {
+        if (section.id === 'onboarding' && profile?.stripeOnboardingComplete) {
+            return {
+                ...section,
+                subItems: section.subItems.filter(item => item.label !== 'Pending Approvals')
+            };
+        }
+        return section;
+    });
 
     const [expandedSections, setExpandedSections] = useState({
         listings: true, // Default open
@@ -154,6 +184,22 @@ const Sidebar = () => {
 
     const toggleSection = (id) => {
         setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
+    };
+
+    const handleLogout = async () => {
+        try {
+            // Call backend to clear cookie
+            await api.post('/auth/logout');
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            // Clear local storage
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+
+            // Redirect to login
+            navigate('/login');
+        }
     };
 
     return (
@@ -184,7 +230,10 @@ const Sidebar = () => {
 
             {/* User Profile / Logout */}
             <div className="p-4 border-t border-neutral-100">
-                <button className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                >
                     <LogOut size={20} />
                     <span className="text-sm font-medium">Log Out</span>
                 </button>

@@ -4,34 +4,34 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 export const sendEmail = async ({ to, subject, html }) => {
-    try {
-        const mailOptions = {
-            from: process.env.EMAIL_FROM,
-            to,
-            subject,
-            html,
-        };
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to,
+      subject,
+      html,
+    };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent: ' + info.response);
-        return info;
-    } catch (error) {
-        console.error('Error sending email:', error);
-        // Don't throw error to prevent blocking the flow, just log it
-        // In prod, you might want a retry queue
-    }
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent: ' + info.response);
+    return info;
+  } catch (error) {
+    console.error('Error sending email:', error);
+    // Don't throw error to prevent blocking the flow, just log it
+    // In prod, you might want a retry queue
+  }
 };
 
 export const sendBookingRequestEmail = async (providerEmail, providerName, bookingDetails, acceptLink, rejectLink) => {
-    const html = `
+  const html = `
     <div style="font-family: Arial, sans-serif; max-w-600px; margin: 0 auto; color: #333;">
       <h2 style="color: #E51D54;">New Booking Request!</h2>
       <p>Hi ${providerName},</p>
@@ -41,6 +41,10 @@ export const sendBookingRequestEmail = async (providerEmail, providerName, booki
         <h3 style="margin-top: 0;">Seeker Details</h3>
         <p><strong>Name:</strong> ${bookingDetails.seekerName}</p>
         <p><strong>Occupation:</strong> ${bookingDetails.occupation}</p>
+        ${bookingDetails.organization ? `<p><strong>Institute:</strong> ${bookingDetails.organization}</p>` : ''}
+        ${bookingDetails.faculty ? `<p><strong>Faculty/Course:</strong> ${bookingDetails.faculty}</p>` : ''}
+        ${bookingDetails.workplace ? `<p><strong>Workplace:</strong> ${bookingDetails.workplace}</p>` : ''}
+        ${bookingDetails.otherDescription ? `<p><strong>Description:</strong> ${bookingDetails.otherDescription}</p>` : ''}
         <p><strong>Note:</strong> "${bookingDetails.note}"</p>
         <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
         <p><strong>Dates:</strong> ${new Date(bookingDetails.startDate).toLocaleDateString()} - ${new Date(bookingDetails.endDate).toLocaleDateString()}</p>
@@ -55,9 +59,9 @@ export const sendBookingRequestEmail = async (providerEmail, providerName, booki
     </div>
   `;
 
-    await sendEmail({
-        to: providerEmail,
-        subject: `Action Required: New Request for ${bookingDetails.listingTitle}`,
-        html
-    });
+  await sendEmail({
+    to: providerEmail,
+    subject: `Action Required: New Request for ${bookingDetails.listingTitle}`,
+    html
+  });
 };

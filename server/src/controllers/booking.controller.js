@@ -34,6 +34,29 @@ export const createBooking = async (req, res) => {
     const deposit = listing.deposit || 0;
     const totalAmount = (rent * Math.max(1, Math.ceil(months))) + deposit;
 
+    // --- Gender Validation ---
+    const applicantGender = req.body.applicationData?.gender;
+    const genderPolicy = listing.genderPolicy; // 'Girls only', 'Boys only', 'Mixed'
+
+    if (applicantGender) {
+      if (genderPolicy === 'Girls only' && applicantGender === 'Male') {
+        return res.status(400).json({
+          message: 'This boarding is for Girls only. Male applicants are not allowed.'
+        });
+      }
+      if (genderPolicy === 'Boys only' && applicantGender === 'Female') {
+        return res.status(400).json({
+          message: 'This boarding is for Boys only. Female applicants are not allowed.'
+        });
+      }
+    } else {
+      // If gender is missing but policy is strict, we should probably require it.
+      // For now, let's assume it's required by the frontend/schema.
+      if (genderPolicy !== 'Mixed' && !applicantGender) {
+        return res.status(400).json({ message: 'Gender is required for this restricted listing.' });
+      }
+    }
+
     const booking = await Booking.create({
       seeker: req.user._id,
       listing: listingId,
@@ -51,7 +74,12 @@ export const createBooking = async (req, res) => {
         occupation: req.body.applicationData?.occupation,
         note: req.body.applicationData?.note,
         phone: req.body.applicationData?.phone,
-        address: req.body.applicationData?.address
+        address: req.body.applicationData?.address,
+        gender: req.body.applicationData?.gender,
+        organization: req.body.applicationData?.organization,
+        faculty: req.body.applicationData?.faculty,
+        workplace: req.body.applicationData?.workplace,
+        otherDescription: req.body.applicationData?.otherDescription
       },
       agreementAccepted: req.body.agreementAccepted || false
     });
@@ -96,6 +124,10 @@ export const createBooking = async (req, res) => {
           listingTitle: fullBooking.listing.title,
           seekerName: fullBooking.seeker.name,
           occupation: fullBooking.applicationData?.occupation || 'N/A',
+          organization: fullBooking.applicationData?.organization,
+          faculty: fullBooking.applicationData?.faculty,
+          workplace: fullBooking.applicationData?.workplace,
+          otherDescription: fullBooking.applicationData?.otherDescription,
           note: fullBooking.applicationData?.note || 'No note',
           startDate: fullBooking.checkInDate,
           endDate: fullBooking.checkOutDate
@@ -150,7 +182,16 @@ export const getBookingById = async (req, res) => {
     }
 
     // Access control: only seeker or provider involved
-    if (booking.seeker.toString() !== req.user.id && booking.provider.toString() !== req.user.id && req.user.role !== 'admin') {
+    const userId = req.user._id.toString();
+    const seekerId = booking.seeker._id.toString(); // seeker is populated, need _id
+    const providerId = booking.provider.toString(); // provider is NOT populated in this query (based on line 144-146) - wait, let's check population.
+    // Line 146 populates seeker. Line 145 populates listing. Provider is NOT populated, so it is an ID.
+
+    console.log(`[DEBUG] getBookingById Auth Check: UserID=${userId}, Role=${req.user.role}`);
+    console.log(`[DEBUG] Booking Details: SeekerID=${seekerId}, ProviderID=${providerId}`);
+
+    if (seekerId !== userId && providerId !== userId && req.user.role !== 'admin') {
+      console.log('[DEBUG] Authorization Failed');
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -201,9 +242,12 @@ export const updateBookingStatus = async (req, res) => {
       console.log(`Sending Acceptance Email to ${booking.seeker.email}`);
 
       // --- NOTIFICATION TRIGGER (ACCEPTED) ---
+      const recipientId = booking.seeker._id;
+      console.log(`[DEBUG] Booking Accepted. Sending notification to Seeker ID: ${recipientId} (Provider ID was: ${booking.provider})`);
+
       const { createNotification } = await import('./notification.controller.js');
       await createNotification({
-        recipient: booking.seeker._id, // Seeker ID
+        recipient: recipientId, // Seeker ID
         type: 'booking_accepted',
         title: 'Booking Accepted! 🎉',
         message: `Your booking for ${booking.listing.title} has been accepted! Please complete payment.`,
