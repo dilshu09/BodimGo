@@ -9,6 +9,20 @@ export const createTenant = async (req, res, next) => {
     try {
         const { listingId, roomId, name, nic, phone, email, address } = req.body;
 
+        // 0. Check for existing ACTIVE tenant with same NIC under this provider
+        const existingActiveTenant = await Tenant.findOne({
+            providerId: req.user._id,
+            nic,
+            status: 'Active'
+        });
+
+        if (existingActiveTenant) {
+            return res.status(400).json({
+                success: false,
+                message: `Tenant with NIC ${nic} is already active in your property.`
+            });
+        }
+
         // 1. Validate Provider owns the listing
         const listing = await Listing.findById(listingId);
         if (!listing) {
@@ -60,43 +74,70 @@ export const createTenant = async (req, res, next) => {
 export const updateTenantStatus = async (req, res) => {
     try {
         const { status, movedOutDate } = req.body;
+        console.log(`[updateTenantStatus] Updating tenant ${req.params.id} to status ${status}`);
+
         const tenant = await Tenant.findOne({ _id: req.params.id, providerId: req.user._id });
 
         if (!tenant) {
+            console.log(`[updateTenantStatus] Tenant not found`);
             return res.status(404).json({ success: false, message: "Tenant not found" });
         }
 
         tenant.status = status;
-        if (status === 'Moved Out' && movedOutDate) {
-            tenant.movedOutDate = movedOutDate;
+        if (status === 'Moved Out') {
+            tenant.movedOutDate = movedOutDate || new Date();
 
             // Increment room availability if they are moving out
-            // Find room by ID (assuming tenant.roomId stores ID as string or ObjectId)
             if (tenant.roomId && tenant.roomId !== "Unassigned") {
-                const Room = (await import('../models/Room.js')).default;
-                // Try to find room within the listing
-                const listing = await Listing.findById(tenant.listingId);
-                if (listing) {
-                    const room = listing.rooms.find(r => r._id.toString() === tenant.roomId || r.name === tenant.roomId);
-                    if (room) {
-                        room.availableBeds = (room.availableBeds || 0) + 1;
-                        // If it was full, it might not be anymore; simplified logic:
-                        if (room.status === 'full') room.status = 'Available';
-                        await listing.save();
+                console.log(`[updateTenantStatus] checking room ${tenant.roomId} for listing ${tenant.listingId}`);
+
+                if (tenant.listingId) {
+                    const listing = await Listing.findById(tenant.listingId);
+                    if (listing) {
+                        const room = listing.rooms.find(r => r._id.toString() === tenant.roomId || r.name === tenant.roomId);
+                        if (room) {
+                            console.log(`[updateTenantStatus] Marking room ${room.name} as Available`);
+                            room.status = 'Available';
+                            try {
+                                await listing.save();
+                                console.log(`[updateTenantStatus] Listing saved (room updated)`);
+                            } catch (listingSaveError) {
+                                console.error(`[updateTenantStatus] Error saving listing:`, listingSaveError);
+                                throw new Error(`Failed to update room availability: ${listingSaveError.message}`);
+                            }
+                        } else {
+                            console.warn(`[updateTenantStatus] Room not found in listing`);
+                        }
+                    } else {
+                        console.warn(`[updateTenantStatus] Listing not found`);
                     }
+                } else {
+                    console.warn(`[updateTenantStatus] Tenant has no listingId`);
                 }
             }
         }
 
-        await tenant.save();
+        try {
+            await tenant.save();
+            console.log(`[updateTenantStatus] Tenant saved successfully`);
+        } catch (saveError) {
+            console.error(`[updateTenantStatus] Error saving tenant:`, saveError);
+            throw new Error(`Failed to save tenant: ${saveError.message}`);
+        }
 
         res.status(200).json({
             success: true,
             data: tenant
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+        console.error('[updateTenantStatus] Error:', err);
+        // If it's a validation error, log the details
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(val => val.message);
+            console.error('[updateTenantStatus] Validation Messages:', messages);
+            return res.status(400).json({ success: false, message: messages.join(', '), error: err.message });
+        }
+        res.status(500).json({ success: false, message: err.message, error: err.message, stack: err.stack });
     }
 };
 

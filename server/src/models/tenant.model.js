@@ -62,6 +62,9 @@ const tenantSchema = new mongoose.Schema({
   joinedDate: {
     type: Date,
     default: Date.now
+  },
+  movedOutDate: {
+    type: Date
   }
 }, {
   timestamps: true

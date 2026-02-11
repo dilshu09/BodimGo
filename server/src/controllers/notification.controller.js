@@ -86,3 +86,41 @@ export const createNotification = async ({ recipient, type, title, message, data
         console.error("Create Notification Error:", error);
     }
 };
+
+// @desc    Delete a notification
+// @route   DELETE /api/notifications/:id
+// @access  Private
+export const deleteNotification = async (req, res) => {
+    try {
+        const notification = await Notification.findById(req.params.id);
+
+        if (!notification) {
+            return res.status(404).json({ success: false, message: 'Notification not found' });
+        }
+
+        // Check ownership
+        if (notification.recipient.toString() !== req.user.id) {
+            return res.status(401).json({ success: false, message: 'Not authorized' });
+        }
+
+        await notification.deleteOne();
+
+        res.json({ success: true, message: 'Notification removed' });
+    } catch (error) {
+        console.error("Delete Notification Error:", error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+// @desc    Delete ALL notifications
+// @route   DELETE /api/notifications
+// @access  Private
+export const deleteAll = async (req, res) => {
+    try {
+        await Notification.deleteMany({ recipient: req.user.id });
+        res.json({ success: true, message: 'All notifications cleared' });
+    } catch (error) {
+        console.error("Delete All Error:", error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};

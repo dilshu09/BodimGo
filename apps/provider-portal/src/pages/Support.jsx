@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HelpCircle, MessageSquare, ChevronDown, ChevronUp, Send, FileText, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';

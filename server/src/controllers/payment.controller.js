@@ -1,6 +1,8 @@
 import Stripe from 'stripe';
 import Booking from '../models/Booking.js';
+import User from '../models/User.js'; // Added User import
 import Payment from '../models/Payment.js';
+import Expense from '../models/Expense.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -132,6 +134,66 @@ export const confirmPayment = async (req, res) => {
   }
 };
 
+// @desc    Record Manual Payment (Cash/Transfer)
+// @route   POST /api/payments/manual
+// @access  Private (Provider)
+export const recordManualPayment = async (req, res) => {
+  const { tenantId, amount, method, date } = req.body;
+
+  try {
+    const Tenant = (await import('../models/tenant.model.js')).default;
+    const tenant = await Tenant.findOne({ _id: tenantId, providerId: req.user._id });
+
+    if (!tenant) {
+      return res.status(404).json({ message: 'Tenant not found' });
+    }
+
+    // Find the user account associated with this tenant email
+    let payerId = null;
+    if (tenant.email) {
+      const payer = await User.findOne({ email: tenant.email });
+      if (payer) payerId = payer._id;
+    }
+
+    // If no registered user found for tenant, we can't link it to a User ID comfortably
+    // But Payment model requires 'payer'. 
+    // Option A: fail. Option B: use a placeholder or allow null in model (requires schema change).
+    // For now, assuming most tenants have a user account or we use the provider's ID as a placeholder/flag? 
+    // BETTER: If manual tenant doesn't have an account, we might need to relax Payment schema or create a shadow user.
+    // Let's assume for now we use the email to find them, if not found, we can't record "User" payment easily.
+    // Workaround: Use the provider ID as payer but mark method clearly, OR just fail if no user.
+    // Let's check if User exists.
+
+    if (!payerId) {
+      // If the tenant was manually added and hasn't registered, we can't create a valid Payment record 
+      // that requires a User ref. 
+      // We will try to find a user by email, if not, we return error for now.
+      return res.status(400).json({ message: 'Tenant does not have a registered account matching their email.' });
+    }
+
+    const paymentDate = date ? new Date(date) : new Date();
+
+    const newPayment = await Payment.create({
+      payer: payerId,
+      payee: req.user._id,
+      amount: amount,
+      method: method || 'cash',
+      status: 'completed',
+      createdAt: paymentDate // Override timestamp for manual entry
+    });
+
+    res.json({
+      success: true,
+      data: newPayment,
+      message: 'Payment recorded successfully'
+    });
+
+  } catch (error) {
+    console.error('Manual Payment Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Create Stripe Connect Account
 // @route   POST /api/payments/connect/create-account
 export const createConnectAccount = async (req, res) => {
@@ -241,7 +303,6 @@ export const getPaymentHistory = async (req, res) => {
   try {
     const payments = await Payment.find({ payee: req.user._id })
       .populate('payer', 'name email')
-      .populate('booking', 'room') // Assuming booking has room info, or populate listing
       .sort({ createdAt: -1 });
 
     res.json(payments);
@@ -291,12 +352,29 @@ export const getPaymentStats = async (req, res) => {
       }
     ]);
 
+    // Total Expenses
+    const totalExpenses = await Expense.aggregate([
+      {
+        $match: {
+          provider: req.user._id
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    const totalExpenseAmount = totalExpenses[0]?.total || 0;
+    const totalRevenueAmount = totalRevenue[0]?.total || 0;
+
     res.json({
       currentMonthRevenue: currentMonthRevenue[0]?.total || 0,
-      totalRevenue: totalRevenue[0]?.total || 0,
-      // Mocking expenses/net profit as we don't track expenses yet
-      totalExpenses: 0,
-      netProfit: totalRevenue[0]?.total || 0
+      totalRevenue: totalRevenueAmount,
+      totalExpenses: totalExpenseAmount,
+      netProfit: totalRevenueAmount - totalExpenseAmount
     });
 
   } catch (error) {

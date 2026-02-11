@@ -194,7 +194,7 @@ const ManualAddTenant = () => {
                                 </div>
                             </div>
                             <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-700">
-                                This will create a pending tenant record. The tenant will become active once the agreement is signed.
+                                The tenant record will be created as <strong>Active</strong>. You can generate an agreement in the next step.
                             </div>
                         </div>
                     )}

@@ -18,6 +18,11 @@ export default function ActiveTenantsPage() {
   const [moveOutDate, setMoveOutDate] = useState(new Date().toISOString().split('T')[0]);
   const [editFormData, setEditFormData] = useState({});
 
+  // Manual Payment State
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentData, setPaymentData] = useState({ amount: '', date: new Date().toISOString().split('T')[0], method: 'cash' });
+  const [selectedTenantForPayment, setSelectedTenantForPayment] = useState(null);
+
   useEffect(() => {
     fetchTenants();
   }, []);
@@ -41,14 +46,15 @@ export default function ActiveTenantsPage() {
         checkInDate: t.createdAt, // Fallback if no specific checkInDate
         monthlyRent: t.rentAmount,
         currentMonth: t.currentMonth || { paid: false, date: null },
-        status: t.status === 'Active' ? 'Active' : t.status,
+        status: (t.status.toLowerCase() === 'active' || t.status === 'Pending') ? 'Active' : t.status,
         paymentHistory: t.paymentHistory || []
       }));
 
-      // Filter: Show if status is Active OR has at least one past payment
-      const activeTenantsList = formattedTenants.filter(t =>
-        t.status === 'Active' || t.paymentHistory.length > 0
-      );
+      // Filter: Show anyone NOT Moved Out or Evicted (case-insensitive check)
+      const activeTenantsList = formattedTenants.filter(t => {
+        const s = t.status.toLowerCase();
+        return s !== 'moved out' && s !== 'evicted';
+      });
 
       setTenants(activeTenantsList);
       setLoading(false);
@@ -60,28 +66,28 @@ export default function ActiveTenantsPage() {
   };
 
   const toggleExpand = (id, type = 'details') => {
+    // If clicking the same thing, close it
     if (expandedTenantId === id && actionType === type) {
       setExpandedTenantId(null);
       setActionType(null);
-    } else {
-      setExpandedTenantId(id);
-      setActionType(type);
+      return;
+    }
 
-      // Initialize form data when opening specific modes
-      const tenant = tenants.find(t => t.id === id);
-      if (tenant && type === 'edit') {
-        setEditFormData({
-          name: tenant.name,
-          email: tenant.email,
-          phone: tenant.phone,
-          nic: tenant.nic,
-          address: tenant.address,
-          rentAmount: tenant.monthlyRent
-        });
-      }
-      if (type === 'move-out') {
-        setMoveOutDate(new Date().toISOString().split('T')[0]);
-      }
+    // Otherwise open/switch
+    setExpandedTenantId(id);
+    setActionType(type);
+
+    // Initialize form data
+    const tenant = tenants.find(t => t.id === id);
+    if (tenant && type === 'edit') {
+      setEditFormData({
+        name: tenant.name,
+        email: tenant.email,
+        phone: tenant.phone,
+        nic: tenant.nic,
+        address: tenant.address,
+        rentAmount: tenant.monthlyRent
+      });
     }
   };
 
@@ -99,7 +105,8 @@ export default function ActiveTenantsPage() {
       fetchTenants();
     } catch (error) {
       console.error("Error moving out tenant:", error);
-      toast.error("Failed to move out tenant");
+      const msg = error.response?.data?.message || "Failed to move out tenant";
+      toast.error(msg);
     }
   };
 
@@ -115,6 +122,37 @@ export default function ActiveTenantsPage() {
     } catch (error) {
       console.error("Error updating tenant:", error);
       toast.error("Failed to update tenant");
+    }
+  };
+
+  const openPaymentModal = (tenant) => {
+    setSelectedTenantForPayment(tenant);
+    setPaymentData({
+      amount: tenant.monthlyRent || '',
+      date: new Date().toISOString().split('T')[0],
+      method: 'cash'
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSubmit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/payments/manual`, {
+        tenantId: selectedTenantForPayment.id,
+        amount: paymentData.amount,
+        method: paymentData.method,
+        date: paymentData.date
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      toast.success("Payment recorded successfully");
+      setShowPaymentModal(false);
+      fetchTenants(); // Refresh to update status
+    } catch (error) {
+      console.error("Error recording payment:", error);
+      toast.error(error.response?.data?.message || "Failed to record payment");
     }
   };
 
@@ -147,10 +185,13 @@ export default function ActiveTenantsPage() {
                   <p className="text-slate-600 text-sm">Room: {tenant.room}</p>
                 </div>
                 <div className="flex gap-2">
-                  {!tenant.currentMonth.paid && tenant.status === 'Active' && (
-                    <span className="px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-700">
-                      Pending
-                    </span>
+                  {!tenant.currentMonth.paid && tenant.status !== 'Moved Out' && tenant.status !== 'Evicted' && (
+                    <button
+                      onClick={() => openPaymentModal(tenant)}
+                      className="px-4 py-2 rounded-full text-sm font-semibold bg-red-100 text-red-700 hover:bg-red-200 transition-colors flex items-center gap-1"
+                    >
+                      Pending <span className="text-xs underline ml-1">(Pay)</span>
+                    </button>
                   )}
                   <span className={`px-4 py-2 rounded-full text-sm font-semibold ${tenant.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                     }`}>
@@ -199,7 +240,14 @@ export default function ActiveTenantsPage() {
                           <button onClick={() => toggleExpand(tenant.id, 'edit')} className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 font-medium text-slate-700 transition">
                             <Edit2 size={12} /> Edit
                           </button>
-                          <button onClick={() => toggleExpand(tenant.id, 'move-out')} className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white border border-red-200 rounded-lg hover:bg-red-50 font-medium text-red-600 transition">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log("Clicking Move Out for:", tenant.id);
+                              toggleExpand(tenant.id, 'move-out');
+                            }}
+                            className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white border border-red-200 rounded-lg hover:bg-red-50 font-medium text-red-600 transition"
+                          >
                             <LogOut size={12} /> Move Out
                           </button>
                         </div>
@@ -273,8 +321,8 @@ export default function ActiveTenantsPage() {
                 <button
                   onClick={() => toggleExpand(tenant.id, 'details')}
                   className={`px-4 py-2 border rounded-lg transition-colors text-sm font-medium flex items-center gap-2 ${expandedTenantId === tenant.id
-                      ? 'border-slate-300 text-slate-600 bg-white hover:bg-slate-50 shadow-sm'
-                      : 'border-red-500 text-red-500 hover:bg-red-50'
+                    ? 'border-slate-300 text-slate-600 bg-white hover:bg-slate-50 shadow-sm'
+                    : 'border-red-500 text-red-500 hover:bg-red-50'
                     }`}
                 >
                   {expandedTenantId === tenant.id ? (
@@ -295,6 +343,73 @@ export default function ActiveTenantsPage() {
           <div className="text-center text-slate-500 py-10">No active tenants found.</div>
         )}
       </div>
+
+      {/* Manual Payment Modal */}
+      {showPaymentModal && selectedTenantForPayment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-900">Record Manual Payment</h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-sm text-slate-600 mb-4">
+                Marking payment for <strong>{selectedTenantForPayment.name}</strong>.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Amount (Rs.)</label>
+                  <input
+                    type="number"
+                    value={paymentData.amount}
+                    onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
+                  <select
+                    value={paymentData.method}
+                    onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded-lg"
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="bank_transfer">Direct Bank Transfer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={paymentData.date}
+                    onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
+                    className="w-full p-2 border border-slate-300 rounded-lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePaymentSubmit}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center gap-2"
+              >
+                <Check size={18} /> Confirm Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

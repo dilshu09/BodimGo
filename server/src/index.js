@@ -25,6 +25,10 @@ import viewingRoutes from "./routes/viewing.routes.js";
 import conversationRoutes from "./routes/conversation.routes.js";
 import ticketRoutes from "./routes/ticket.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import invoiceRoutes from "./routes/invoice.routes.js";
+import expenseRoutes from "./routes/expense.routes.js";
+import financeRoutes from "./routes/finance.routes.js";
+import dashboardRoutes from "./routes/dashboard.routes.js";
 
 import morgan from 'morgan';
 import fs from 'fs';
@@ -95,7 +99,10 @@ app.use("/api/viewing-requests", viewingRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/tickets", ticketRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.use("/api/invoices", invoiceRoutes);
+app.use("/api/expenses", expenseRoutes);
+app.use("/api/finance", financeRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 // Temporary Debug Route to Make Admin
 app.get("/make-admin/:email", async (req, res) => {
   try {

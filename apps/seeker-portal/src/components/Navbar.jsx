@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, UserCircle, Globe, Bell, X } from 'lucide-react';
+import { Search, UserCircle, Globe, Bell, X, Trash2 } from 'lucide-react';
 import logo from '../assets/logo.png';
 import api from '../services/api';
 
@@ -10,6 +10,22 @@ const Navbar = () => {
     const [unreadCount, setUnreadCount] = useState(0);
     const [showNotifications, setShowNotifications] = useState(false);
     const [user, setUser] = useState(null);
+
+    // Notification Logic
+    const notificationRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     useEffect(() => {
         checkAuth();
@@ -55,6 +71,30 @@ const Navbar = () => {
         }
     };
 
+
+
+    const clearAllNotifications = async () => {
+        try {
+            await api.delete('/notifications');
+            setNotifications([]);
+            setUnreadCount(0);
+        } catch (err) {
+            console.error("Failed to clear notifications", err);
+        }
+    };
+
+    const deleteNotification = async (e, id) => {
+        e.stopPropagation();
+        try {
+            await api.delete(`/notifications/${id}`);
+            setNotifications(prev => prev.filter(n => n._id !== id));
+            // Recalculate unread count if needed, or just fetch again
+            fetchNotifications();
+        } catch (err) {
+            console.error("Failed to delete notification", err);
+        }
+    };
+
     const markAsRead = async (id, link) => {
         try {
             await api.put(`/notifications/${id}/read`);
@@ -87,7 +127,7 @@ const Navbar = () => {
                 {/* Right Menu */}
                 <div className="flex items-center gap-4">
                     {/* Notification Bell */}
-                    <div className="relative">
+                    <div className="relative" ref={notificationRef}>
                         <button
                             className="relative p-2 hover:bg-neutral-100 rounded-full transition-colors"
                             onClick={() => setShowNotifications(!showNotifications)}
@@ -101,11 +141,21 @@ const Navbar = () => {
                         {/* Dropdown */}
                         {showNotifications && (
                             <div className="absolute right-0 top-12 w-80 bg-white rounded-xl shadow-xl border border-neutral-100 overflow-hidden z-50">
-                                <div className="p-3 border-b border-neutral-100 flex justify-between items-center bg-neutral-50">
+                                <div className="p-3 border-b border-neutral-100 flex justify-between items-center bg-neutral-50 gap-2">
                                     <h3 className="font-bold text-sm text-neutral-900">Notifications</h3>
-                                    <button onClick={() => setShowNotifications(false)} className="text-neutral-400 hover:text-black">
-                                        <X size={16} />
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        {notifications.length > 0 && (
+                                            <button
+                                                onClick={clearAllNotifications}
+                                                className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1"
+                                            >
+                                                <Trash2 size={12} /> Clear All
+                                            </button>
+                                        )}
+                                        <button onClick={() => setShowNotifications(false)} className="text-neutral-400 hover:text-black">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="max-h-96 overflow-y-auto">
                                     {notifications.length > 0 ? (
@@ -114,7 +164,14 @@ const Navbar = () => {
                                                 key={notif._id}
                                                 onClick={() => markAsRead(notif._id, notif.type === 'booking_accepted' ? `/checkout/${notif.data?.bookingId}` : notif.data?.viewingRequestId ? '/viewings' : null)}
                                             >
-                                                <div className="flex gap-3">
+                                                <div className="flex gap-3 relative">
+                                                    <button
+                                                        onClick={(e) => deleteNotification(e, notif._id)}
+                                                        className="absolute top-0 right-0 p-1 text-neutral-400 hover:text-red-500 hover:bg-neutral-100 rounded-full transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <X size={14} />
+                                                    </button>
                                                     <div className={`mt-1 h-2 w-2 rounded-full shrink-0 ${!notif.isRead ? 'bg-blue-500' : 'bg-transparent'}`} />
                                                     <div>
                                                         <h4 className={`text-sm ${!notif.isRead ? 'font-bold text-neutral-900' : 'font-medium text-neutral-700'}`}>

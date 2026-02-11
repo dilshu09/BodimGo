@@ -4,6 +4,9 @@ import { Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logo from '../../assets/logo.png';
 
 const API_URL = "http://localhost:5000/api"; // Adjust if needed
 
@@ -31,9 +34,9 @@ export default function TenantHistoryPage() {
         email: t.email,
         phone: t.phone,
         room: t.roomId,
-        status: t.status === 'Active' ? 'Current' : t.status, // Map 'Active' to 'Current' for UI consistency if needed
+        status: (t.status.toLowerCase() === 'active' || t.status === 'Pending') ? 'Current' : t.status,
         moveInDate: t.joinedDate || t.createdAt,
-        moveOutDate: null, // Not currently tracked in backend
+        moveOutDate: t.movedOutDate,
         paymentHistory: t.paymentHistory || [],
       }));
 
@@ -51,11 +54,103 @@ export default function TenantHistoryPage() {
       ? tenants
       : tenants.filter((t) => {
         if (filterStatus === 'Current') return t.status === 'Current' || t.status === 'Active';
-        if (filterStatus === 'Moved Out') return t.status === 'Moved Out';
+        if (filterStatus === 'Moved Out') return t.status.toLowerCase() === 'moved out';
         return t.status === filterStatus;
       });
 
   const selectedTenant = tenants.find(t => t.id === selectedTenantId);
+
+  const loadImage = (src) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+    });
+  };
+
+  const generatePDF = async (tenant) => {
+    const doc = new jsPDF();
+
+    // 1. Header
+    try {
+      const logoImg = await loadImage(logo);
+      doc.addImage(logoImg, 'PNG', 14, 10, 15, 15);
+      doc.setFontSize(22);
+      doc.setTextColor(220, 38, 38); // Red color for brand
+      doc.text("BodimGo", 35, 20);
+    } catch (err) {
+      console.error("Error loading logo for PDF:", err);
+      doc.setFontSize(22);
+      doc.setTextColor(220, 38, 38); // Red color for brand
+      doc.text("BodimGo", 14, 20);
+    }
+
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text("Payment History Report", 14, 28);
+
+    doc.setDrawColor(200);
+    doc.line(14, 32, 196, 32);
+
+    // 2. Tenant Details
+    doc.setFontSize(10);
+    doc.setTextColor(0);
+
+    const startY = 40;
+    doc.text(`Tenant Name: ${tenant.tenantName}`, 14, startY);
+    doc.text(`Room: ${tenant.room}`, 14, startY + 6);
+    doc.text(`Email: ${tenant.email}`, 14, startY + 12);
+    doc.text(`Phone: ${tenant.phone}`, 14, startY + 18);
+
+    doc.text(`Move In: ${new Date(tenant.moveInDate).toLocaleDateString()}`, 120, startY);
+    if (tenant.moveOutDate) {
+      doc.text(`Move Out: ${new Date(tenant.moveOutDate).toLocaleDateString()}`, 120, startY + 6);
+    }
+    doc.text(`Status: ${tenant.status}`, 120, startY + 12);
+
+    // 3. Table Data
+    const tableRows = tenant.paymentHistory.map(p => {
+      // Advanced payment logic: If paid in a previous month relative to due date month
+      const paidDate = new Date(p.paidDate);
+      const dueDate = new Date(p.dueDate);
+
+      // Simple check: if paidDate is before the 1st of the due Month
+      const dueMonthStart = new Date(dueDate.getFullYear(), dueDate.getMonth(), 1);
+      const isAdvanced = paidDate < dueMonthStart;
+
+      return [
+        p.month,
+        dueDate.toLocaleDateString(),
+        paidDate.toLocaleDateString(),
+        `Rs. ${p.amount.toLocaleString()}`,
+        p.status,
+        isAdvanced ? 'Advanced Payment' : '-'
+      ];
+    });
+
+    // 4. Generate Table
+    autoTable(doc, {
+      startY: startY + 30,
+      head: [['Month', 'Due Date', 'Paid Date', 'Amount', 'Status', 'Notes']],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: { fillColor: [220, 38, 38] }, // Red header
+      styles: { fontSize: 9 },
+    });
+
+    // 5. Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(`Generated on ${new Date().toLocaleString()}`, 14, doc.internal.pageSize.height - 10);
+      doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 25, doc.internal.pageSize.height - 10);
+    }
+
+    doc.save(`Payment_History_${tenant.tenantName.replace(/\s+/g, '_')}.pdf`);
+  };
 
   if (loading) {
     return <div className="p-8"><div className="text-center text-slate-500">Loading history...</div></div>;
@@ -181,9 +276,19 @@ export default function TenantHistoryPage() {
                 </div>
 
                 <div className="p-6">
-                  <h4 className="text-lg font-bold text-slate-900 mb-4">
-                    Payment History
-                  </h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-bold text-slate-900">
+                      Payment History
+                    </h4>
+                    {selectedTenant.paymentHistory.length > 0 && (
+                      <button
+                        onClick={() => generatePDF(selectedTenant)}
+                        className="text-sm flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        <Download size={14} /> Download Report
+                      </button>
+                    )}
+                  </div>
                   <div className="overflow-x-auto">
                     {selectedTenant.paymentHistory.length === 0 ? (
                       <div className="text-slate-500 text-sm italic">No payment history available.</div>
@@ -191,54 +296,22 @@ export default function TenantHistoryPage() {
                       <table className="w-full text-sm">
                         <thead className="bg-slate-50 border-b border-slate-200">
                           <tr>
-                            <th className="px-4 py-3 text-left font-semibold text-slate-900">
-                              Month
-                            </th>
-                            <th className="px-4 py-3 text-left font-semibold text-slate-900">
-                              Due Date
-                            </th>
-                            <th className="px-4 py-3 text-left font-semibold text-slate-900">
-                              Paid Date
-                            </th>
-                            <th className="px-4 py-3 text-left font-semibold text-slate-900">
-                              Amount
-                            </th>
-                            <th className="px-4 py-3 text-left font-semibold text-slate-900">
-                              Status
-                            </th>
-                            <th className="px-4 py-3 text-left font-semibold text-slate-900">
-                              Action
-                            </th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900">Month</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900">Due Date</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900">Paid Date</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900">Amount</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900">Status</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                           {selectedTenant.paymentHistory.map((payment, i) => (
                             <tr key={i} className="hover:bg-slate-50">
-                              <td className="px-4 py-3 font-medium text-slate-900">
-                                {payment.month}
-                              </td>
-                              <td className="px-4 py-3 text-slate-600">
-                                {new Date(
-                                  payment.dueDate,
-                                ).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-3 text-slate-600">
-                                {new Date(
-                                  payment.paidDate,
-                                ).toLocaleDateString()}
-                              </td>
-                              <td className="px-4 py-3 font-bold text-slate-900">
-                                Rs. {payment.amount.toLocaleString()}
-                              </td>
+                              <td className="px-4 py-3 font-medium text-slate-900">{payment.month}</td>
+                              <td className="px-4 py-3 text-slate-600">{new Date(payment.dueDate).toLocaleDateString()}</td>
+                              <td className="px-4 py-3 text-slate-600">{new Date(payment.paidDate).toLocaleDateString()}</td>
+                              <td className="px-4 py-3 font-bold text-slate-900">Rs. {payment.amount.toLocaleString()}</td>
                               <td className="px-4 py-3">
-                                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">
-                                  {payment.status}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <button className="flex items-center gap-1 text-red-500 hover:text-red-700 transition-colors">
-                                  <Download size={14} />
-                                </button>
+                                <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">{payment.status}</span>
                               </td>
                             </tr>
                           ))}
