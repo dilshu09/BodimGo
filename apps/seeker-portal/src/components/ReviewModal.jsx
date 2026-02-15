@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, Star } from 'lucide-react';
+import { Star, X } from 'lucide-react';
 import api from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const ReviewModal = ({ isOpen, onClose, listingId, onReviewAdded }) => {
     const [rating, setRating] = useState(0);
@@ -12,7 +13,7 @@ const ReviewModal = ({ isOpen, onClose, listingId, onReviewAdded }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (rating === 0) return alert("Please select a rating");
+        if (rating === 0) return toast.error("Please select a rating");
 
         setLoading(true);
         try {
@@ -21,11 +22,12 @@ const ReviewModal = ({ isOpen, onClose, listingId, onReviewAdded }) => {
                 rating,
                 comment
             });
-            alert('Review submitted successfully!');
+            toast.success('Review submitted successfully!');
             onReviewAdded();
             onClose();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to submit review');
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Failed to submit review');
         } finally {
             setLoading(false);
         }

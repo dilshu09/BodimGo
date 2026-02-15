@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Send, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const MessageModal = ({ isOpen, onClose, providerName }) => {
     const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ const MessageModal = ({ isOpen, onClose, providerName }) => {
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         setLoading(false);
-        alert(`Message sent to ${providerName}!`);
+        toast.success(`Message sent to ${providerName}!`);
         onClose();
     };
 

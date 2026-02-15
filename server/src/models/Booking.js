@@ -4,7 +4,7 @@ const BookingSchema = new mongoose.Schema({
   listing: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
   seeker: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   provider: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Denormalized for query speed
-  room: { type: mongoose.Schema.Types.ObjectId, ref: 'Room' },
+  room: { type: mongoose.Schema.Types.ObjectId }, // Reference to subdocument in Listing.rooms. Do NOT use ref: 'Room' as valid requests failed.
 
   status: {
     type: String,

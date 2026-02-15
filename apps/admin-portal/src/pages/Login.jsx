@@ -34,8 +34,8 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-8 rounded-xl shadow-card w-full max-w-sm text-center">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-neutral-950 transition-colors duration-200">
+            <div className="bg-white dark:bg-neutral-900 p-8 rounded-xl shadow-card w-full max-w-sm text-center border border-transparent dark:border-neutral-800 transition-all">
                 <img src={logo} alt="BodimGo" className="h-16 w-auto mx-auto mb-4" />
                 <h1 className="text-xl font-bold mb-6 text-primary">Admin Login</h1>
                 {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
@@ -43,7 +43,7 @@ const Login = () => {
                     <input
                         type="email"
                         placeholder="Email"
-                        className="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        className="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-white dark:bg-neutral-800 border-gray-200 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
@@ -51,13 +51,13 @@ const Login = () => {
                         <input
                             type={showPassword ? "text" : "password"}
                             placeholder="Password"
-                            className="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 pr-10"
+                            className="input-field w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 pr-10 bg-white dark:bg-neutral-800 border-gray-200 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                         />
                         <button
                             type="button"
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-300"
                             onClick={() => setShowPassword(!showPassword)}
                         >
                             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

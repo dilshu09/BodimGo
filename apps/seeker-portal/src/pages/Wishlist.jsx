@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import Navbar from '../components/Navbar';
 import ListingCard from '../components/ListingCard';
+import ConfirmationModal from '../components/ConfirmationModal';
 import api from '../services/api';
 
 const Wishlist = () => {
@@ -23,10 +24,21 @@ const Wishlist = () => {
         fetchWishlist();
     }, []);
 
-    const handleRemove = async (listingId) => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [itemToRemove, setItemToRemove] = useState(null);
+
+    const handleRemoveClick = (listingId) => {
+        setItemToRemove(listingId);
+        setIsModalOpen(true);
+    };
+
+    const confirmRemove = async () => {
+        if (!itemToRemove) return;
         try {
-            await api.delete(`/seekers/wishlist/${listingId}`);
-            setWishlist(prev => prev.filter(item => item._id !== listingId));
+            await api.delete(`/seekers/wishlist/${itemToRemove}`);
+            setWishlist(prev => prev.filter(item => item._id !== itemToRemove));
+            setIsModalOpen(false);
+            setItemToRemove(null);
         } catch (err) {
             console.error("Failed to remove item", err);
         }
@@ -57,7 +69,7 @@ const Wishlist = () => {
                                 key={listing._id}
                                 listing={listing}
                                 isSaved={true}
-                                onToggleWishlist={handleRemove}
+                                onToggleWishlist={handleRemoveClick}
                             />
                         ))}
                     </div>
@@ -68,6 +80,17 @@ const Wishlist = () => {
                         <p className="text-neutral-500">Start saving your favorite places!</p>
                     </div>
                 )}
+
+                <ConfirmationModal
+                    isOpen={isModalOpen}
+                    title="Remove from Wishlist"
+                    message="Are you sure you want to remove this property from your wishlist?"
+                    confirmText="Remove"
+                    cancelText="Keep"
+                    isDanger={true}
+                    onConfirm={confirmRemove}
+                    onCancel={() => setIsModalOpen(false)}
+                />
             </div>
         </div>
     );

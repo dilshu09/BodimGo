@@ -1,10 +1,40 @@
 import React, { useState } from 'react';
-import { X, ChevronRight, Check } from 'lucide-react';
+import { Calendar, CheckCircle, ArrowRight, ArrowLeft, User, Bed, X, ChevronRight, Check } from 'lucide-react';
 import api from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
-    const [step, setStep] = useState(1);
+    // Determine if we need room selection
+    const hasRooms = listing.rooms && listing.rooms.length > 0;
+
+    const [step, setStep] = useState(hasRooms ? 1 : 2); // Start at 1 if rooms, else skip to details (simulating step 2 as 1st visible)
+    // Actually, let's keep step logic simple: 
+    // Step 1: Room Selection (Only if hasRooms)
+    // Step 2: Personal Details
+    // Step 3: Agreement
+    // Step 4: Confirm
+
+    // Normalizing steps:
+    // If hasRooms: 1=Room, 2=Details, 3=Agreement, 4=Confirm
+    // If noRooms:  1=Details, 2=Agreement, 3=Confirm
+
+    // Better Approach: Use explicit step names or just conditional rendering based on a counter that accounts for the offset.
+    // Let's stick to a counter but adjust "Display Step" and "Total Steps" dynamically.
+
+    const [currentStepIndex, setCurrentStepIndex] = useState(0);
+    // Steps Array
+    const steps = [
+        ...(hasRooms ? [{ id: 'room', title: 'Select Room' }] : []),
+        { id: 'details', title: 'Personal Details' },
+        { id: 'agreement', title: 'House Rules' },
+        { id: 'confirm', title: 'Confirm' }
+    ];
+
+    const currentStep = steps[currentStepIndex];
+    const totalSteps = steps.length;
+
     const [loading, setLoading] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
     const [formData, setFormData] = useState({
         name: user?.name || '',
         nic: '',
@@ -14,22 +44,18 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
         address: user?.address || '',
         gender: '',
         agreementAccepted: false,
-        // New Fields
-        organization: '', // University/Institute
-        faculty: '',      // Faculty/Course
-        workplace: '',    // Company
-        otherDescription: '' // Other
+        organization: '',
+        faculty: '',
+        workplace: '',
+        otherDescription: ''
     });
 
-    const totalSteps = 3;
-
-    const validateStep1 = () => {
+    const validateDetails = () => {
         if (!formData.name.trim()) return "Full Name is required";
         if (!formData.gender) return "Gender is required";
         if (!formData.phone.trim()) return "Phone Number is required";
         if (!formData.address.trim()) return "Address is required";
 
-        // Occupation Specific Validation
         if (formData.occupation === 'Student') {
             if (!formData.organization.trim()) return "University/Institute is required";
             if (!formData.faculty.trim()) return "Faculty/Course is required";
@@ -38,36 +64,47 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
         } else if (formData.occupation === 'Other') {
             if (!formData.otherDescription.trim()) return "Please describe your occupation";
         }
-
         return null;
     };
 
     const handleNext = () => {
-        if (step === 1) {
-            const error = validateStep1();
-            if (error) {
-                alert(error);
+        if (currentStep.id === 'room') {
+            if (!selectedRoom) {
+                toast.error("Please select a room to proceed.");
                 return;
             }
         }
-        if (step === 2 && !formData.agreementAccepted) {
-            alert("You must accept the agreement to proceed.");
+        if (currentStep.id === 'details') {
+            const error = validateDetails();
+            if (error) {
+                toast.error(error);
+                return;
+            }
+        }
+        if (currentStep.id === 'agreement' && !formData.agreementAccepted) {
+            toast.error("You must accept the agreement to proceed.");
             return;
         }
-        setStep(prev => prev + 1);
+
+        if (currentStepIndex < totalSteps - 1) {
+            setCurrentStepIndex(prev => prev + 1);
+        } else {
+            handleSubmit();
+        }
     };
 
-    const handleBack = () => setStep(prev => prev - 1);
+    const handleBack = () => setCurrentStepIndex(prev => prev - 1);
 
     const handleSubmit = async () => {
         setLoading(true);
         try {
-            const rent = listing.rooms && listing.rooms.length > 0
-                ? Math.min(...listing.rooms.map(r => r.price))
-                : (listing.rent || 0);
+            // Price is either from selected room OR listing rent
+            const rent = selectedRoom ? selectedRoom.price : (listing.rent || 0);
+            const deposit = selectedRoom ? (selectedRoom.deposit || listing.pricingDefaults?.deposit?.amount || 0) : (listing.deposit || 0);
 
             await api.post('/bookings', {
                 listingId: listing._id,
+                roomId: selectedRoom?._id, // Send Room ID
                 startDate: new Date(),
                 endDate: new Date(new Date().setMonth(new Date().getMonth() + 1)),
                 applicationData: {
@@ -78,7 +115,6 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                     phone: formData.phone,
                     address: formData.address,
                     gender: formData.gender,
-                    // Send specific fields
                     organization: formData.occupation === 'Student' ? formData.organization : undefined,
                     faculty: formData.occupation === 'Student' ? formData.faculty : undefined,
                     workplace: formData.occupation === 'Working Professional' ? formData.workplace : undefined,
@@ -86,11 +122,13 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                 },
                 agreementAccepted: formData.agreementAccepted
             });
+            toast.success('Booking Request Sent!');
             onSuccess();
+            onClose(); // Close the wizard modal (or ListingDetails logic handles this)
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.message || "Failed to send request.";
-            alert(msg);
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -100,10 +138,10 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
                 {/* Header */}
-                <div className="px-6 py-4 border-b border-neutral-100 flex justify-between items-center bg-white sticky top-0">
+                <div className="px-6 py-4 border-b border-neutral-100 flex justify-between items-center bg-white sticky top-0 z-10">
                     <div>
                         <h2 className="text-xl font-bold text-neutral-900">Request to Book</h2>
-                        <p className="text-sm text-neutral-500">Step {step} of {totalSteps}</p>
+                        <p className="text-sm text-neutral-500">Step {currentStepIndex + 1} of {totalSteps}: {currentStep.title}</p>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full">
                         <X size={20} />
@@ -112,8 +150,88 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
 
                 {/* Content */}
                 <div className="p-6 overflow-y-auto flex-1">
-                    {step === 1 && (
+
+                    {/* STEP: ROOM SELECTION */}
+                    {currentStep.id === 'room' && (
                         <div className="space-y-4">
+                            <h3 className="font-bold text-lg mb-2">Select a Room</h3>
+                            <div className="space-y-3">
+                                {listing.rooms.filter(r => r.status === 'Available' || (r.availableBeds > 0)).map((room) => (
+                                    <div
+                                        key={room._id}
+                                        onClick={() => setSelectedRoom(room)}
+                                        className={`group border rounded-2xl p-4 cursor-pointer transition-all flex gap-4 items-start ${selectedRoom?._id === room._id
+                                            ? 'border-[#E51D54] bg-[#E51D54]/5 ring-1 ring-[#E51D54]'
+                                            : 'border-neutral-200 hover:border-[#E51D54]/50 hover:shadow-md'
+                                            }`}
+                                    >
+                                        {/* Room Image Thumb */}
+                                        <div className="w-24 h-24 bg-neutral-200 rounded-xl overflow-hidden flex-shrink-0 relative">
+                                            {room.images?.[0] ? (
+                                                <img src={typeof room.images[0] === 'string' ? room.images[0] : room.images[0].url} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-neutral-400"><Bed size={24} /></div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <h4 className="font-bold text-neutral-900 text-lg line-clamp-1">{room.name}</h4>
+                                                <div className={`w-5 h-5 rounded-full border flex flex-shrink-0 items-center justify-center ml-2 ${selectedRoom?._id === room._id ? 'bg-[#E51D54] border-[#E51D54]' : 'border-neutral-300'}`}>
+                                                    {selectedRoom?._id === room._id && <div className="w-2.5 h-2.5 bg-white rounded-full" />}
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-2">
+                                                <span className="font-bold text-[#E51D54] text-lg">Rs {room.price.toLocaleString()}</span>
+                                                <span className="text-neutral-500 text-sm font-normal"> / month</span>
+                                            </div>
+
+                                            <div className="flex flex-wrap gap-2 text-xs">
+                                                <span className="bg-neutral-100 border border-neutral-200 px-2 py-1 rounded-md text-neutral-600 flex items-center gap-1.5 font-medium">
+                                                    <User size={12} /> {room.capacity} Person{room.capacity > 1 ? 's' : ''}
+                                                </span>
+                                                <span className="bg-neutral-100 border border-neutral-200 px-2 py-1 rounded-md text-neutral-600 font-medium capitalize">
+                                                    {room.type}
+                                                </span>
+                                                {(room.availableBeds !== undefined && room.availableBeds !== null) ? (
+                                                    <span className={`px-2 py-1 rounded-md border font-bold flex items-center gap-1 ${room.availableBeds > 0
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-red-50 text-red-700 border-red-200'
+                                                        }`}>
+                                                        {room.availableBeds > 0 ? (
+                                                            <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> {room.availableBeds} beds left</>
+                                                        ) : 'Full'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-1 rounded-md font-bold">
+                                                        Available
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {room.features?.furnishing && room.features.furnishing.length > 0 && (
+                                                <p className="text-xs text-neutral-400 mt-2 line-clamp-1">{room.features.furnishing.join(' • ')}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                {listing.rooms.filter(r => r.status === 'Available' || (r.availableBeds > 0)).length === 0 && (
+                                    <div className="text-center py-12 bg-neutral-50 rounded-2xl border border-dashed border-neutral-300">
+                                        <div className="w-12 h-12 bg-neutral-200 rounded-full flex items-center justify-center mx-auto mb-3 text-neutral-400">
+                                            <Bed size={24} />
+                                        </div>
+                                        <h3 className="text-neutral-900 font-medium">No rooms available</h3>
+                                        <p className="text-sm text-neutral-500 mt-1">Please check back later or contact the provider.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* STEP: DETAILS */}
+                    {currentStep.id === 'details' && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                             <h3 className="font-bold text-lg">Tell the provider about yourself</h3>
 
                             <div>
@@ -256,8 +374,9 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                         </div>
                     )}
 
-                    {step === 2 && (
-                        <div className="space-y-4">
+                    {/* STEP: AGREEMENT */}
+                    {currentStep.id === 'agreement' && (
+                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                             <h3 className="font-bold text-lg">Review House Rules & Agreement</h3>
                             <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 text-sm max-h-60 overflow-y-auto">
                                 <h4 className="font-bold mb-2">
@@ -287,8 +406,9 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                         </div>
                     )}
 
-                    {step === 3 && (
-                        <div className="space-y-6 text-center py-4">
+                    {/* STEP: CONFIRM */}
+                    {currentStep.id === 'confirm' && (
+                        <div className="space-y-6 text-center py-4 animate-in fade-in zoom-in-95 duration-300">
                             <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Check size={32} className="text-[#E51D54]" />
                             </div>
@@ -297,14 +417,22 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                                 The provider will review your request. You won't be charged until they accept.
                             </p>
 
-                            <div className="bg-neutral-50 p-4 rounded-xl text-left space-y-2">
+                            <div className="bg-neutral-50 p-4 rounded-xl text-left space-y-2 border border-neutral-200">
                                 <div className="flex justify-between">
                                     <span className="text-neutral-600">Listing</span>
-                                    <span className="font-medium">{listing.title}</span>
+                                    <span className="font-medium text-right">{listing.title}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-neutral-600">Total Estimate</span>
-                                    <span className="font-medium">LKR {(listing.rooms && listing.rooms.length > 0 ? Math.min(...listing.rooms.map(r => r.price)) : (listing.rent || 0)).toLocaleString()}/mo</span>
+                                {selectedRoom && (
+                                    <div className="flex justify-between">
+                                        <span className="text-neutral-600">Room</span>
+                                        <span className="font-medium text-right">{selectedRoom.name}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between border-t border-neutral-200 pt-2 mt-2">
+                                    <span className="text-neutral-600 font-bold">Total Estimate</span>
+                                    <span className="font-bold text-[#E51D54]">
+                                        LKR {(selectedRoom ? selectedRoom.price : (listing.rent || 0)).toLocaleString()}/mo
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -314,7 +442,7 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                 {/* Footer */}
                 <div className="p-6 border-t border-neutral-100 bg-white">
                     <div className="flex gap-4">
-                        {step > 1 && (
+                        {currentStepIndex > 0 && (
                             <button
                                 onClick={handleBack}
                                 className="px-6 py-3 font-bold text-neutral-700 hover:bg-neutral-100 rounded-xl transition-colors"
@@ -323,12 +451,12 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
                             </button>
                         )}
                         <button
-                            onClick={(step === totalSteps) ? handleSubmit : handleNext}
+                            onClick={handleNext}
                             disabled={loading}
                             className="flex-1 bg-[#E51D54] text-white font-bold py-3 rounded-xl hover:bg-[#d01b4b] transition-colors flex items-center justify-center gap-2"
                         >
-                            {loading ? 'Sending...' : (step === totalSteps) ? 'Send Request' : 'Next'}
-                            {!loading && step < totalSteps && <ChevronRight size={20} />}
+                            {loading ? 'Sending...' : (currentStep.id === 'confirm') ? 'Send Request' : 'Next'}
+                            {!loading && currentStep.id !== 'confirm' && <ChevronRight size={20} />}
                         </button>
                     </div>
                 </div>
@@ -338,3 +466,4 @@ const BookingWizard = ({ listing, onClose, onSuccess, user }) => {
 };
 
 export default BookingWizard;
+

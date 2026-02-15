@@ -17,6 +17,9 @@ router.post('/create-intent', protect, createPaymentIntent);
 router.post('/confirm', protect, confirmPayment);
 router.post('/manual', protect, authorize('provider'), recordManualPayment);
 
+// Seeker Payment Proof
+router.post('/proof', protect, (await import('../controllers/payment.controller.js')).submitPaymentProof);
+
 // Stripe Connect
 router.post('/connect/create-account', protect, authorize('provider'), createConnectAccount);
 router.post('/connect/onboarding-link', protect, authorize('provider'), getAccountLink);

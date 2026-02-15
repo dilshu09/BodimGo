@@ -6,6 +6,7 @@ import { checkListingCompleteness } from '../utils/listingCompleteness';
 import { toast } from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 import RoomFormModal from '../components/RoomFormModal';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 // Map missing items to wizard steps OR internal tabs
 const STEP_MAPPING = {
@@ -87,6 +88,9 @@ const RoomsTab = ({ listing, onRefetch }) => {
     const [editingRoom, setEditingRoom] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [roomToDelete, setRoomToDelete] = useState(null);
+
     const handleSaveRoom = async (roomData) => {
         try {
             setLoading(true);
@@ -114,16 +118,24 @@ const RoomsTab = ({ listing, onRefetch }) => {
         }
     };
 
-    const handleDeleteRoom = async (roomId) => {
-        if (!window.confirm("Are you sure you want to delete this room?")) return;
+    const handleDeleteClick = (roomId) => {
+        setRoomToDelete(roomId);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDeleteRoom = async () => {
+        if (!roomToDelete) return;
         try {
             setLoading(true);
-            const updatedRooms = listing.rooms.filter(r => r._id !== roomId);
+            const updatedRooms = listing.rooms.filter(r => r._id !== roomToDelete);
             await api.put(`/listings/${listing._id}`, { rooms: updatedRooms });
             toast.success("Room deleted");
             onRefetch();
+            setIsDeleteModalOpen(false);
+            setRoomToDelete(null);
         } catch (error) {
             toast.error("Failed to delete room");
+            setIsDeleteModalOpen(false);
         } finally {
             setLoading(false);
         }
@@ -183,7 +195,7 @@ const RoomsTab = ({ listing, onRefetch }) => {
 
                                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1 rounded-lg shadow-sm">
                                     <button onClick={() => openEdit(room)} className="p-1 hover:bg-neutral-100 rounded text-neutral-600 hover:text-primary"><Edit size={14} /></button>
-                                    <button onClick={() => handleDeleteRoom(room._id)} className="p-1 hover:bg-red-50 rounded text-neutral-600 hover:text-red-600"><Trash2 size={14} /></button>
+                                    <button onClick={() => handleDeleteClick(room._id)} className="p-1 hover:bg-red-50 rounded text-neutral-600 hover:text-red-600"><Trash2 size={14} /></button>
                                 </div>
                             </div>
 
@@ -224,6 +236,20 @@ const RoomsTab = ({ listing, onRefetch }) => {
             {isModalOpen && (
                 <RoomFormModal room={editingRoom} onSave={handleSaveRoom} onClose={() => setIsModalOpen(false)} />
             )}
+
+            <ConfirmationModal
+                isOpen={isDeleteModalOpen}
+                title="Delete Room"
+                message="Are you sure you want to delete this room? This action cannot be undone."
+                confirmText="Delete Room"
+                cancelText="Cancel"
+                isDanger={true}
+                onConfirm={confirmDeleteRoom}
+                onCancel={() => {
+                    setIsDeleteModalOpen(false);
+                    setRoomToDelete(null);
+                }}
+            />
         </div>
     );
 };

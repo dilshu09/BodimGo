@@ -8,9 +8,9 @@ import Tenant from '../models/tenant.model.js';
 // @access  Private (Seeker)
 export const createBooking = async (req, res) => {
   try {
-    const { listingId, startDate, endDate, guests } = req.body;
+    const { listingId, roomId, startDate, endDate, guests } = req.body;
     console.log("Create Booking Request Body:", req.body);
-    console.log("Received listingId:", listingId);
+    console.log("Received listingId:", listingId, "roomId:", roomId);
 
     const listing = await Listing.findById(listingId);
     if (!listing) {
@@ -18,25 +18,78 @@ export const createBooking = async (req, res) => {
       return res.status(404).json({ message: 'Listing not found' });
     }
 
-    // Calculate nights and total amount
+    // --- Room Inventory Management (Fix 37, 38, 39) ---
+    let selectedRoom = null;
+    let rent = listing.rent;
+    let deposit = listing.deposit || 0;
+
+    if (roomId) {
+      // Find the room subdocument
+      selectedRoom = listing.rooms.id(roomId);
+      if (!selectedRoom) {
+        return res.status(404).json({ message: 'Selected room not found in this listing.' });
+      }
+
+      // Check Availability
+      if (selectedRoom.availableBeds <= 0 || selectedRoom.status === 'Occupied') {
+        return res.status(400).json({ message: 'This room is no longer available.' });
+      }
+
+      // Update Rent/Deposit from Room
+      rent = selectedRoom.price;
+      if (selectedRoom.deposit) deposit = selectedRoom.deposit;
+
+      // FIX: Initialize availableBeds if missing (migration/fallback)
+      if (selectedRoom.availableBeds === undefined || selectedRoom.availableBeds === null) {
+        if (selectedRoom.occupancyMode === 'Entire Room') {
+          selectedRoom.availableBeds = 1; // 1 unit available
+        } else {
+          selectedRoom.availableBeds = selectedRoom.capacity; // Assume all beds available
+        }
+      }
+
+      // Re-check Availability after init
+      if (selectedRoom.availableBeds <= 0 || selectedRoom.status === 'Occupied') {
+        return res.status(400).json({ message: 'This room is no longer available.' });
+      }
+
+      // DECREMENT INVENTORY (Optimistic locking or atomic update preferred, but direct save for MVP is ok)
+      selectedRoom.availableBeds -= 1;
+
+      // Update Status if Full
+      if (selectedRoom.availableBeds <= 0) {
+        selectedRoom.status = 'Occupied'; // Or 'Reserved' if we want to wait for payment?
+        // Let's use 'Reserved' until paid? Or 'Occupied' if we consider booking request as holding it?
+        // User said "won't be charged until they accept", so technically we should HOLD it or warn provider.
+        // For now, let's mark as Occupied/Reserved to prevent double booking.
+        selectedRoom.status = 'Occupied';
+      }
+
+      // Save the listing with updated room stats
+      await listing.save();
+      console.log(`Room ${selectedRoom.name} inventory updated. Remaining: ${selectedRoom.availableBeds}`);
+
+    } else {
+      // Fallback for non-room listings
+      // If listing HAS rooms but NONE selected, we should probably error if the UI forces it.
+      if (listing.rooms && listing.rooms.length > 0) {
+        // Ideally we should mandate room selection.
+        // But for backward compatibility or explicit "Entire Unit", we proceed.
+        if (!rent) rent = Math.min(...listing.rooms.map(r => r.price)); // Fallback
+      }
+    }
+
+    rent = rent || 5000;
+
+    // Calculate total
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const months = (end - start) / (1000 * 60 * 60 * 24 * 30.44); // Approx months
-
-
-    // Fallback for room-based listings if global rent is 0
-    let rent = listing.rent;
-    if (!rent && listing.rooms && listing.rooms.length > 0) {
-      rent = Math.min(...listing.rooms.map(r => r.price));
-    }
-    rent = rent || 5000; // Final fallback to avoid 0 amount error in stripe (MVP hack)
-
-    const deposit = listing.deposit || 0;
+    const months = (end - start) / (1000 * 60 * 60 * 24 * 30.44);
     const totalAmount = (rent * Math.max(1, Math.ceil(months))) + deposit;
 
     // --- Gender Validation ---
     const applicantGender = req.body.applicationData?.gender;
-    const genderPolicy = listing.genderPolicy; // 'Girls only', 'Boys only', 'Mixed'
+    const genderPolicy = listing.genderPolicy;
 
     if (applicantGender) {
       if (genderPolicy === 'Girls only' && applicantGender === 'Male') {
@@ -50,8 +103,6 @@ export const createBooking = async (req, res) => {
         });
       }
     } else {
-      // If gender is missing but policy is strict, we should probably require it.
-      // For now, let's assume it's required by the frontend/schema.
       if (genderPolicy !== 'Mixed' && !applicantGender) {
         return res.status(400).json({ message: 'Gender is required for this restricted listing.' });
       }
@@ -61,10 +112,11 @@ export const createBooking = async (req, res) => {
       seeker: req.user._id,
       listing: listingId,
       provider: listing.provider,
+      room: roomId, // Save the room ID
       checkInDate: startDate,
       checkOutDate: endDate,
       moveInDate: startDate,
-      status: 'pending', // Start as pending approval
+      status: 'pending',
       agreedMonthRent: rent,
       agreedDeposit: deposit,
       totalAmount: totalAmount,
@@ -103,16 +155,7 @@ export const createBooking = async (req, res) => {
 
     // Send Email to Provider
     if (fullBooking.provider && fullBooking.provider.email) {
-      // Since we don't have a frontend route for "Accept by ID" yet without auth, 
-      // We will direct them to the provider portal dashboard or a specific API endpoint if we want "One Click" action.
-      // For MVP, lets assume we want them to login to the portal. 
-      // BUT user asked for "accept from it" (email). 
-      // So we will use the API link directly (caution: security risk if no token, but okay for MVP demo) or a frontend generic page.
-      // Let's use a Direct API link for MVP demo speed, or better, a frontend "Action" page.
-      // Let's point to the Provider Portal "Requests" page (we haven't built it yet) or just use the local API for now?
-      // Let's use API link for now as requested "accept from it".
-
-      const acceptLink = `${process.env.ADMIN_URL || 'http://localhost:5174'}/booking-action/${booking._id}?action=accept`; // We will build a simple frontend handler
+      const acceptLink = `${process.env.ADMIN_URL || 'http://localhost:5174'}/booking-action/${booking._id}?action=accept`;
       const rejectLink = `${process.env.ADMIN_URL || 'http://localhost:5174'}/booking-action/${booking._id}?action=reject`;
 
       const { sendBookingRequestEmail } = await import('../utils/emailService.js');

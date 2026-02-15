@@ -1,13 +1,71 @@
 import Listing from '../models/Listing.js';
-import Tenant from '../models/tenant.model.js'; // Use correct file name from file list
+import Tenant from '../models/tenant.model.js';
 import { uploadToCloudinary } from '../utils/cloudinary.js';
+import { runAgent } from '../ai/orchestrator.js';
+import mongoose from 'mongoose';
 
 // @desc    Create a new listing (Multi-step Wizard)
 // @route   POST /api/listings
 // @access  Private (Provider)
 export const createListing = async (req, res) => {
   try {
-    const data = req.body; // Use 'data' variable consistently
+    const data = req.body;
+
+    // --- 0. AI BLOCKING VALIDATION ---
+    console.log("Starting Sync AI Validation...");
+
+    // A. Text & PII Check
+    const textContext = `${data.title} ${data.description}`;
+    const abusiveCheck = await runAgent('AbusiveWordsCheckAgent', {
+      text: textContext,
+      context: { userId: req.user.id }
+    }, { type: 'validation', id: new mongoose.Types.ObjectId() });
+
+    if (abusiveCheck.action === 'block' || abusiveCheck.pii_detected) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation Failed: Content Safety',
+        error: abusiveCheck.reason || "Description contains inappropriate language or prohibited phone numbers (PII)."
+      });
+    }
+
+    // B. Location Verification
+    if (data.location) {
+      const locationCheck = await runAgent('AddressVerificationAgent', {
+        ...data.location
+      }, { type: 'validation', id: new mongoose.Types.ObjectId() });
+
+      if (!locationCheck.isValid) {
+        const errorMsg = Object.values(locationCheck.errors || {}).join(', ') || "Location details do not match coordinates.";
+        return res.status(400).json({
+          success: false,
+          message: 'Validation Failed: Location Mismatch',
+          error: errorMsg
+        });
+      }
+    }
+
+    // C. Image Moderation (Main Images)
+    if (data.images && data.images.length > 0) {
+      const base64Images = data.images.filter(img => img.startsWith('data:image'));
+      for (const img of base64Images) {
+        const base64 = img.split(',')[1];
+        const imageCheck = await runAgent('ImageModerationAgent', {
+          imageBase64: base64,
+          imageId: 'upload'
+        }, { type: 'validation', id: new mongoose.Types.ObjectId() });
+
+        if (!imageCheck.isAllowed) {
+          return res.status(400).json({
+            success: false,
+            message: 'Validation Failed: Image Rejected',
+            error: imageCheck.reason || "Image must be a clear property photo (No animals, people, or text)."
+          });
+        }
+      }
+    }
+    console.log("AI Validation Passed. Proceeding...");
+    // --------------------------------
 
     console.log("Creating Listing. Processing Images...");
 
@@ -42,8 +100,8 @@ export const createListing = async (req, res) => {
     let status = 'active';
     if (data.status === 'draft') status = 'draft';
 
-    // If AI verification flags exist, or explicitly set to hidden by audit
-    if (data.status === 'hidden_by_audit') status = 'hidden_by_audit';
+    // AI verification is now blocking, so we don't set 'hidden_by_audit' here.
+    // If AI verification flags exist, or explicitly set to hidden by audit (Logic Removed)
 
     const newListing = new Listing({
       ...data,
@@ -617,6 +675,31 @@ export const getPendingApprovals = async (req, res) => {
 
   } catch (error) {
     console.error("Pending Approvals Error:", error);
+    res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+  }
+};
+
+// @desc    Delete a listing
+// @route   DELETE /api/listings/:id
+// @access  Private (Provider/Admin)
+export const deleteListing = async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+
+    if (!listing) {
+      return res.status(404).json({ success: false, message: 'Listing not found' });
+    }
+
+    // Check ownership (unless admin)
+    if (listing.provider.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(401).json({ success: false, message: 'Not authorized' });
+    }
+
+    await listing.deleteOne();
+
+    res.json({ success: true, message: 'Listing deleted successfully' });
+  } catch (error) {
+    console.error("Delete Listing Error:", error);
     res.status(500).json({ success: false, message: 'Server Error', error: error.message });
   }
 };

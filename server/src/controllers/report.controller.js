@@ -17,9 +17,14 @@ export const createReport = async (req, res) => {
         const report = await Report.create({
             reporter: req.user.id,
             listing: listingId,
-            reason,
             description
         });
+
+        // Increment provider's report count
+        const User = (await import('../models/User.js')).default;
+        if (listing.provider) {
+            await User.findByIdAndUpdate(listing.provider, { $inc: { reportCount: 1 } });
+        }
 
         // Send automated acknowledgement to reporter
         try {
@@ -71,7 +76,14 @@ export const createReport = async (req, res) => {
 export const getReports = async (req, res) => {
     try {
         const reports = await Report.find()
-            .populate('listing', 'title _id')
+            .populate({
+                path: 'listing',
+                select: 'title _id',
+                populate: {
+                    path: 'provider',
+                    select: 'name email phone profileImage isVerified warningCount status reportCount'
+                }
+            })
             .populate('reporter', 'name email')
             .sort({ createdAt: -1 });
 

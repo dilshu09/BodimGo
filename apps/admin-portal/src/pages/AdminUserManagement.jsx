@@ -235,7 +235,7 @@ const AdminUserManagement = () => {
           placeholder="Search by name or email..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+          className="w-full pl-10 pr-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary hover:border-[#FF385C] transition-colors duration-300"
         />
       </div>
 
@@ -280,7 +280,7 @@ const AdminUserManagement = () => {
             </thead>
             <tbody className="divide-y divide-neutral-200">
               {filteredUsers.map((user) => (
-                <tr key={user._id} className="hover:bg-neutral-50 transition">
+                <tr key={user._id} className="group hover:bg-neutral-50 transition-all border-l-4 border-transparent hover:border-[#FF385C]">
                   <td className="px-6 py-4 font-medium text-neutral-900 flex items-center gap-2">
                     {user.name}
                     {user.isVerified && <BadgeCheck size={16} className="text-blue-500" title="Verified Provider" />}

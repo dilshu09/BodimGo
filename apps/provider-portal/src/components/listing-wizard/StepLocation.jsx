@@ -16,6 +16,33 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
         return data.location?.coordinates?.lat ? data.location.coordinates : defaultCenter;
     }, [data.location?.coordinates]);
 
+    // Geocoding Helper
+    const geocodeLocation = useCallback((searchText) => {
+        if (!window.google || !window.google.maps) return;
+        const geocoder = new window.google.maps.Geocoder();
+
+        geocoder.geocode({ address: `${searchText}, Sri Lanka` }, (results, status) => {
+            if (status === 'OK' && results[0]) {
+                const { lat, lng } = results[0].geometry.location;
+                update({
+                    location: {
+                        ...data.location,
+                        coordinates: { lat: lat(), lng: lng() }
+                    }
+                });
+            }
+        });
+    }, [data.location, update]);
+
+    // Auto-update on City Select
+    useEffect(() => {
+        if (data.location?.city && data.location?.district) {
+            // Only geocode if coordinates are 0,0 or we just changed city (optional optimization?)
+            // For now, simple trigger:
+            geocodeLocation(`${data.location.city}, ${data.location.district}`);
+        }
+    }, [data.location?.city]);
+
     // Derive Province
     const [province, setProvince] = useState('');
 
@@ -50,7 +77,7 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
         if (name === 'province') {
             setProvince(value);
             update({
-                location: { ...data.location, district: '', city: '' }
+                location: { ...data.location, province: value, district: '', city: '' }
             });
             setCitySearch('');
         } else if (name === 'district') {
@@ -197,6 +224,11 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                         name="address"
                         value={data.location?.address}
                         onChange={handleChange}
+                        onBlur={() => {
+                            if (data.location?.address && data.location?.city) {
+                                geocodeLocation(`${data.location.address}, ${data.location.city}`);
+                            }
+                        }}
                         className={`input-field ${errors?.addressText ? 'border-red-500' : ''}`}
                         placeholder="House No, Street, Landmark"
                     />

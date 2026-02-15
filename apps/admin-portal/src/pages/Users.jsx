@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import { CheckCircle, XCircle } from 'lucide-react';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const UsersPage = () => {
     const [users, setUsers] = useState([]);
+
+    // Modal State
+    const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+    const [providerToVerify, setProviderToVerify] = useState(null);
 
     const fetchUsers = async () => {
         try {
@@ -18,14 +23,21 @@ const UsersPage = () => {
         fetchUsers();
     }, []);
 
-    const verifyProvider = async (id) => {
-        if (confirm('Are you sure you want to verify this provider?')) {
-            try {
-                await api.put(`/admin/providers/${id}/verify`);
-                fetchUsers();
-            } catch (err) {
-                alert('Verification failed');
-            }
+    const handleVerifyClick = (id) => {
+        setProviderToVerify(id);
+        setIsVerifyModalOpen(true);
+    };
+
+    const confirmVerify = async () => {
+        if (!providerToVerify) return;
+        try {
+            await api.put(`/admin/providers/${providerToVerify}/verify`);
+            fetchUsers();
+            setIsVerifyModalOpen(false);
+            setProviderToVerify(null);
+        } catch (err) {
+            alert('Verification failed'); // Could replace with toast if available, but sticking to alert replacement for now
+            setIsVerifyModalOpen(false);
         }
     };
 
@@ -50,7 +62,7 @@ const UsersPage = () => {
                                 <td className="px-6 py-4 text-gray-500">{user.email}</td>
                                 <td className="px-6 py-4">
                                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${user.role === 'provider' ? 'bg-purple-100 text-purple-700' :
-                                            user.role === 'admin' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'
+                                        user.role === 'admin' ? 'bg-gray-100 text-gray-700' : 'bg-blue-100 text-blue-700'
                                         }`}>
                                         {user.role}
                                     </span>
@@ -69,7 +81,7 @@ const UsersPage = () => {
                                 <td className="px-6 py-4">
                                     {user.role === 'provider' && !user.isVerified && (
                                         <button
-                                            onClick={() => verifyProvider(user._id)}
+                                            onClick={() => handleVerifyClick(user._id)}
                                             className="text-primary hover:underline font-medium"
                                         >
                                             Verify
@@ -81,6 +93,21 @@ const UsersPage = () => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isVerifyModalOpen}
+                title="Verify Provider"
+                message="Are you sure you want to verify this provider? They will be able to publish listings."
+                confirmText="Verify Provider"
+                cancelText="Cancel"
+                isDanger={false}
+                onConfirm={confirmVerify}
+                onCancel={() => {
+                    setIsVerifyModalOpen(false);
+                    setProviderToVerify(null);
+                }}
+            />
         </div>
     );
 };

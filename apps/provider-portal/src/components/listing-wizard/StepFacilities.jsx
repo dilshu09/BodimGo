@@ -1,7 +1,7 @@
 import {
     Wifi, Bath, Utensils, Wind, Fan, Calculator,
     Droplets, Tv, Video, Car, Bike, BookOpen,
-    Columns, Flower2, Dumbbell, Waves, Zap, Sparkles
+    Columns, Flower2, Dumbbell, Waves, Zap, Sparkles, Plus
 } from 'lucide-react';
 
 // Enhanced Facility List with Icons
@@ -69,6 +69,59 @@ const StepFacilities = ({ data, update }) => {
                         </div>
                     );
                 })}
+            </div>
+
+            {/* Custom Facility Input */}
+            <div className="mt-8 pt-6 border-t border-neutral-100">
+                <h4 className="font-bold text-neutral-800 mb-2">Other Amenities</h4>
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        id="custom-facility-input"
+                        placeholder="e.g. Roof Top, Solar Power, Gym"
+                        className="input-field flex-1 border-neutral-300 focus:border-primary focus:ring-primary"
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const val = e.target.value.trim();
+                                if (val && !data.facilities?.includes(val)) {
+                                    toggleFacility(val); // Reuse toggle to add
+                                    e.target.value = '';
+                                }
+                            }
+                        }}
+                    />
+                    <button
+                        type="button"
+                        onClick={() => {
+                            const input = document.getElementById('custom-facility-input');
+                            const val = input.value.trim();
+                            if (val && !data.facilities?.includes(val)) {
+                                toggleFacility(val);
+                                input.value = '';
+                            }
+                        }}
+                        className="bg-neutral-900 text-white px-6 rounded-xl font-bold hover:bg-neutral-800 transition-all active:scale-95 flex items-center gap-2 shadow-lg shadow-neutral-200"
+                    >
+                        <Plus size={20} />
+                        Add
+                    </button>
+                </div>
+
+                {/* Display Custom Added Facilities (Not in Predefined List) */}
+                <div className="flex flex-wrap gap-2 mt-4">
+                    {data.facilities?.filter(f => !FACILITIES.some(pf => pf.label === f)).map(custom => (
+                        <div key={custom} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-2">
+                            {custom}
+                            <button
+                                onClick={() => toggleFacility(custom)}
+                                className="hover:text-red-500 transition-colors"
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <div className="mt-8 p-5 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl border border-yellow-100 flex items-start gap-4">

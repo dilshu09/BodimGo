@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, UserPlus, FileText, ChevronRight, CheckCircle, AlertTriangle, Home, Users, DollarSign, ArrowUpRight, TrendingUp, Settings } from 'lucide-react';
+import { Plus, UserPlus, FileText, ChevronRight, CheckCircle, AlertTriangle, Home, Users, DollarSign, ArrowUpRight, TrendingUp, Settings, Clock, PieChart } from 'lucide-react';
 import axios from 'axios';
 
 const Dashboard = () => {
@@ -44,25 +44,34 @@ const Dashboard = () => {
     // Stats Configuration matching FinanceDashboard style
     const statCards = [
         {
-            title: "Active Tenants",
-            value: stats?.activeTenants || 0,
-            icon: Users,
-            bg: "bg-blue-50",
-            textColor: "text-blue-600"
+            title: "Pending Requests",
+            value: stats?.pendingRequests || 0,
+            icon: Clock,
+            bg: "bg-amber-50 dark:bg-slate-800/50",
+            textColor: "text-amber-600 dark:text-amber-400",
+            borderColor: "border-slate-200 dark:border-slate-700",
+            hoverBorder: "hover:border-amber-500 dark:hover:border-amber-400",
+            hoverText: "group-hover:text-amber-600 dark:group-hover:text-amber-400"
         },
         {
-            title: "Monthly Revenue",
-            value: `Rs. ${(stats?.thisMonthRevenue || 0).toLocaleString()}`,
-            icon: DollarSign,
-            bg: "bg-emerald-50", // Matching Finance 'Green' feel
-            textColor: "text-emerald-600"
+            title: "Occupancy Rate",
+            value: `${stats?.occupancyRate || 0}%`,
+            icon: PieChart,
+            bg: "bg-emerald-50 dark:bg-slate-800/50",
+            textColor: "text-emerald-600 dark:text-emerald-400",
+            borderColor: "border-slate-200 dark:border-slate-700",
+            hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-400",
+            hoverText: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
         },
         {
             title: "Empty Rooms",
             value: stats?.vacantRooms || 0,
             icon: Home,
-            bg: "bg-orange-50",
-            textColor: "text-orange-600"
+            bg: "bg-orange-50 dark:bg-slate-800/50",
+            textColor: "text-orange-600 dark:text-orange-400",
+            borderColor: "border-slate-200 dark:border-slate-700",
+            hoverBorder: "hover:border-orange-500 dark:hover:border-orange-400",
+            hoverText: "group-hover:text-orange-600 dark:group-hover:text-orange-400"
         }
     ];
 
@@ -80,14 +89,14 @@ const Dashboard = () => {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-                    <p className="text-slate-600 mt-1">
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Dashboard</h1>
+                    <p className="text-slate-600 dark:text-slate-400 mt-1">
                         Here's what's happening with your properties today.
                     </p>
                 </div>
 
                 <div className="flex gap-3">
-                    <Link to="/listings" className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 font-medium transition-colors shadow-sm">
+                    <Link to="/listings" className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 font-medium transition-colors shadow-sm">
                         View Listings
                     </Link>
                     <Link to="/add-listing" className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-hover font-medium flex items-center gap-2 transition-colors shadow-sm">
@@ -104,77 +113,104 @@ const Dashboard = () => {
                     {/* Quick Stats Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         {statCards.map((stat, i) => (
-                            <div key={i} className={`${stat.bg} rounded-xl p-6 border border-slate-200 shadow-sm transition-all hover:shadow-md`}>
-                                <div className="flex items-start justify-between mb-4">
+                            <div key={i} className={`${stat.bg} rounded-xl p-3 border ${stat.borderColor || 'border-slate-200'} shadow-sm transition-all duration-300 hover:shadow-xl ${stat.hoverBorder} hover:-translate-y-1 group`}>
+                                <div className="flex items-start justify-between mb-1">
                                     <div>
-                                        <p className="text-sm text-slate-600 font-medium">{stat.title}</p>
-                                        <p className="text-2xl font-bold text-slate-900 mt-2">{stat.value}</p>
+                                        <p className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wide opacity-80 group-hover:opacity-100 transition-opacity">{stat.title}</p>
+                                        <p className={`text-xl font-black text-slate-900 dark:text-white mt-0.5 tracking-tight ${stat.hoverText} transition-colors`}>{stat.value}</p>
                                     </div>
-                                    <div className={`p-2 rounded-lg bg-white/60 ${stat.textColor}`}>
-                                        <stat.icon size={22} />
+                                    <div className={`p-2 rounded-lg bg-white/60 dark:bg-black/20 ${stat.textColor} group-hover:scale-110 transition-transform shadow-sm`}>
+                                        <stat.icon size={18} />
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    {/* Occupancy Section */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-8">
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-bold text-slate-900">Occupancy Status</h2>
+                    {/* Occupancy Section - Enhanced UI */}
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 relative overflow-hidden">
+                        {/* Background Decoration */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 dark:bg-blue-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+
+                        <div className="flex items-center justify-between mb-8 relative z-10">
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-900">Occupancy Overview</h2>
+                                <p className="text-slate-500 text-sm">Real-time room availability</p>
+                            </div>
+                            <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
+                                <span className={`w-2 h-2 rounded-full ${stats?.occupancyRate >= 80 ? 'bg-emerald-500' : stats?.occupancyRate >= 50 ? 'bg-orange-500' : 'bg-red-500'}`}></span>
+                                <span className="text-xs font-semibold text-slate-700">
+                                    {stats?.occupancyRate >= 80 ? 'High Demand' : stats?.occupancyRate >= 50 ? 'Moderate' : 'Low Occupancy'}
+                                </span>
+                            </div>
                         </div>
 
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-12">
-                            {/* SVG Gauge - Bigger & Thinner */}
-                            <div className="relative w-64 h-64 flex-shrink-0">
+                        <div className="flex flex-col md:flex-row items-center justify-around gap-8 relative z-10">
+                            {/* SVG Gauge - Enhanced with Gradient */}
+                            <div className="relative w-56 h-56 flex-shrink-0 group">
+                                <div className="absolute inset-0 bg-blue-100/20 rounded-full blur-xl scale-90 group-hover:scale-100 transition-transform duration-700"></div>
                                 <svg className="w-full h-full transform -rotate-90">
+                                    <defs>
+                                        <linearGradient id="occupancyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor="#3b82f6" /> {/* Blue-500 */}
+                                            <stop offset="100%" stopColor="#8b5cf6" /> {/* Violet-500 */}
+                                        </linearGradient>
+                                    </defs>
                                     {/* Background Circle */}
                                     <circle
-                                        cx="128"
-                                        cy="128"
-                                        r={radius}
-                                        stroke="#f1f5f9" // slate-100
-                                        strokeWidth={strokeWidth}
+                                        cx="112"
+                                        cy="112"
+                                        r="90"
+                                        stroke="#f1f5f9"
+                                        strokeWidth="12"
                                         fill="transparent"
+                                        className="transition-all duration-300"
                                     />
                                     {/* Progress Circle */}
                                     <circle
-                                        cx="128"
-                                        cy="128"
-                                        r={radius}
-                                        stroke="currentColor"
-                                        strokeWidth={strokeWidth}
+                                        cx="112"
+                                        cy="112"
+                                        r="90"
+                                        stroke="url(#occupancyGradient)"
+                                        strokeWidth="12"
                                         fill="transparent"
-                                        strokeDasharray={circumference}
-                                        strokeDashoffset={strokeDashoffset}
-                                        className="text-primary transition-all duration-1000 ease-out"
+                                        strokeDasharray={2 * Math.PI * 90}
+                                        strokeDashoffset={2 * Math.PI * 90 - ((stats?.occupancyRate || 0) / 100) * (2 * Math.PI * 90)}
+                                        className="transition-all duration-1000 ease-out drop-shadow-sm"
                                         strokeLinecap="round"
                                     />
                                 </svg>
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-5xl font-bold text-slate-900">{stats?.occupancyRate || 0}%</span>
-                                    <span className="text-sm font-medium text-slate-500 mt-1">Occupied</span>
+                                    <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">
+                                        {stats?.occupancyRate || 0}%
+                                    </span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Occupied</span>
                                 </div>
                             </div>
 
-                            <div className="space-y-4 w-full max-w-xs">
-                                <div className="flex justify-between items-center p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
-                                    <span className="flex items-center gap-3 text-slate-700 font-medium">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-primary"></div>
-                                        Occupied Rooms
-                                    </span>
-                                    <span className="font-bold text-slate-900">{stats?.totalRooms - stats?.vacantRooms}</span>
+                            {/* Legend / Stats */}
+                            <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
+                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center hover:bg-white hover:shadow-md transition-all duration-300 group/card">
+                                    <div className="mb-2 p-2 bg-blue-100 text-blue-600 rounded-lg group-hover/card:scale-110 transition-transform">
+                                        <Users size={20} />
+                                    </div>
+                                    <span className="text-2xl font-bold text-slate-900">{stats?.totalRooms - stats?.vacantRooms || 0}</span>
+                                    <span className="text-xs font-medium text-slate-500">Occupied Rooms</span>
                                 </div>
-                                <div className="flex justify-between items-center p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
-                                    <span className="flex items-center gap-3 text-slate-700 font-medium">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-slate-300"></div>
-                                        Vacant Rooms
-                                    </span>
-                                    <span className="font-bold text-slate-900">{stats?.vacantRooms}</span>
+
+                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center hover:bg-white hover:shadow-md transition-all duration-300 group/card">
+                                    <div className="mb-2 p-2 bg-emerald-100 text-emerald-600 rounded-lg group-hover/card:scale-110 transition-transform">
+                                        <Home size={20} />
+                                    </div>
+                                    <span className="text-2xl font-bold text-slate-900">{stats?.vacantRooms || 0}</span>
+                                    <span className="text-xs font-medium text-slate-500">Vacant Rooms</span>
                                 </div>
-                                <div className="pt-2 border-t border-slate-100 flex justify-between text-sm text-slate-500">
-                                    <span>Total Rooms: {stats?.totalRooms}</span>
-                                    <Link to="/listings" className="text-primary hover:underline font-medium">Manage</Link>
+
+                                <div className="col-span-2 pt-2">
+                                    <div className="flex justify-between items-center px-4 py-3 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-200 cursor-pointer hover:bg-slate-800 transition-colors">
+                                        <span className="font-medium text-sm">Total Capacity</span>
+                                        <span className="font-bold">{stats?.totalRooms || 0} Rooms</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -185,7 +221,7 @@ const Dashboard = () => {
                 <div className="space-y-8">
 
                     {/* 1. Quick Links Card (Now on Top) */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 w-full">
+                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 w-full">
                         <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
                         <div className="space-y-3">
                             <Link to="/tenants/add" className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-primary/5 text-slate-700 hover:text-primary transition-all border border-transparent hover:border-primary/20 group">
@@ -211,7 +247,7 @@ const Dashboard = () => {
 
                     {/* 2. Action Center (Now below) */}
                     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[500px]">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
+                        <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-white">
                             <h2 className="text-lg font-bold text-slate-900">Action Center</h2>
                             {actions.length > 0 && (
                                 <span className="bg-red-50 text-primary text-xs font-bold px-2 py-1 rounded-md border border-red-100">{actions.length} New</span>

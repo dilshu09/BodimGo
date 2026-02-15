@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, Loader2 } from 'lucide-react';
 import api from '../services/api';
+import { toast } from "react-hot-toast";
 
 const ViewingRequestModal = ({ isOpen, onClose, listingId, providerName }) => {
     const [loading, setLoading] = useState(false);
@@ -21,11 +22,11 @@ const ViewingRequestModal = ({ isOpen, onClose, listingId, providerName }) => {
                 time,
                 note
             });
-            alert(`Viewing request sent to ${providerName} for ${date} at ${time}!`);
+            toast.success(`Viewing request sent to ${providerName} for ${date} at ${time}!`);
             onClose();
-        } catch (error) {
-            console.error(error);
-            alert("Failed to send viewing request. Please try again.");
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to send viewing request. Please try again.");
         } finally {
             setLoading(false);
         }

@@ -164,25 +164,25 @@ export default function ActiveTenantsPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">Active Tenants</h2>
-          <p className="text-slate-600 mt-1">Current tenants in your boarding</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Active Tenants</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">Current tenants in your boarding</p>
         </div>
         <div className="text-right">
           <div className="text-4xl font-bold text-red-500">{tenants.length}</div>
-          <p className="text-slate-600">Total Active Tenants</p>
+          <p className="text-slate-600 dark:text-slate-400">Total Active Tenants</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">
         {tenants.map((tenant) => (
-          <div key={tenant.id} className={`bg-white rounded-lg shadow-sm border transition-all duration-200 ${expandedTenantId === tenant.id ? 'border-blue-200 ring-4 ring-blue-50' : 'border-slate-200 hover:shadow-md'}`}>
+          <div key={tenant.id} className={`group bg-white dark:bg-slate-900 rounded-xl shadow-sm border transition-all duration-300 ${expandedTenantId === tenant.id ? 'border-blue-200 dark:border-blue-800 ring-4 ring-blue-50 dark:ring-blue-900/20 transition-none' : 'border-slate-200 dark:border-slate-800 hover:shadow-xl hover:border-[#FF385C] dark:hover:border-[#FF385C] hover:-translate-y-1'}`}>
 
             {/* Top Row: Basic Info and Status */}
             <div className="p-6 pb-0">
               <div className="flex items-start justify-between mb-4 pr-16">
                 <div>
-                  <h3 className="text-xl font-bold text-slate-900">{tenant.name}</h3>
-                  <p className="text-slate-600 text-sm">Room: {tenant.room}</p>
+                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">{tenant.name}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm">Room: {tenant.room}</p>
                 </div>
                 <div className="flex gap-2">
                   {!tenant.currentMonth.paid && tenant.status !== 'Moved Out' && tenant.status !== 'Evicted' && (
@@ -203,26 +203,26 @@ export default function ActiveTenantsPage() {
               {/* Quick Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Email</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-1">Email</p>
                   <div className="flex items-center gap-2">
                     <Mail size={16} className="text-red-500" />
-                    <p className="text-sm text-slate-900 truncate">{tenant.email}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-300 truncate">{tenant.email}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Phone</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-1">Phone</p>
                   <div className="flex items-center gap-2">
                     <Phone size={16} className="text-red-500" />
-                    <p className="text-sm text-slate-900">{tenant.phone}</p>
+                    <p className="text-sm text-slate-900 dark:text-slate-300">{tenant.phone}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Monthly Rent</p>
-                  <p className="text-sm font-bold text-slate-900">Rs. {(tenant.monthlyRent || 0).toLocaleString()}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-1">Monthly Rent</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">Rs. {(tenant.monthlyRent || 0).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-slate-500 mb-1">Check-in Date</p>
-                  <p className="text-sm text-slate-900">{new Date(tenant.checkInDate).toLocaleDateString()}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500 mb-1">Check-in Date</p>
+                  <p className="text-sm text-slate-900 dark:text-slate-300">{new Date(tenant.checkInDate).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
@@ -230,14 +230,14 @@ export default function ActiveTenantsPage() {
             {/* Expanded Content Section */}
             {expandedTenantId === tenant.id && (
               <div className="px-6 pb-6 animate-in fade-in slide-in-from-top-1 duration-200">
-                <div className="p-6 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="p-6 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                   {/* VIEW MODE */}
                   {actionType === 'details' && (
                     <>
-                      <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
-                        <h4 className="font-bold text-slate-800">Full Details</h4>
+                      <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
+                        <h4 className="font-bold text-slate-800 dark:text-white">Full Details</h4>
                         <div className="flex gap-2">
-                          <button onClick={() => toggleExpand(tenant.id, 'edit')} className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 font-medium text-slate-700 transition">
+                          <button onClick={() => toggleExpand(tenant.id, 'edit')} className="text-xs flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 font-medium text-slate-700 dark:text-slate-200 transition">
                             <Edit2 size={12} /> Edit
                           </button>
                           <button
@@ -253,11 +253,11 @@ export default function ActiveTenantsPage() {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-6">
-                        <div><label className="text-xs text-slate-500 uppercase">Full Name</label><p className="text-sm font-medium text-slate-900">{tenant.name}</p></div>
-                        <div><label className="text-xs text-slate-500 uppercase">NIC / ID</label><p className="text-sm font-medium text-slate-900">{tenant.nic || 'N/A'}</p></div>
-                        <div className="col-span-2 md:col-span-1"><label className="text-xs text-slate-500 uppercase">Address</label><p className="text-sm font-medium text-slate-900">{tenant.address || 'N/A'}</p></div>
-                        <div><label className="text-xs text-slate-500 uppercase">Email</label><p className="text-sm font-medium text-slate-900 break-all">{tenant.email}</p></div>
-                        <div><label className="text-xs text-slate-500 uppercase">Phone</label><p className="text-sm font-medium text-slate-900">{tenant.phone}</p></div>
+                        <div><label className="text-xs text-slate-500 dark:text-slate-400 uppercase">Full Name</label><p className="text-sm font-medium text-slate-900 dark:text-white">{tenant.name}</p></div>
+                        <div><label className="text-xs text-slate-500 dark:text-slate-400 uppercase">NIC / ID</label><p className="text-sm font-medium text-slate-900 dark:text-white">{tenant.nic || 'N/A'}</p></div>
+                        <div className="col-span-2 md:col-span-1"><label className="text-xs text-slate-500 dark:text-slate-400 uppercase">Address</label><p className="text-sm font-medium text-slate-900 dark:text-white">{tenant.address || 'N/A'}</p></div>
+                        <div><label className="text-xs text-slate-500 dark:text-slate-400 uppercase">Email</label><p className="text-sm font-medium text-slate-900 dark:text-white break-all">{tenant.email}</p></div>
+                        <div><label className="text-xs text-slate-500 dark:text-slate-400 uppercase">Phone</label><p className="text-sm font-medium text-slate-900 dark:text-white">{tenant.phone}</p></div>
                       </div>
                     </>
                   )}
@@ -265,17 +265,17 @@ export default function ActiveTenantsPage() {
                   {/* EDIT MODE */}
                   {actionType === 'edit' && (
                     <div className="max-w-3xl">
-                      <div className="flex items-center justify-between mb-4 border-b border-slate-200 pb-2">
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2"><Edit2 size={16} /> Edit Details</h4>
-                        <button onClick={() => toggleExpand(tenant.id, 'details')} className="text-xs text-slate-500 hover:text-slate-700 underline">Cancel</button>
+                      <div className="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
+                        <h4 className="font-bold text-slate-800 dark:text-white flex items-center gap-2"><Edit2 size={16} /> Edit Details</h4>
+                        <button onClick={() => toggleExpand(tenant.id, 'details')} className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 underline">Cancel</button>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 mb-1">Full Name</label><input value={editFormData.name || ''} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg text-sm" /></div>
-                        <div><label className="block text-xs font-medium text-slate-500 mb-1">Phone</label><input value={editFormData.phone || ''} onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg text-sm" /></div>
-                        <div><label className="block text-xs font-medium text-slate-500 mb-1">NIC</label><input value={editFormData.nic || ''} onChange={(e) => setEditFormData({ ...editFormData, nic: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg text-sm" /></div>
-                        <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 mb-1">Email</label><input value={editFormData.email || ''} onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg text-sm" /></div>
-                        <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 mb-1">Address</label><input value={editFormData.address || ''} onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg text-sm" /></div>
-                        <div><label className="block text-xs font-medium text-slate-500 mb-1">Rent Amount</label><input type="number" value={editFormData.rentAmount || ''} onChange={(e) => setEditFormData({ ...editFormData, rentAmount: e.target.value })} className="w-full p-2 border border-slate-300 rounded-lg text-sm" /></div>
+                        <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Full Name</label><input value={editFormData.name || ''} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
+                        <div><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Phone</label><input value={editFormData.phone || ''} onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
+                        <div><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">NIC</label><input value={editFormData.nic || ''} onChange={(e) => setEditFormData({ ...editFormData, nic: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
+                        <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Email</label><input value={editFormData.email || ''} onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
+                        <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Address</label><input value={editFormData.address || ''} onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
+                        <div><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Rent Amount</label><input type="number" value={editFormData.rentAmount || ''} onChange={(e) => setEditFormData({ ...editFormData, rentAmount: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
                       </div>
                       <div className="mt-4 flex justify-end gap-2">
                         <button onClick={() => toggleExpand(tenant.id, 'details')} className="px-3 py-1.5 text-sm border rounded-lg text-slate-600 hover:bg-slate-50">Cancel</button>
@@ -307,12 +307,12 @@ export default function ActiveTenantsPage() {
             )}
 
             {/* Bottom Bar: Payment Status and View Button */}
-            <div className="border-t border-slate-200 p-4 pt-4 rounded-b-lg bg-slate-50/50">
+            <div className="border-t border-slate-200 dark:border-slate-700 p-4 pt-4 rounded-b-lg bg-slate-50/50 dark:bg-slate-800/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CreditCard size={16} className="text-red-500" />
                   <div>
-                    <p className="text-xs text-slate-500">Current Month Payment</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Current Month Payment</p>
                     <p className={`text-sm font-bold ${tenant.currentMonth.paid ? 'text-green-600' : 'text-red-600'}`}>
                       {tenant.currentMonth.paid && tenant.currentMonth.date ? `✓ Paid on ${new Date(tenant.currentMonth.date).toLocaleDateString()}` : 'Not Paid'}
                     </p>
@@ -321,8 +321,8 @@ export default function ActiveTenantsPage() {
                 <button
                   onClick={() => toggleExpand(tenant.id, 'details')}
                   className={`px-4 py-2 border rounded-lg transition-colors text-sm font-medium flex items-center gap-2 ${expandedTenantId === tenant.id
-                    ? 'border-slate-300 text-slate-600 bg-white hover:bg-slate-50 shadow-sm'
-                    : 'border-red-500 text-red-500 hover:bg-red-50'
+                    ? 'border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 shadow-sm'
+                    : 'border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'
                     }`}
                 >
                   {expandedTenantId === tenant.id ? (
@@ -346,48 +346,48 @@ export default function ActiveTenantsPage() {
 
       {/* Manual Payment Modal */}
       {showPaymentModal && selectedTenantForPayment && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200 border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900">Record Manual Payment</h3>
-              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Record Manual Payment</h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                 <X size={24} />
               </button>
             </div>
 
             <div className="mb-6">
-              <p className="text-sm text-slate-600 mb-4">
-                Marking payment for <strong>{selectedTenantForPayment.name}</strong>.
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                Marking payment for <strong className="text-slate-900 dark:text-white">{selectedTenantForPayment.name}</strong>.
               </p>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Amount (Rs.)</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount (Rs.)</label>
                   <input
                     type="number"
                     value={paymentData.amount}
                     onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                    className="w-full p-2 border border-slate-300 rounded-lg"
+                    className="w-full p-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Payment Method</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Payment Method</label>
                   <select
                     value={paymentData.method}
                     onChange={(e) => setPaymentData({ ...paymentData, method: e.target.value })}
-                    className="w-full p-2 border border-slate-300 rounded-lg"
+                    className="w-full p-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg"
                   >
                     <option value="cash">Cash</option>
                     <option value="bank_transfer">Direct Bank Transfer</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
                   <input
                     type="date"
                     value={paymentData.date}
                     onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
-                    className="w-full p-2 border border-slate-300 rounded-lg"
+                    className="w-full p-2 border border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg"
                   />
                 </div>
               </div>
@@ -396,7 +396,7 @@ export default function ActiveTenantsPage() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 font-medium"
+                className="px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium"
               >
                 Cancel
               </button>

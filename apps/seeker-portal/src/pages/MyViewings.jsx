@@ -2,10 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Calendar, MapPin, Clock, MessageSquare, Loader2, Home } from "lucide-react";
 import api from "../services/api";
 import { Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import ConfirmationModal from "../components/ConfirmationModal";
+import { SkeletonList } from "../components/Skeleton";
 
 export default function MyViewings() {
     const [viewings, setViewings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [viewingToCancel, setViewingToCancel] = useState(null);
 
     useEffect(() => {
         fetchViewings();
@@ -17,8 +22,28 @@ export default function MyViewings() {
             setViewings(res.data);
         } catch (err) {
             console.error("Failed to fetch viewings", err);
+            toast.error("Failed to load viewings");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleCancelClick = (id) => {
+        setViewingToCancel(id);
+        setIsCancelModalOpen(true);
+    };
+
+    const confirmCancel = async () => {
+        if (!viewingToCancel) return;
+        try {
+            await api.put(`/viewing-requests/${viewingToCancel}/cancel`);
+            toast.success("Viewing request cancelled");
+            fetchViewings(); // Refresh list
+            setIsCancelModalOpen(false);
+            setViewingToCancel(null);
+        } catch (err) {
+            console.error("Failed to cancel viewing", err);
+            toast.error(err.response?.data?.message || "Failed to cancel request");
         }
     };
 
@@ -33,8 +58,10 @@ export default function MyViewings() {
     };
 
     if (loading) return (
-        <div className="min-h-screen pt-24 pb-12 flex justify-center">
-            <Loader2 className="animate-spin text-primary" size={32} />
+        <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
+            <div className="max-w-5xl mx-auto">
+                <SkeletonList />
+            </div>
         </div>
     );
 
@@ -96,6 +123,18 @@ export default function MyViewings() {
                                                     "{viewing.note}"
                                                 </div>
                                             )}
+
+                                            {/* Cancel Button for Pending Requests */}
+                                            {viewing.status === 'pending' && (
+                                                <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                                                    <button
+                                                        onClick={() => handleCancelClick(viewing._id)}
+                                                        className="text-red-500 text-sm font-medium hover:text-red-700 transition-colors flex items-center gap-1"
+                                                    >
+                                                        Cancel Request
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Provider Reply Section */}
@@ -117,6 +156,17 @@ export default function MyViewings() {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={isCancelModalOpen}
+                title="Cancel Viewing Request"
+                message="Are you sure you want to cancel this viewing request?"
+                confirmText="Yes, Cancel"
+                cancelText="No, Keep It"
+                isDanger={true}
+                onConfirm={confirmCancel}
+                onCancel={() => setIsCancelModalOpen(false)}
+            />
         </div>
     );
 }

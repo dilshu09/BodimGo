@@ -3,12 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api'; // Ensure this points to your axios instance
 import { User, Calendar, MapPin, CheckCircle, XCircle, Mail, Phone, ArrowLeft, FileText, Briefcase } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const BookingDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // Modal State
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [actionToConfirm, setActionToConfirm] = useState(null);
 
     useEffect(() => {
         fetchBooking();
@@ -26,16 +31,24 @@ const BookingDetails = () => {
         }
     };
 
-    const handleAction = async (action) => {
-        if (!confirm(`Are you sure you want to ${action} this booking?`)) return;
+    const handleActionClick = (action) => {
+        setActionToConfirm(action);
+        setIsConfirmModalOpen(true);
+    };
+
+    const confirmAction = async () => {
+        if (!actionToConfirm) return;
 
         try {
-            await api.put(`/bookings/${id}/status`, { action });
-            toast.success(`Booking ${action}ed successfully`);
+            await api.put(`/bookings/${id}/status`, { action: actionToConfirm });
+            toast.success(`Booking ${actionToConfirm}ed successfully`);
             fetchBooking(); // Refresh
+            setIsConfirmModalOpen(false);
+            setActionToConfirm(null);
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.message || 'Action failed');
+            setIsConfirmModalOpen(false);
         }
     };
 
@@ -188,13 +201,13 @@ const BookingDetails = () => {
                 {booking.status === 'pending' && (
                     <div className="p-6 bg-neutral-50 border-t border-neutral-200 flex justify-end gap-3">
                         <button
-                            onClick={() => handleAction('reject')}
+                            onClick={() => handleActionClick('reject')}
                             className="bg-white border border-red-200 text-red-600 px-6 py-2 rounded-xl font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
                         >
                             <XCircle size={18} /> Reject
                         </button>
                         <button
-                            onClick={() => handleAction('accept')}
+                            onClick={() => handleActionClick('accept')}
                             className="bg-green-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center gap-2 shadow-lg shadow-green-200"
                         >
                             <CheckCircle size={18} /> Accept Application
@@ -202,6 +215,21 @@ const BookingDetails = () => {
                     </div>
                 )}
             </div>
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                title={`${actionToConfirm === 'accept' ? 'Accept' : 'Reject'} Booking Request`}
+                message={`Are you sure you want to ${actionToConfirm} this booking request? This action will notify the applicant.`}
+                confirmText={actionToConfirm === 'accept' ? 'Accept Request' : 'Reject Request'}
+                cancelText="Cancel"
+                isDanger={actionToConfirm === 'reject'}
+                onConfirm={confirmAction}
+                onCancel={() => {
+                    setIsConfirmModalOpen(false);
+                    setActionToConfirm(null);
+                }}
+            />
         </div>
     );
 };

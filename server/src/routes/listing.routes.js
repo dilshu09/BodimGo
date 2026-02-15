@@ -1,5 +1,5 @@
 import express from 'express';
-import { createListing, getListings, getListingById, getMyListings, updateListing, getAllProviderRooms, updateRoomStatus } from '../controllers/listing.controller.js';
+import { createListing, getListings, getListingById, getMyListings, updateListing, getAllProviderRooms, updateRoomStatus, deleteListing } from '../controllers/listing.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -20,6 +20,7 @@ router.put('/provider/rooms/:roomId/status', protect, authorize('provider'), upd
 
 router.route('/:id')
   .get(getListingById)
-  .put(protect, authorize('provider', 'admin'), updateListing);
+  .put(protect, authorize('provider', 'admin'), updateListing)
+  .delete(protect, authorize('provider', 'admin'), deleteListing);
 
 export default router;

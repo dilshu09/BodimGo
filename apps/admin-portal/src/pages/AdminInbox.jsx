@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Mail, MessageSquare, Send, CheckCircle, Clock, AlertCircle, Search, Filter, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
@@ -12,12 +13,15 @@ const AdminInbox = () => {
     const [filter, setFilter] = useState("all");
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [replyMessage, setReplyMessage] = useState("");
+    const location = useLocation();
 
     const getPriorityColor = (p) => {
         switch (p) {
             case 'urgent': return 'text-red-600 bg-red-100';
             case 'high': return 'text-orange-600 bg-orange-100';
             case 'medium': return 'text-blue-600 bg-blue-100';
+            case 'medium': return 'text-blue-600 bg-blue-100';
+            case 'in_progress': return 'text-purple-600 bg-purple-100';
             default: return 'text-slate-600 bg-slate-100';
         }
     };
@@ -25,6 +29,19 @@ const AdminInbox = () => {
     useEffect(() => {
         fetchTickets();
     }, []);
+
+    useEffect(() => {
+        if (location.state?.ticketId && tickets.length > 0) {
+            const t = tickets.find(t => t._id === location.state.ticketId);
+            if (t) {
+                setSelectedTicket(t);
+                // Auto-mark as in_progress if open
+                if (t.status === 'open') {
+                    markAsInProgress(t._id);
+                }
+            }
+        }
+    }, [tickets, location.state]);
 
     const fetchTickets = async () => {
         try {
@@ -36,6 +53,16 @@ const AdminInbox = () => {
             // toast.error("Could not load tickets");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const markAsInProgress = async (id) => {
+        try {
+            await api.put(`/tickets/admin/${id}`, { status: 'in_progress' });
+            // Update local state to reflect change immediately
+            setTickets(prev => prev.map(t => t._id === id ? { ...t, status: 'in_progress' } : t));
+        } catch (error) {
+            console.error("Failed to mark as in_progress", error);
         }
     };
 
@@ -72,8 +99,8 @@ const AdminInbox = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
                 {/* Ticket List */}
                 <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-200 bg-slate-50 flex gap-2">
-                        {['all', 'open', 'resolved', 'closed'].map(f => (
+                    <div className="p-4 border-b border-slate-200 bg-slate-50 flex gap-2 overflow-x-auto scrollbar-thin">
+                        {['all', 'open', 'in_progress', 'resolved', 'closed'].map(f => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
@@ -83,7 +110,7 @@ const AdminInbox = () => {
                             </button>
                         ))}
                     </div>
-                    <div className="overflow-y-auto flex-1 p-2 space-y-2">
+                    <div className="overflow-y-auto flex-1 p-2 space-y-2 scrollbar-thin">
                         {loading && (
                             <div className="text-center p-8 text-slate-400 text-sm">Loading tickets...</div>
                         )}
@@ -93,8 +120,11 @@ const AdminInbox = () => {
                         {!loading && filteredTickets.map(ticket => (
                             <div
                                 key={ticket._id}
-                                onClick={() => setSelectedTicket(ticket)}
-                                className={`p-4 rounded-xl cursor-pointer border transition-all ${selectedTicket?._id === ticket._id ? 'bg-blue-50 border-blue-200 shadow-sm' : 'bg-white border-transparent hover:bg-slate-50'}`}
+                                onClick={() => {
+                                    setSelectedTicket(ticket);
+                                    if (ticket.status === 'open') markAsInProgress(ticket._id);
+                                }}
+                                className={`p-4 rounded-xl cursor-pointer border transition-all ${selectedTicket?._id === ticket._id ? 'bg-[#FF385C]/5 border-[#FF385C]/20 shadow-sm' : 'bg-white border-transparent hover:bg-slate-50'}`}
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${getPriorityColor(ticket.priority)}`}>
@@ -102,7 +132,7 @@ const AdminInbox = () => {
                                     </span>
                                     <span className="text-xs text-slate-400">{new Date(ticket.createdAt).toLocaleDateString()}</span>
                                 </div>
-                                <h3 className="font-bold text-slate-800 text-sm mb-1">{ticket.subject}</h3>
+                                <h3 className={`font-bold text-sm mb-1 ${selectedTicket?._id === ticket._id ? 'text-[#FF385C]' : 'text-slate-800'}`}>{ticket.subject}</h3>
                                 <p className="text-xs text-slate-500 truncate">{ticket.message}</p>
                                 <p className="text-xs text-slate-400 mt-2 font-medium">{ticket.provider?.name || 'Unknown'}</p>
                             </div>
@@ -123,15 +153,18 @@ const AdminInbox = () => {
                                             <span className="text-xs">({selectedTicket.provider?.email})</span>
                                         </div>
                                     </div>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${selectedTicket.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                                        {selectedTicket.status}
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold capitalize ${selectedTicket.status === 'open' ? 'bg-green-100 text-green-700' :
+                                        selectedTicket.status === 'in_progress' ? 'bg-purple-100 text-purple-700' :
+                                            'bg-slate-100 text-slate-600'
+                                        }`}>
+                                        {selectedTicket.status.replace('_', ' ')}
                                     </span>
                                 </div>
                                 <div className="bg-slate-50 p-4 rounded-xl text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
                                     {selectedTicket.message}
                                 </div>
                                 {selectedTicket.adminResponse && (
-                                    <div className="mt-4 bg-blue-50 p-4 rounded-xl border border-blue-100 text-blue-800 text-sm">
+                                    <div className="mt-4 bg-[#FF385C]/5 p-4 rounded-xl border border-[#FF385C]/20 text-[#FF385C] text-sm">
                                         <p className="font-bold mb-1 flex items-center gap-2"><CheckCircle size={14} /> Admin Response:</p>
                                         {selectedTicket.adminResponse}
                                     </div>
@@ -144,7 +177,7 @@ const AdminInbox = () => {
                                     <textarea
                                         value={replyMessage}
                                         onChange={(e) => setReplyMessage(e.target.value)}
-                                        className="flex-1 w-full p-4 border border-slate-200 rounded-xl resize-none focus:ring-2 focus:ring-slate-900 outline-none"
+                                        className="flex-1 w-full p-4 border border-slate-200 rounded-xl resize-none focus:ring-2 focus:ring-[#FF385C] outline-none"
                                         placeholder="Type your response here..."
                                     ></textarea>
                                     <div className="flex justify-end mt-4 gap-3">
@@ -157,7 +190,7 @@ const AdminInbox = () => {
                                         </button>
                                         <button
                                             type="submit"
-                                            className="px-6 py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 flex items-center gap-2"
+                                            className="px-6 py-2 bg-[#FF385C] text-white font-bold rounded-lg hover:bg-[#e02e4d] flex items-center gap-2 transform active:scale-95 transition-all"
                                         >
                                             <Send size={16} /> Send Reply
                                         </button>

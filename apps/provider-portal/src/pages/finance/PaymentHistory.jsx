@@ -71,35 +71,34 @@ export default function PaymentHistory() {
         <div className="p-8 max-w-7xl mx-auto" onClick={() => setShowFilterMenu(false)}>
             <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-slate-900">Transaction History</h2>
-                    <p className="text-slate-600 mt-2">View your income and expenses in one place</p>
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Transaction History</h2>
+                    <p className="text-slate-600 dark:text-slate-400 mt-2">View your income and expenses in one place</p>
                 </div>
                 <div className="flex gap-2 relative">
                     <div className="relative">
                         <button
                             onClick={(e) => { e.stopPropagation(); setShowFilterMenu(!showFilterMenu); }}
-                            className={`px-4 py-2 border rounded-lg flex items-center gap-2 font-medium transition-colors ${filter !== 'all' ? 'bg-primary text-white border-primary' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                            className={`px-4 py-2 border rounded-lg flex items-center gap-2 font-medium transition-colors ${filter !== 'all' ? 'bg-primary text-white border-primary' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                         >
                             <Filter size={18} /> {filter === 'all' ? 'Filter' : filter}
                         </button>
 
                         {showFilterMenu && (
-                            <div className="absolute right-0 top-12 w-48 bg-white rounded-xl shadow-card border border-slate-100 z-10 overflow-hidden">
-                                <button onClick={() => setFilter('all')} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-medium text-slate-700">All Transactions</button>
-                                <button onClick={() => setFilter('Income')} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-medium text-green-600">Income Only</button>
-                                <button onClick={() => setFilter('Expense')} className="w-full text-left px-4 py-3 hover:bg-slate-50 text-sm font-medium text-primary">Expenses Only</button>
+                            <div className="absolute right-0 top-12 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-card border border-slate-100 dark:border-slate-700 z-10 overflow-hidden">
+                                <button onClick={() => setFilter('all')} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300">All Transactions</button>
+                                <button onClick={() => setFilter('Income')} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium text-green-600 dark:text-green-400">Income Only</button>
+                                <button onClick={() => setFilter('Expense')} className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm font-medium text-primary dark:text-red-400">Expenses Only</button>
                             </div>
                         )}
                     </div>
-
-                    <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 flex items-center gap-2 font-medium">
+                    <button className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-medium">
                         <Download size={18} /> Export
                     </button>
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="grid grid-cols-6 bg-slate-50 p-4 border-b border-slate-200 text-sm font-semibold text-slate-600">
+            <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors duration-200">
+                <div className="grid grid-cols-6 bg-slate-50 dark:bg-slate-950 p-4 border-b border-slate-200 dark:border-slate-800 text-sm font-semibold text-slate-600 dark:text-slate-400">
                     <div className="col-span-2">Description</div>
                     <div>Date</div>
                     <div>Type</div>
@@ -107,26 +106,26 @@ export default function PaymentHistory() {
                     <div className="text-right">Status</div>
                 </div>
 
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filteredTransactions.map((tx) => (
-                        <div key={tx.id} className="grid grid-cols-6 p-4 items-center hover:bg-slate-50 transition-colors">
+                        <div key={tx.id} className="grid grid-cols-6 p-4 items-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <div className="col-span-2">
-                                <p className="font-bold text-slate-900">{tx.description}</p>
-                                <p className="text-xs text-slate-500">{tx.subtext}</p>
+                                <p className="font-bold text-slate-900 dark:text-white">{tx.description}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{tx.subtext}</p>
                             </div>
-                            <div className="text-sm text-slate-600">{tx.formattedDate}</div>
+                            <div className="text-sm text-slate-600 dark:text-slate-400">{tx.formattedDate}</div>
                             <div>
-                                <span className={`px-2 py-1 rounded text-xs font-semibold ${tx.type === 'Income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-primary'
+                                <span className={`px-2 py-1 rounded text-xs font-semibold ${tx.type === 'Income' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/30 text-primary dark:text-red-400'
                                     }`}>
                                     {tx.type}
                                 </span>
                             </div>
-                            <div className={`font-bold text-right ${tx.type === 'Income' ? 'text-green-600' : 'text-primary'
+                            <div className={`font-bold text-right ${tx.type === 'Income' ? 'text-green-600 dark:text-green-400' : 'text-primary dark:text-red-400'
                                 }`}>
                                 {tx.type === 'Income' ? '+' : '-'} Rs. {tx.amount.toLocaleString()}
                             </div>
                             <div className="text-right">
-                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold capitalize ${tx.status === 'completed' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
+                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold capitalize ${tx.status === 'completed' ? 'bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-400' : 'bg-yellow-50 dark:bg-yellow-900/10 text-yellow-700 dark:text-yellow-400'
                                     }`}>
                                     {tx.status}
                                 </span>
@@ -134,7 +133,7 @@ export default function PaymentHistory() {
                         </div>
                     ))}
                     {filteredTransactions.length === 0 && (
-                        <div className="p-8 text-center text-slate-500">No transactions found.</div>
+                        <div className="p-8 text-center text-slate-500 dark:text-slate-400">No transactions found.</div>
                     )}
                 </div>
             </div>

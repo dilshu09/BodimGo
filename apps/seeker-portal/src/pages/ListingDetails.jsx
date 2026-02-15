@@ -2,12 +2,14 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import api from "../services/api";
-import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare } from "lucide-react";
+import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare, Star, Bath, Bed, Maximize, Heart, Share2, Shield, Calendar, AlertTriangle } from "lucide-react";
 import ReviewModal from "../components/ReviewModal";
 import ReportModal from "../components/ReportModal";
+import { SkeletonDetails } from "../components/Skeleton";
 import BookingWizard from "../components/BookingWizard";
 import ViewingRequestModal from "../components/ViewingRequestModal";
 import MessageModal from "../components/MessageModal";
+import { toast } from 'react-hot-toast';
 
 const ListingDetails = () => {
   const { id } = useParams();
@@ -20,7 +22,9 @@ const ListingDetails = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showViewingModal, setShowViewingModal] = useState(false);
+
   const [showMessageModal, setShowMessageModal] = useState(false);
+  const [canReview, setCanReview] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -29,6 +33,7 @@ const ListingDetails = () => {
         setListing(res.data);
       } catch (err) {
         console.error(err);
+        toast.error("Failed to load listing details.");
       } finally {
         setLoading(false);
       }
@@ -61,9 +66,26 @@ const ListingDetails = () => {
       }
     };
 
+    const checkReviewEligibility = async () => {
+      try {
+        const res = await api.get('/bookings');
+        const myBookings = Array.isArray(res.data) ? res.data : res.data.data || [];
+        // Check if user has a confirmed/active booking for this listing
+        const hasValidBooking = myBookings.some(b =>
+          b.listing === id || (b.listing && b.listing._id === id) &&
+          ['confirmed', 'active', 'completed', 'moved_out'].includes(b.status)
+        );
+        setCanReview(hasValidBooking);
+      } catch (err) {
+        // Likely not logged in or error fetching
+        setCanReview(false);
+      }
+    };
+
     fetchDetails();
     fetchReviews();
     fetchProfile();
+    checkReviewEligibility();
   }, [id]);
 
   const navigate = useNavigate();
@@ -86,19 +108,26 @@ const ListingDetails = () => {
     // Maybe navigate to a "Requests" page? For now, stay here.
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-white dark:bg-slate-950 pb-20">
+      <Navbar />
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <SkeletonDetails />
+      </div>
+    </div>
+  );
   if (!listing) return <div>Listing not found</div>;
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white dark:bg-slate-950 pb-20 transition-colors duration-200">
       <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-6">
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-6">
           {listing.title}
         </h1>
 
         {/* Images Grid (Mock for MVP: just one Main or placeholder) */}
-        <div className="h-[400px] bg-neutral-200 rounded-2xl overflow-hidden mb-12 grid grid-cols-4 grid-rows-2 gap-2 relative">
+        <div className="h-[400px] bg-neutral-200 dark:bg-slate-800 rounded-2xl overflow-hidden mb-12 grid grid-cols-4 grid-rows-2 gap-2 relative">
           <div className="col-span-2 row-span-2 bg-neutral-300">
             {/* Main Image */}
             {listing.images?.[0] && (
@@ -108,11 +137,11 @@ const ListingDetails = () => {
               />
             )}
           </div>
-          <div className="bg-neutral-300"></div>
-          <div className="bg-neutral-300"></div>
-          <div className="bg-neutral-300"></div>
-          <div className="bg-neutral-300"></div>
-          <button className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:scale-105 transition-transform">
+          <div className="bg-neutral-300 dark:bg-slate-700"></div>
+          <div className="bg-neutral-300 dark:bg-slate-700"></div>
+          <div className="bg-neutral-300 dark:bg-slate-700"></div>
+          <div className="bg-neutral-300 dark:bg-slate-700"></div>
+          <button className="absolute bottom-4 right-4 bg-white dark:bg-slate-900 px-4 py-2 rounded-lg text-sm font-bold shadow-md hover:scale-105 transition-transform text-neutral-900 dark:text-white">
             Show all photos
           </button>
         </div>
@@ -120,21 +149,21 @@ const ListingDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 relative">
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-8">
-            <div className="flex justify-between items-center border-b border-neutral-200 pb-6">
+            <div className="flex justify-between items-center border-b border-neutral-200 dark:border-slate-800 pb-6">
               <div>
-                <h2 className="text-xl font-bold text-neutral-800 mb-1">
+                <h2 className="text-xl font-bold text-neutral-800 dark:text-slate-100 mb-1">
                   {listing.type === "entire_place"
                     ? "Entire unit"
                     : "Private room"}{" "}
                   hosted by {listing.provider?.name}
                 </h2>
-                <p className="text-neutral-500 text-sm">
+                <p className="text-neutral-500 dark:text-slate-400 text-sm">
                   2 guests • 1 bedroom • 1 bed • 1 bath
                 </p>
               </div>
               <button
                 onClick={() => setShowProvider(true)}
-                className="h-12 w-12 bg-neutral-200 rounded-full flex items-center justify-center hover:bg-neutral-300 transition overflow-hidden"
+                className="h-12 w-12 bg-neutral-200 dark:bg-slate-700 rounded-full flex items-center justify-center hover:bg-neutral-300 dark:hover:bg-slate-600 transition overflow-hidden"
               >
                 {listing.provider?.profileImage ? (
                   <img
@@ -150,13 +179,13 @@ const ListingDetails = () => {
 
 
             {listing.provider?.isVerified && (
-              <div className="flex items-center gap-4 border-b border-neutral-200 pb-6">
-                <ShieldCheck size={24} className="text-neutral-800" />
+              <div className="flex items-center gap-4 border-b border-neutral-200 dark:border-slate-800 pb-6">
+                <ShieldCheck size={24} className="text-neutral-800 dark:text-slate-200" />
                 <div>
-                  <h3 className="font-bold text-sm text-neutral-800">
+                  <h3 className="font-bold text-sm text-neutral-800 dark:text-slate-100">
                     Identity verified
                   </h3>
-                  <p className="text-neutral-500 text-sm">
+                  <p className="text-neutral-500 dark:text-slate-400 text-sm">
                     This host has successfully completed identity checks.
                   </p>
                 </div>
@@ -164,23 +193,23 @@ const ListingDetails = () => {
             )}
 
             <div>
-              <h3 className="text-xl font-bold text-neutral-800 mb-4">
+              <h3 className="text-xl font-bold text-neutral-800 dark:text-slate-100 mb-4">
                 About this place
               </h3>
-              <p className="text-neutral-600 leading-relaxed whitespace-pre-line">
+              <p className="text-neutral-600 dark:text-slate-300 leading-relaxed whitespace-pre-line">
                 {listing.description}
               </p>
             </div>
 
             <div>
-              <h3 className="text-xl font-bold text-neutral-800 mb-4">
+              <h3 className="text-xl font-bold text-neutral-800 dark:text-slate-100 mb-4">
                 What this place offers
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 {listing.facilities?.map((facility) => (
                   <div
                     key={facility}
-                    className="flex items-center gap-3 text-neutral-600"
+                    className="flex items-center gap-3 text-neutral-600 dark:text-slate-300"
                   >
                     <Check size={18} />
                     <span>{facility}</span>
@@ -191,15 +220,15 @@ const ListingDetails = () => {
 
             {/* Available Rooms Section */}
             {listing.rooms && listing.rooms.length > 0 && (
-              <div className="border-t border-neutral-200 pt-8 mt-8">
-                <h3 className="text-xl font-bold text-neutral-800 mb-6">
+              <div className="border-t border-neutral-200 dark:border-slate-800 pt-8 mt-8">
+                <h3 className="text-xl font-bold text-neutral-800 dark:text-slate-100 mb-6">
                   Available Rooms
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {listing.rooms.map((room) => (
-                    <div key={room._id} className="border border-neutral-200 rounded-xl overflow-hidden flex flex-col">
+                    <div key={room._id} className="border border-neutral-200 dark:border-slate-700 rounded-xl overflow-hidden flex flex-col bg-white dark:bg-slate-900">
                       {/* Room Image */}
-                      <div className="h-48 bg-neutral-100 relative">
+                      <div className="h-48 bg-neutral-100 dark:bg-slate-800 relative">
                         {room.images && room.images.length > 0 ? (
                           <img
                             src={typeof room.images[0] === 'string' ? room.images[0] : room.images[0].url}
@@ -211,7 +240,7 @@ const ListingDetails = () => {
                           listing.images && listing.images[0] ? (
                             <img src={listing.images[0]} className="w-full h-full object-cover opacity-50" alt="Room" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm">No Image</div>
+                            <div className="w-full h-full flex items-center justify-center text-neutral-400 dark:text-slate-500 text-sm">No Image</div>
                           )
                         )}
                         <div className={`absolute top-3 right-3 px-2 py-1 rounded text-xs font-bold uppercase tracking-wide
@@ -223,12 +252,12 @@ const ListingDetails = () => {
                       {/* Room Details */}
                       <div className="p-4 flex flex-col flex-1">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-bold text-neutral-900">{room.name}</h4>
-                          <span className="font-bold text-neutral-900">
-                            Rs {room.price?.toLocaleString()} <span className="text-xs text-neutral-500 font-normal">/mo</span>
+                          <h4 className="font-bold text-neutral-900 dark:text-white">{room.name}</h4>
+                          <span className="font-bold text-neutral-900 dark:text-white">
+                            Rs {room.price?.toLocaleString()} <span className="text-xs text-neutral-500 dark:text-slate-400 font-normal">/mo</span>
                           </span>
                         </div>
-                        <div className="text-sm text-neutral-500 mb-4 flex items-center gap-2">
+                        <div className="text-sm text-neutral-500 dark:text-slate-400 mb-4 flex items-center gap-2">
                           <User size={14} /> {room.capacity} Person(s)
                           {room.occupancyMode === 'Entire Room' ? ' • Entire Room' : ' • Shared'}
                         </div>
@@ -236,10 +265,10 @@ const ListingDetails = () => {
                         {/* Features */}
                         <div className="flex flex-wrap gap-2 mt-auto">
                           {room.features?.bathroomType && (
-                            <span className="text-xs bg-neutral-100 text-neutral-600 px-2 py-1 rounded">{room.features.bathroomType} Bath</span>
+                            <span className="text-xs bg-neutral-100 dark:bg-slate-800 text-neutral-600 dark:text-slate-300 px-2 py-1 rounded">{room.features.bathroomType} Bath</span>
                           )}
                           {room.features?.furnishing?.map((f, i) => (
-                            <span key={i} className="text-xs bg-neutral-100 text-neutral-600 px-2 py-1 rounded">{f}</span>
+                            <span key={i} className="text-xs bg-neutral-100 dark:bg-slate-800 text-neutral-600 dark:text-slate-300 px-2 py-1 rounded">{f}</span>
                           ))}
                         </div>
                       </div>
@@ -260,10 +289,10 @@ const ListingDetails = () => {
                     <MapPin size={24} className="text-neutral-700" />
                   </div>
                   <div>
-                    <p className="font-semibold text-neutral-900 text-lg">
+                    <p className="font-semibold text-neutral-900 dark:text-white text-lg">
                       {listing.location.city}, {listing.location.district}
                     </p>
-                    <p className="text-neutral-500">
+                    <p className="text-neutral-500 dark:text-slate-400">
                       {listing.location.address || "Exact location provided after booking"}
                     </p>
                   </div>
@@ -274,7 +303,7 @@ const ListingDetails = () => {
                     href={`https://www.google.com/maps/search/?api=1&query=${listing.location.coordinates.lat},${listing.location.coordinates.lng}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 border border-neutral-900 text-neutral-900 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-50 transition-colors"
+                    className="inline-flex items-center gap-2 border border-neutral-900 dark:border-slate-200 text-neutral-900 dark:text-slate-200 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-50 dark:hover:bg-slate-800 transition-colors"
                   >
                     <MapPin size={18} />
                     Show on Google Maps
@@ -286,27 +315,53 @@ const ListingDetails = () => {
 
             {/* Reviews Section */}
             <div id="reviews-section">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl font-bold text-neutral-800 flex items-center gap-2">
-                  <StarIcon className="fill-black text-black" size={20} />
-                  {reviews.length > 0
-                    ? `${(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)} · ${reviews.length} reviews`
-                    : "No reviews yet"}
-                </h3>
-                <button
-                  onClick={() => setShowReviewModal(true)}
-                  className="text-black underline font-semibold hover:text-neutral-600"
-                >
-                  Write a review
-                </button>
+              <div className="mb-8 border-b border-neutral-200 dark:border-slate-800 pb-8">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-2xl font-bold text-neutral-900 dark:text-white mb-6">Guest Reviews</h3>
+                    <div className="flex items-center gap-4">
+                      <div className="text-5xl font-extrabold text-neutral-900 dark:text-white">
+                        {reviews.length > 0
+                          ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+                          : "New"}
+                      </div>
+                      <div className="flex flex-col justify-center">
+                        <div className="flex gap-1 mb-1">
+                          {[...Array(5)].map((_, i) => {
+                            const avg = reviews.length > 0 ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length : 0;
+                            return (
+                              <StarIcon
+                                key={i}
+                                size={18}
+                                className={i < Math.round(avg) ? "fill-yellow-500 text-yellow-500" : "text-neutral-200 dark:text-slate-700"}
+                              />
+                            );
+                          })}
+                        </div>
+                        <p className="text-neutral-500 dark:text-slate-400 font-medium">
+                          Based on {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {canReview && (
+                    <button
+                      onClick={() => setShowReviewModal(true)}
+                      className="px-6 py-3 border border-neutral-900 dark:border-slate-200 rounded-xl font-semibold hover:bg-neutral-50 dark:hover:bg-slate-800 dark:text-slate-200 transition"
+                    >
+                      Write a review
+                    </button>
+                  )}
+                </div>
               </div>
 
               {reviews.length > 0 ? (
                 <div className="space-y-6">
                   {reviews.map((review) => (
-                    <div key={review._id} className="border-b border-neutral-100 pb-6 last:border-0">
+                    <div key={review._id} className="border-b border-neutral-100 dark:border-slate-800 pb-6 last:border-0">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="h-10 w-10 bg-neutral-200 rounded-full flex items-center justify-center overflow-hidden">
+                        <div className="h-10 w-10 bg-neutral-200 dark:bg-slate-700 rounded-full flex items-center justify-center overflow-hidden">
                           {review.author?.profileImage ? (
                             <img src={review.author.profileImage} className="w-full h-full object-cover" />
                           ) : (
@@ -314,29 +369,29 @@ const ListingDetails = () => {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-neutral-900">{review.author?.name || 'User'}</p>
-                          <p className="text-xs text-neutral-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+                          <p className="font-semibold text-neutral-900 dark:text-white">{review.author?.name || 'User'}</p>
+                          <p className="text-xs text-neutral-500 dark:text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 mb-2">
                         {[...Array(5)].map((_, i) => (
-                          <StarIcon key={i} size={14} className={i < review.rating ? "fill-black text-black" : "text-neutral-300"} />
+                          <StarIcon key={i} size={14} className={i < review.rating ? "fill-yellow-500 text-yellow-500" : "text-neutral-300 dark:text-slate-600"} />
                         ))}
                       </div>
-                      <p className="text-neutral-700">{review.comment}</p>
+                      <p className="text-neutral-700 dark:text-slate-300">{review.comment}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-neutral-500 italic">No reviews yet.</p>
+                <p className="text-neutral-500 dark:text-slate-400 italic">No reviews yet.</p>
               )}
             </div>
 
             {/* Report (Mobile/Bottom backup) */}
-            <div className="block lg:hidden pt-6 border-t border-neutral-200">
+            <div className="block lg:hidden pt-6 border-t border-neutral-200 dark:border-slate-800">
               <button
                 onClick={() => setShowReportModal(true)}
-                className="flex items-center gap-2 text-neutral-500 hover:text-red-600 transition-colors text-sm font-semibold underline"
+                className="flex items-center gap-2 text-neutral-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm font-semibold underline"
               >
                 <Flag size={16} />
                 Report this listing
@@ -349,24 +404,24 @@ const ListingDetails = () => {
 
           {/* Booking Card */}
           <div className="hidden lg:block relative">
-            <div className="sticky top-28 bg-white border border-neutral-200 shadow-[0_6px_16px_rgba(0,0,0,0.12)] rounded-xl p-6">
+            <div className="sticky top-28 bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 shadow-[0_6px_16px_rgba(0,0,0,0.12)] rounded-xl p-6">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <span className="text-2xl font-bold text-neutral-900">
+                  <span className="text-2xl font-bold text-neutral-900 dark:text-white">
                     Rs {listing.rooms && listing.rooms.length > 0
                       ? Math.min(...listing.rooms.map(r => r.price)).toLocaleString()
                       : (listing.rent ?? "N/A")}
                   </span>
-                  <span className="text-neutral-500"> month</span>
+                  <span className="text-neutral-500 dark:text-slate-400"> month</span>
                 </div>
                 {/* Review Mini-Summary in Card */}
                 <div className="flex items-center gap-1 text-sm font-semibold">
-                  <StarIcon size={14} className="fill-black text-black" />
+                  <StarIcon size={14} className="fill-yellow-500 text-yellow-500" />
                   {reviews.length > 0 ? (
                     <>
                       <span>{(reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)}</span>
                       <span className="text-neutral-400">·</span>
-                      <a href="#reviews-section" className="text-neutral-500 underline hover:text-black transition">
+                      <a href="#reviews-section" className="text-neutral-500 dark:text-slate-400 underline hover:text-black dark:hover:text-white transition">
                         {reviews.length} reviews
                       </a>
                     </>
@@ -378,33 +433,46 @@ const ListingDetails = () => {
 
               <div className="space-y-4 mb-4">
                 <div className="border border-neutral-400 rounded-lg p-3">
-                  <div className="text-xs font-bold uppercase text-neutral-800">
-                    Check-in
+                  {/* Booking Section */}
+                  <div className="mb-4">
+                    <div className="text-xs font-bold uppercase text-neutral-800 dark:text-slate-300">
+                      Check-in
+                    </div>
+                    <div className="text-sm text-neutral-600 dark:text-slate-400 mb-2">Today</div>
+                    <button
+                      onClick={handleRequestBook}
+                      className="w-full bg-[#E51D54] hover:bg-[#d41b4e] text-white font-bold py-3.5 rounded-lg text-lg transition-transform active:scale-[0.98]"
+                    >
+                      Request to Book
+                    </button>
                   </div>
-                  <div className="text-sm text-neutral-600">Today</div>
-                  <button
-                    onClick={handleRequestBook}
-                    className="w-full bg-[#E51D54] hover:bg-[#d41b4e] text-white font-bold py-3.5 rounded-lg text-lg transition-transform active:scale-[0.98]"
-                  >
-                    Request to Book
-                  </button>
-                  <button
-                    onClick={() => setShowViewingModal(true)}
-                    className="w-full border border-neutral-300 text-neutral-700 font-bold py-3.5 rounded-lg text-lg hover:bg-neutral-50 transition-transform active:scale-[0.98]"
-                  >
-                    Schedule Viewing
-                  </button>
+
+                  {/* Divider */}
+                  <div className="border-t border-neutral-200 dark:border-slate-700 my-4"></div>
+
+                  {/* Viewing Section */}
+                  <div>
+                    <div className="text-xs font-bold uppercase text-neutral-800 dark:text-slate-300">
+                      Want to see it first?
+                    </div>
+                    <div className="text-sm text-neutral-600 dark:text-slate-400 mb-2">Check availability for a tour</div>
+                    <button
+                      onClick={() => setShowViewingModal(true)}
+                      className="w-full border border-neutral-300 dark:border-slate-600 text-neutral-700 dark:text-slate-200 font-bold py-3.5 rounded-lg text-lg hover:bg-neutral-50 dark:hover:bg-slate-800 transition-transform active:scale-[0.98]"
+                    >
+                      Schedule Viewing
+                    </button>
+                  </div>
                 </div>
 
-                <p className="text-center text-sm text-neutral-500 mb-6">
+                <p className="text-center text-sm text-neutral-500 dark:text-slate-500 mb-6">
                   You won't be charged yet
                 </p>
 
-                <div className="flex justify-between items-center text-neutral-600 text-sm pt-4 border-t border-neutral-200">
-                  <button className="underline hover:text-black">Share</button>
+                <div className="flex justify-center items-center text-neutral-600 dark:text-slate-400 text-sm pt-4 border-t border-neutral-200 dark:border-slate-700">
                   <button
                     onClick={() => setShowReportModal(true)}
-                    className="flex items-center gap-2 hover:text-red-600 transition-colors underline"
+                    className="flex items-center gap-2 hover:text-red-600 dark:hover:text-red-400 transition-colors underline"
                   >
                     <Flag size={14} />
                     Report this listing
@@ -430,7 +498,7 @@ const ListingDetails = () => {
 
                 {/* Provider Info */}
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="h-14 w-14 bg-neutral-200 rounded-full flex items-center justify-center overflow-hidden">
+                  <div className="h-14 w-14 bg-neutral-200 dark:bg-slate-700 rounded-full flex items-center justify-center overflow-hidden">
                     {listing.provider?.profileImage ? (
                       <img
                         src={listing.provider.profileImage}
@@ -442,7 +510,7 @@ const ListingDetails = () => {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-neutral-900">
+                    <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-900">
                       {listing.provider.name}
                     </h3>
                     <p className="text-sm text-neutral-500">Boarding Provider</p>

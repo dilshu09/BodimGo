@@ -1,26 +1,55 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Inter', system-ui, sans-serif;
-  --color-primary: #FF385C; /* Airbnb Red for consistency, or Admin Blue if preferred */
+  --color-primary: #FF385C;
+  /* Airbnb Red for consistency, or Admin Blue if preferred */
   --color-primary-hover: #D93250;
-  
-  --shadow-card: 0 4px 12px rgba(0,0,0,0.08);
+
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 @layer base {
   body {
-    @apply font-sans text-neutral-800 bg-gray-50 antialiased;
+    @apply font-sans bg-white text-neutral-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-200 antialiased;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 56, 92, 0.6);
+    border-radius: 10px;
+  }
+
+  /* Thin variant for specific pages */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #FF385C;
   }
 }
 
 @layer components {
+
   /* Modern Clean Styles */
   .btn-primary {
     @apply bg-neutral-900 text-white px-4 py-2 rounded-lg font-medium transition-all hover:bg-neutral-800 hover:shadow-md active:scale-95 disabled:opacity-50 cursor-pointer text-sm;
   }
-  
+
   .btn-secondary {
     @apply bg-white border border-neutral-200 text-neutral-700 px-4 py-2 rounded-lg font-medium transition-all hover:bg-neutral-50 hover:border-neutral-300 active:scale-95 text-sm;
   }
@@ -36,7 +65,7 @@
   .table-header {
     @apply px-6 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider bg-gray-50 border-b border-gray-100;
   }
-  
+
   .table-cell {
     @apply px-6 py-4 whitespace-nowrap text-sm text-neutral-700 border-b border-gray-50;
   }

@@ -29,7 +29,7 @@ const SidebarItem = ({ item, isExpanded, onToggle, isActive }) => {
             <div
                 onClick={() => hasSubItems && onToggle(item.id)}
                 className={`flex items-center justify-between px-4 py-3 cursor-pointer rounded-xl transition-colors
-                    ${isActive && !hasSubItems ? 'bg-primary/10 text-primary font-medium' : 'text-neutral-600 hover:bg-neutral-100'}
+                    ${isActive && !hasSubItems ? 'bg-primary/10 text-primary font-medium' : 'text-neutral-600 dark:text-slate-400 hover:bg-neutral-100 dark:hover:bg-slate-800 hover:text-neutral-900 dark:hover:text-slate-200'}
                 `}
             >
                 {/* Main Link Content */}
@@ -47,7 +47,7 @@ const SidebarItem = ({ item, isExpanded, onToggle, isActive }) => {
 
                 {/* Arrow for Accordion */}
                 {hasSubItems && (
-                    <div className="text-neutral-400">
+                    <div className="text-neutral-400 dark:text-slate-500">
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     </div>
                 )}
@@ -60,13 +60,13 @@ const SidebarItem = ({ item, isExpanded, onToggle, isActive }) => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden ml-4 pl-4 border-l border-neutral-200"
+                        className="overflow-hidden ml-4 pl-4 border-l border-neutral-200 dark:border-slate-800"
                     >
                         {item.subItems.map((sub) => (
                             <NavLink
                                 key={sub.path}
                                 to={sub.path}
-                                className={({ isActive }) => `block py-2 text-sm transition-colors ${isActive ? 'text-primary font-medium' : 'text-neutral-500 hover:text-neutral-800'}`}
+                                className={({ isActive }) => `block py-2 text-sm transition-colors ${isActive ? 'text-primary font-medium' : 'text-neutral-500 dark:text-slate-500 hover:text-neutral-800 dark:hover:text-slate-300'}`}
                             >
                                 {sub.label}
                             </NavLink>
@@ -79,6 +79,7 @@ const SidebarItem = ({ item, isExpanded, onToggle, isActive }) => {
 };
 
 const Sidebar = () => {
+    // ... (logic remains the same)
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -203,14 +204,14 @@ const Sidebar = () => {
     };
 
     return (
-        <div className="w-64 h-screen bg-white border-r border-neutral-200 flex flex-col sticky top-0">
+        <div className="w-64 h-screen bg-white dark:bg-slate-900 border-r border-neutral-200 dark:border-slate-800 flex flex-col sticky top-0 transition-colors duration-200">
             {/* Logo */}
-            <div className="p-6 border-b border-neutral-100">
+            <div className="p-6 border-b border-neutral-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
                     <img src={logo} alt="BodimGo" className="h-8 w-auto" />
                     <div>
                         <h1 className="text-xl font-bold text-primary leading-tight">BodimGo</h1>
-                        <p className="text-[10px] text-neutral-400 font-bold tracking-wider uppercase">Provider Portal</p>
+                        <p className="text-[10px] text-neutral-400 dark:text-slate-500 font-bold tracking-wider uppercase">Provider Portal</p>
                     </div>
                 </div>
             </div>
@@ -229,10 +230,10 @@ const Sidebar = () => {
             </div>
 
             {/* User Profile / Logout */}
-            <div className="p-4 border-t border-neutral-100">
+            <div className="p-4 border-t border-neutral-100 dark:border-slate-800">
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
                 >
                     <LogOut size={20} />
                     <span className="text-sm font-medium">Log Out</span>

@@ -152,3 +152,43 @@ export const replyToViewingRequest = async (req, res) => {
         res.status(500).json({ message: 'Server Error' });
     }
 };
+// @desc    Cancel a viewing request
+// @route   PUT /api/viewing-requests/:id/cancel
+// @access  Private (Seeker)
+export const cancelViewingRequest = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const viewingRequest = await ViewingRequest.findById(id).populate('listing', 'title provider');
+
+        if (!viewingRequest) {
+            return res.status(404).json({ message: 'Viewing request not found' });
+        }
+
+        // Verify seeker ownership
+        if (viewingRequest.seeker.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+
+        if (viewingRequest.status !== 'pending') {
+            return res.status(400).json({ message: 'Can only cancel pending requests' });
+        }
+
+        viewingRequest.status = 'cancelled';
+        await viewingRequest.save();
+
+        // Notify Provider
+        await createNotification({
+            recipient: viewingRequest.listing.provider,
+            type: 'viewing_update',
+            title: 'Viewing Request Cancelled',
+            message: `The viewing request for ${viewingRequest.listing.title} has been cancelled by the seeker.`,
+            data: { viewingRequestId: viewingRequest._id }
+        });
+
+        res.json(viewingRequest);
+    } catch (error) {
+        console.error("Error cancelling viewing request:", error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};

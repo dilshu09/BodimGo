@@ -79,21 +79,21 @@ export const getDashboardStats = async (req, res) => {
             ...pendingBookings.map(b => ({
                 type: 'booking',
                 message: `New booking request from ${b.seeker?.name || 'Guest'}`,
-                link: '/bookings',
+                link: '/inquiries/bookings', // Corrected path
                 urgent: true,
                 date: b.createdAt
             })),
             ...(realUnreadCount > 0 ? [{
                 type: 'message',
                 message: `You have ${realUnreadCount} unread message${realUnreadCount > 1 ? 's' : ''}`,
-                link: '/messages',
+                link: '/inquiries/inbox', // Corrected path
                 urgent: false,
                 date: new Date()
             }] : []),
             ...pendingTenants.map(t => ({
                 type: 'tenant',
                 message: `Tenant verification needed: ${t.name}`,
-                link: '/tenants/add',
+                link: '/approvals', // Corrected: Pending approvals page
                 urgent: true,
                 date: new Date()
             }))

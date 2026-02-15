@@ -439,3 +439,21 @@ export const warnUser = async (req, res) => {
   }
 };
 
+// @desc    Get all listings for a specific provider
+// @route   GET /api/admin/providers/:id/listings
+// @access  Private/Admin
+export const getProviderListings = async (req, res) => {
+  try {
+    const listings = await Listing.find({ provider: req.params.id })
+      .select('title address location status images stats type pricingDefaults description rooms')
+      .sort({ updatedAt: -1 });
+
+    res.json({
+      success: true,
+      count: listings.length,
+      data: listings
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

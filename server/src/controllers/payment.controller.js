@@ -3,6 +3,8 @@ import Booking from '../models/Booking.js';
 import User from '../models/User.js'; // Added User import
 import Payment from '../models/Payment.js';
 import Expense from '../models/Expense.js';
+import Invoice from '../models/Invoice.js';
+import { sendInvoiceEmail } from '../utils/emailService.js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -70,21 +72,22 @@ export const confirmPayment = async (req, res) => {
         const newPayment = await Payment.create({
           payer: req.user._id,
           payee: booking.provider,
-          // booking: booking._id, 
+          // booking: booking._id,
           amount: paymentIntent.amount / 100,
           method: 'stripe',
           status: 'completed',
           stripePaymentId: paymentIntent.id
         });
 
-        // --- NEW: Auto-Create Tenant ---
+        // --- NEW: Auto-Create Tenant (MOVED UP LOGICALLY or we handle here) ---
+        let tenantId = null;
         try {
           const Tenant = (await import('../models/tenant.model.js')).default;
           // Check if tenant already exists to avoid duplicates
           const existingTenant = await Tenant.findOne({ email: req.user.email, listingId: booking.listing });
 
           if (!existingTenant) {
-            await Tenant.create({
+            const newTenant = await Tenant.create({
               listingId: booking.listing,
               roomId: booking.room ? booking.room.toString() : "Unassigned", // Handle if room is populated or ID
               providerId: booking.provider,
@@ -98,10 +101,56 @@ export const confirmPayment = async (req, res) => {
               depositAmount: booking.agreedDeposit,
               joinedDate: new Date()
             });
+            tenantId = newTenant._id;
+          } else {
+            tenantId = existingTenant._id;
           }
         } catch (err) {
           console.error("Failed to auto-create tenant:", err);
           // Don't fail the request, just log it
+        }
+
+        // --- NEW: Create Invoice and Send Emails ---
+        if (tenantId) {
+          try {
+            const invoiceNumber = `INV-${Date.now()}`; // Simple unique ID
+            const newInvoice = await Invoice.create({
+              tenant: tenantId,
+              provider: booking.provider,
+              invoiceNumber: invoiceNumber,
+              month: new Date().toISOString().slice(0, 7), // Current month YYYY-MM
+              dueDate: new Date(), // Paid immediately
+              items: [{ description: `Rent/Deposit Payment for ${booking.listing.title}`, amount: paymentIntent.amount / 100 }],
+              totalAmount: paymentIntent.amount / 100,
+              paidAmount: paymentIntent.amount / 100,
+              status: 'paid'
+            });
+
+            // Prepare Invoice Details for Email
+            // Need Provider Name - populate or fetch
+            const providerUser = await User.findById(booking.provider);
+
+            const invoiceDetails = {
+              invoiceNumber,
+              date: new Date(),
+              payerName: req.user.name,
+              payeeName: providerUser ? providerUser.name : "Property Provider",
+              listingTitle: booking.listing.title,
+              items: newInvoice.items,
+              totalAmount: newInvoice.totalAmount
+            };
+
+            // Send to Tenant
+            await sendInvoiceEmail(req.user.email, invoiceDetails);
+
+            // Send to Provider
+            if (providerUser && providerUser.email) {
+              await sendInvoiceEmail(providerUser.email, invoiceDetails);
+            }
+
+          } catch (invErr) {
+            console.error("Failed to create/send invoice:", invErr);
+          }
         }
 
         // --- NEW: Update Room Availability ---
@@ -133,6 +182,7 @@ export const confirmPayment = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // @desc    Record Manual Payment (Cash/Transfer)
 // @route   POST /api/payments/manual
@@ -379,6 +429,49 @@ export const getPaymentStats = async (req, res) => {
 
   } catch (error) {
     console.error('Get Payment Stats Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+// @desc    Submit Payment Proof (Seeker)
+// @route   POST /api/payments/proof
+// @access  Private (Seeker)
+export const submitPaymentProof = async (req, res) => {
+  const { amount, date, proofImageUrl, listingId } = req.body;
+
+  try {
+    const Tenant = (await import('../models/tenant.model.js')).default;
+    // Find active tenancy to identify provider
+    const tenant = await Tenant.findOne({
+      email: req.user.email,
+      status: { $in: ['Active', 'Pending'] }
+    });
+
+    if (!tenant) {
+      return res.status(404).json({ message: 'No active tenancy found.' });
+    }
+
+    const paymentDate = date ? new Date(date) : new Date();
+
+    const newPayment = await Payment.create({
+      payer: req.user._id,
+      payee: tenant.providerId,
+      amount: amount,
+      method: 'bank_transfer',
+      status: 'pending', // Pending verification
+      proofImageUrl: proofImageUrl,
+      createdAt: paymentDate
+    });
+
+    // Notify Provider? (Optional for MVP)
+
+    res.json({
+      success: true,
+      data: newPayment,
+      message: 'Payment proof submitted successfully'
+    });
+
+  } catch (error) {
+    console.error('Submit Payment Proof Error:', error);
     res.status(500).json({ message: error.message });
   }
 };

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import ListingCard from '../components/ListingCard';
 import SearchBar from '../components/SearchBar';
+import { SkeletonGrid } from '../components/Skeleton';
 import api from '../services/api';
 
 const Home = () => {
@@ -50,7 +51,7 @@ const Home = () => {
             {/* Grid */}
             <main className="max-w-[1600px] mx-auto px-4 py-8">
                 {loading ? (
-                    <div className="flex items-center justify-center h-64 text-neutral-400">Loading homes...</div>
+                    <SkeletonGrid count={10} />
                 ) : listings.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-10">
                         {listings.map(listing => (

@@ -128,6 +128,8 @@ export default function FinanceDashboard() {
       trend: "up",
       bg: "bg-blue-50",
       textColor: "text-blue-600",
+      hoverBorder: "hover:border-blue-500",
+      hoverText: "group-hover:text-blue-600",
     },
     {
       label: "Total Expenses",
@@ -137,6 +139,8 @@ export default function FinanceDashboard() {
       trend: "down",
       bg: "bg-red-50",
       textColor: "text-primary",
+      hoverBorder: "hover:border-primary",
+      hoverText: "group-hover:text-primary",
     },
     {
       label: "Net Profit",
@@ -146,6 +150,8 @@ export default function FinanceDashboard() {
       trend: statsData.netProfit >= 0 ? "up" : "down",
       bg: statsData.netProfit >= 0 ? "bg-green-50" : "bg-red-50",
       textColor: statsData.netProfit >= 0 ? "text-green-600" : "text-primary",
+      hoverBorder: statsData.netProfit >= 0 ? "hover:border-green-500" : "hover:border-primary",
+      hoverText: statsData.netProfit >= 0 ? "group-hover:text-green-600" : "group-hover:text-primary",
     },
     {
       label: "Visual Breakdown",
@@ -155,6 +161,8 @@ export default function FinanceDashboard() {
       trend: "none",
       bg: "bg-purple-50",
       textColor: "text-purple-600",
+      hoverBorder: "hover:border-purple-500",
+      hoverText: "group-hover:text-purple-600",
     },
   ];
 
@@ -181,18 +189,18 @@ export default function FinanceDashboard() {
         {stats.map((stat, i) => (
           <div
             key={i}
-            className={`${stat.bg} rounded-xl p-6 border border-slate-200 shadow-sm`}
+            className={`${stat.bg} rounded-xl p-6 border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-xl ${stat.hoverBorder} hover:-translate-y-1 group`}
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-sm text-slate-600 font-medium">
+                <p className="text-xs text-slate-600 font-bold uppercase tracking-wide opacity-80 group-hover:opacity-100 transition-opacity">
                   {stat.label}
                 </p>
-                <p className="text-2xl font-bold text-slate-900 mt-2">
+                <p className={`text-2xl font-black text-slate-900 mt-2 tracking-tight ${stat.hoverText} transition-colors`}>
                   {typeof stat.value === 'string' && stat.value.includes('Expenses') ? stat.value : `Rs. ${stat.value}`}
                 </p>
               </div>
-              <div className={`p-2 rounded-lg bg-white/50 ${stat.textColor}`}>
+              <div className={`p-2.5 rounded-lg bg-white/60 ${stat.textColor} group-hover:scale-110 transition-transform shadow-sm`}>
                 <stat.icon size={20} />
               </div>
             </div>

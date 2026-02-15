@@ -63,35 +63,35 @@ export default function BookingsPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-neutral-900 tracking-tight">Bookings</h2>
-          <p className="text-neutral-500 mt-2">
+          <h2 className="text-3xl font-bold text-neutral-900 dark:text-white tracking-tight">Bookings</h2>
+          <p className="text-neutral-500 dark:text-slate-400 mt-2">
             Track and manage all your incoming reservations.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <p className="text-sm text-slate-600">Total Bookings</p>
-          <p className="text-2xl font-bold text-slate-900 mt-2">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors duration-200">
+          <p className="text-sm text-slate-600 dark:text-slate-400">Total Bookings</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">
             {bookings.length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <p className="text-sm text-slate-600">Confirmed</p>
-          <p className="text-2xl font-bold text-green-600 mt-2">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors duration-200">
+          <p className="text-sm text-slate-600 dark:text-slate-400">Confirmed</p>
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">
             {bookings.filter((b) => b.status.toLowerCase().includes('confirmed') || b.status.toLowerCase().includes('accepted')).length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <p className="text-sm text-slate-600">Pending</p>
-          <p className="text-2xl font-bold text-yellow-600 mt-2">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors duration-200">
+          <p className="text-sm text-slate-600 dark:text-slate-400">Pending</p>
+          <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">
             {bookings.filter((b) => b.status.toLowerCase().includes('pending')).length}
           </p>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <p className="text-sm text-slate-600">Total Revenue</p>
-          <p className="text-2xl font-bold text-slate-900 mt-2">
+        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-4 transition-colors duration-200">
+          <p className="text-sm text-slate-600 dark:text-slate-400">Total Revenue</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2">
             Rs.{" "}
             {bookings
               .filter((b) => b.paymentStatus === "Paid")
@@ -101,62 +101,62 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-colors duration-200">
         <div className="overflow-x-auto">
           {bookings.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">No bookings found.</div>
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">No bookings found.</div>
           ) : (
             <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Guest Name
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Room
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Check-in
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Check-out
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Total Price
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Payment
                   </th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900 dark:text-slate-200">
                     Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                 {bookings.map((booking) => (
                   <tr
                     key={booking.id}
-                    className="hover:bg-slate-50 transition-colors"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                   >
                     <td className="px-6 py-4">
                       <div>
-                        <p className="font-medium text-slate-900">
+                        <p className="font-medium text-slate-900 dark:text-white">
                           {booking.guestName}
                         </p>
-                        <p className="text-xs text-slate-600">{booking.email}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{booking.email}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-900">{booking.room}</td>
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4 text-slate-900 dark:text-slate-300">{booking.room}</td>
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                       {new Date(booking.checkIn).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 text-slate-600">
+                    <td className="px-6 py-4 text-slate-600 dark:text-slate-400">
                       {new Date(booking.checkOut).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 font-bold text-slate-900">
+                    <td className="px-6 py-4 font-bold text-slate-900 dark:text-white">
                       Rs. {(booking.totalPrice || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
@@ -173,10 +173,10 @@ export default function BookingsPage() {
                     <td className="px-6 py-4">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-semibold ${booking.paymentStatus === "Paid"
-                          ? "bg-green-100 text-green-700"
+                          ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
                           : booking.paymentStatus === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-slate-100 text-slate-700"
+                            ? "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-400"
                           }`}
                       >
                         {booking.paymentStatus}

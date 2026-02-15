@@ -188,7 +188,7 @@ export default function RoomsPage() {
                     </div>
                     <div className="text-sm">
                       <span className={`px-2 py-1 rounded text-xs font-bold ${room.status === 'Available' ? 'bg-green-100 text-green-700' :
-                          room.status === 'Occupied' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
+                        room.status === 'Occupied' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
                         }`}>
                         {room.status}
                       </span>
@@ -212,13 +212,6 @@ export default function RoomsPage() {
                           className={`text-sm font-bold ${actionType === 'details' ? 'text-red-600' : 'text-slate-500 hover:text-slate-800'}`}
                         >
                           Details
-                        </button>
-                        {/* Edit opens Modal now */}
-                        <button
-                          onClick={() => toggleExpand(room._id, 'edit')}
-                          className={`text-sm font-bold text-slate-500 hover:text-slate-800`}
-                        >
-                          Edit Room (Modal)
                         </button>
                         <button
                           onClick={() => toggleExpand(room._id, 'delete')}

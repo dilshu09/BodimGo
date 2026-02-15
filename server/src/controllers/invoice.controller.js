@@ -50,3 +50,29 @@ export const getProviderInvoices = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// @desc    Mark invoice as paid
+// @route   PUT /api/invoices/:id/pay
+// @access  Private (Provider)
+export const markInvoiceAsPaid = async (req, res) => {
+    try {
+        const invoice = await Invoice.findById(req.params.id);
+
+        if (!invoice) {
+            return res.status(404).json({ message: 'Invoice not found' });
+        }
+
+        if (invoice.provider.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        invoice.status = 'paid';
+        invoice.paidAt = Date.now();
+        await invoice.save();
+
+        res.json(invoice);
+    } catch (error) {
+        console.error("Mark Paid Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};

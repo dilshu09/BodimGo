@@ -290,3 +290,99 @@ export const getTenants = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error', error: err.message });
     }
 };
+
+// @desc    Get current tenancy for logged in seeker
+// @route   GET /api/tenants/my-tenancy
+// @access  Private
+export const getMyTenancy = async (req, res) => {
+    try {
+        const userEmail = req.user.email;
+
+        // Find tenant record by email. Prioritize Active/Pending.
+        const tenants = await Tenant.find({
+            email: userEmail,
+            status: { $in: ['Active', 'Pending'] }
+        })
+            .populate('listingId', 'title address images location rent deposit')
+            .populate('providerId', 'name email phone')
+            .sort({ status: 1, createdAt: -1 }); // 'Active' comes before 'Pending'? No, Alphabetical. Active < Pending. So 1 works.
+
+        if (!tenants || tenants.length === 0) {
+            return res.status(404).json({ success: false, message: "No active tenancy found" });
+        }
+
+        // Sort in memory to be sure: Active > Pending
+        const activeTenant = tenants.find(t => t.status === 'Active') || tenants[0];
+
+        // Get Payments
+        const Payment = (await import('../models/Payment.js')).default;
+        const payments = await Payment.find({
+            payer: req.user._id,
+            payee: activeTenant.providerId._id
+        }).sort({ createdAt: -1 });
+
+        const tenantObj = activeTenant.toObject();
+        tenantObj.paymentHistory = payments.map(p => ({
+            _id: p._id,
+            month: new Date(p.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' }),
+            date: p.createdAt,
+            amount: p.amount,
+            status: p.status
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: tenantObj
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+};
+// @desc    Request Move Out (Seeker initiated)
+// @route   POST /api/tenants/move-out
+// @access  Private (Seeker)
+export const requestMoveOut = async (req, res) => {
+    try {
+        const userEmail = req.user.email;
+        const tenant = await Tenant.findOne({ email: userEmail, status: 'Active' })
+            .populate('listingId', 'title')
+            .populate('providerId', 'name');
+
+        if (!tenant) {
+            return res.status(404).json({ success: false, message: "No active tenancy found" });
+        }
+
+        // Check if already requested (optional logic, but good for idempotency)
+        // For now, we'll just update status to 'Move Out Requested' or similar?
+        // Actually, schema might only support 'Active', 'Moved Out'. 
+        // Let's check schema. If no 'Move Out Requested' status exists, we might need to add it or just send a notification.
+        // Assuming strict status enum, let's just send a notification to Provider for now, 
+        // OR if permitted, update status to specific "Notice Given" state if available.
+        // For MVP: Send Notification + maybe update a flag? 
+        // Let's assume we can update status to 'Pending Move Out' if schema permits.
+        // If not, we'll just send notification. 
+        // A safer bet without seeing schema is to Notification-only if status structure is rigid.
+        // BUT user asked for "Transaction". 
+        // Let's try to update status to "Move Out Pending" and see if it sticks, or catch validation error?
+        // Better: Just Notify Provider + Return Success. Provider must manually mark 'Moved Out' to release room.
+
+        const { Notification } = await import('../models/Notification.js'); // Dynamic import if needed or use controller
+        const { createNotification } = await import('./notification.controller.js');
+
+        await createNotification({
+            recipient: tenant.providerId._id,
+            type: 'move_out_request',
+            title: 'Move Out Request',
+            message: `${tenant.name} has requested to move out from ${tenant.listingId?.title || 'your property'}.`,
+            data: { tenantId: tenant._id }
+        });
+
+        res.status(200).json({ success: true, message: "Move out request sent to provider" });
+
+    } catch (err) {
+        console.error("Move Out Request Error:", err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+};

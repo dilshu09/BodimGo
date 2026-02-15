@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, AlertTriangle } from 'lucide-react';
 import api from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const ReportModal = ({ isOpen, onClose, listingId }) => {
     const [reason, setReason] = useState('');
@@ -19,7 +20,7 @@ const ReportModal = ({ isOpen, onClose, listingId }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!reason) return alert("Please select a reason");
+        if (!reason) return toast.error("Please select a reason");
 
         setLoading(true);
         try {
@@ -29,10 +30,11 @@ const ReportModal = ({ isOpen, onClose, listingId }) => {
                 description
             });
             setSuccess(true);
-            // Auto close after 3 seconds or let user close
-            // setTimeout(onClose, 3000); 
+            toast.success('Report submitted. We will review it shortly.');
+            onClose();
         } catch (err) {
-            alert(err.response?.data?.message || 'Failed to submit report');
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Failed to submit report');
         } finally {
             setLoading(false);
         }

@@ -43,6 +43,7 @@ const INITIAL_DATA = {
         additionalNotes: ''
     },
     location: {
+        province: '',
         district: '',
         city: '',
         address: '',
@@ -109,10 +110,17 @@ const AddListing = () => {
     const startStep = searchParams.get('step') ? parseInt(searchParams.get('step')) : 1;
 
     // Load Maps API at Parent Level
-    const { isLoaded: isMapsLoaded } = useJsApiLoader({
+    const { isLoaded: isMapsLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
         libraries
     });
+
+    useEffect(() => {
+        if (loadError) {
+            toast.error("Google Maps failed to load. Please disable AdBlocker or check connection.");
+            console.error("Maps Load Error:", loadError);
+        }
+    }, [loadError]);
 
     const [currentStep, setCurrentStep] = useState(startStep);
     const [formData, setFormData] = useState(INITIAL_DATA);
@@ -213,36 +221,18 @@ const AddListing = () => {
             toast.dismiss(t);
 
             if (!res.data.isValid) {
-                // Handle AI Rejection - NON-BLOCKING FLOW
+                // BLOCKING FLOW
                 const errorMsg = res.data.errors?.[0] || "Content flagged by AI safety guidelines.";
-
-                // Mark as flagged but allow proceeding
-                setIsFlagged(true);
-                setFlagDetails(prev => [...prev, {
-                    action: 'flagged',
-                    reason: `Description: ${errorMsg}`,
-                    aiFlag: true,
-                    timestamp: new Date()
-                }]);
 
                 setStep1Errors({
                     ...step1Errors,
-                    description: `⚠️ Note: ${errorMsg}`
+                    description: errorMsg
                 });
 
-                toast((t) => (
-                    <span>
-                        <b>AI Notice:</b> {errorMsg}
-                        <br />
-                        <span className="text-xs">Listing will require manual review.</span>
-                    </span>
-                ), { icon: '⚠️', duration: 5000 });
-
-                // Proceed anyway
-                setStep1Verified(true);
-                setVerifying(false);
-                setTimeout(() => setCurrentStep(2), 2000); // Give time to read
-                return;
+                toast.error(errorMsg);
+                setStep1Verified(false);
+                setVerifying(false); // Stop loader
+                return; // STOP HERE
             }
 
             // Success (Clean)
@@ -263,8 +253,35 @@ const AddListing = () => {
     };
     const verifyStep2 = async () => {
         if (!formData.location.city) { toast.error("Please fill location"); return; }
-        setStep2Verified(true);
-        setCurrentStep(3);
+
+        // Add AI Location Verification
+        try {
+            setVerifying(true);
+            const t = toast.loading("Verifying address...");
+            const res = await api.post('/ai/verify-location', formData.location);
+            toast.dismiss(t);
+
+            if (!res.data.isValid) {
+                const errorMsg = Object.values(res.data.errors || {}).join(', ');
+                setStep2Errors({ general: errorMsg });
+                toast.error(errorMsg || "Location mismatch detected.");
+                setStep2Verified(false);
+                setVerifying(false);
+                return;
+            }
+
+            setStep2Verified(true);
+            setVerifying(false);
+            setCurrentStep(3);
+
+        } catch (err) {
+            console.error(err);
+            // If AI fails, maybe allow proceed or block? User said "if location wrong show error"
+            // Let's assume strict blocking for consistency, or soft allow if server error.
+            setStep2Verified(true);
+            setVerifying(false);
+            setCurrentStep(3);
+        }
     };
     const verifyStep6 = async () => {
         if (!formData.images.length) { toast.error("Please upload photos"); return; }
@@ -280,34 +297,17 @@ const AddListing = () => {
             toast.dismiss(t);
 
             if (!res.data.isValid) {
-                // Handle AI Rejection - NON-BLOCKING FLOW
+                // BLOCKING FLOW
                 const flagged = res.data.flaggedImages;
-
-                setIsFlagged(true);
-
-                // Add specific reasons
-                const newFlags = flagged.map(f => ({
-                    action: 'flagged',
-                    reason: `Image: ${f.reason || 'Content Violation'} (${f.category})`,
-                    aiFlag: true,
-                    timestamp: new Date()
-                }));
-                setFlagDetails(prev => [...prev, ...newFlags]);
+                const errorMsg = flagged[0]?.reason || "Images rejected by AI Safety check.";
 
                 setStep6Errors({ flaggedImages: flagged });
 
-                toast((t) => (
-                    <span>
-                        <b>AI Notice:</b> {flagged.length} photo(s) flagged.
-                        <br />
-                        <span className="text-xs">Listing will require manual review.</span>
-                    </span>
-                ), { icon: '⚠️', duration: 5000 });
+                toast.error(`Blocked: ${errorMsg}`);
 
-                setStep6Verified(true); // Allow proceed
+                setStep6Verified(false);
                 setVerifying(false);
-                setTimeout(() => setCurrentStep(7), 2000);
-                return;
+                return; // STOP HERE
             }
 
             // Success

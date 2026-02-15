@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
+import { toast } from 'react-hot-toast';
 
 // Initialize Stripe
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -12,6 +14,7 @@ const CheckoutForm = ({ booking, clientSecret }) => {
     const stripe = useStripe();
     const elements = useElements();
     const navigate = useNavigate();
+    const { bookingId } = useParams(); // Added to get bookingId for the new API call
     const [error, setError] = useState(null);
     const [processing, setProcessing] = useState(false);
 
@@ -20,6 +23,22 @@ const CheckoutForm = ({ booking, clientSecret }) => {
         setProcessing(true);
 
         if (!stripe || !elements) return;
+
+        // Check booking status before confirming payment
+        try {
+            const bookingStatusRes = await api.get(`/bookings/${bookingId}`);
+            if (bookingStatusRes.data.status !== 'pending') { // Assuming 'pending' is the status before payment
+                toast.error("This booking is not eligible for payment.");
+                setProcessing(false);
+                navigate('/bookings'); // Redirect to bookings page
+                return;
+            }
+        } catch (err) {
+            console.error("Failed to fetch booking status:", err);
+            toast.error("Failed to verify booking status.");
+            setProcessing(false);
+            return;
+        }
 
         const result = await stripe.confirmCardPayment(clientSecret, {
             payment_method: {
@@ -33,16 +52,23 @@ const CheckoutForm = ({ booking, clientSecret }) => {
 
         if (result.error) {
             setError(result.error.message);
+            toast.error(result.error.message);
             setProcessing(false);
         } else {
             if (result.paymentIntent.status === 'succeeded') {
                 // Confirm on backend
-                await api.post('/payments/confirm', {
-                    paymentIntentId: result.paymentIntent.id,
-                    bookingId: booking._id
-                });
-                alert('Payment Successful! Booking Confirmed.');
-                navigate('/');
+                try {
+                    await api.put(`/bookings/${bookingId}/pay`, { paymentIntentId: result.paymentIntent.id });
+                    toast.success("Payment Successful! Booking Confirmed.");
+                    navigate('/bookings');
+                } catch (confirmError) {
+                    console.error("Failed to confirm payment on backend:", confirmError);
+                    toast.error("Payment succeeded but failed to confirm booking. Please contact support.");
+                    setProcessing(false);
+                }
+            } else {
+                toast.error("Payment did not succeed. Please try again.");
+                setProcessing(false);
             }
         }
     };
@@ -92,7 +118,7 @@ const Checkout = () => {
             setClientSecret(res.data.clientSecret);
         }).catch(err => {
             console.error(err);
-            alert(err.response?.data?.message || "Failed to load checkout");
+            toast.error(err.response?.data?.message || "Failed to load checkout");
         });
     }, [bookingId]);
 
