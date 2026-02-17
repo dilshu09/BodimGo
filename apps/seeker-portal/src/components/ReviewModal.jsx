@@ -34,13 +34,13 @@ const ReviewModal = ({ isOpen, onClose, listingId, onReviewAdded }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl w-full max-w-md p-6 relative">
-                <button onClick={onClose} className="absolute top-4 right-4 text-neutral-400 hover:text-black">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-xl w-full max-w-md p-6 relative border border-transparent dark:border-slate-800 shadow-2xl">
+                <button onClick={onClose} className="absolute top-4 right-4 text-neutral-400 hover:text-black dark:hover:text-slate-200 transition-colors">
                     <X size={24} />
                 </button>
 
-                <h2 className="text-xl font-bold mb-4">Write a Review</h2>
+                <h2 className="text-xl font-bold mb-4 text-neutral-900 dark:text-white">Write a Review</h2>
 
                 <form onSubmit={handleSubmit}>
                     <div className="flex gap-2 mb-4 justify-center">
@@ -55,14 +55,14 @@ const ReviewModal = ({ isOpen, onClose, listingId, onReviewAdded }) => {
                             >
                                 <Star
                                     size={32}
-                                    className={star <= (hoveredStar || rating) ? "fill-yellow-400 text-yellow-400" : "text-neutral-300"}
+                                    className={star <= (hoveredStar || rating) ? "fill-yellow-400 text-yellow-400" : "text-neutral-300 dark:text-slate-600"}
                                 />
                             </button>
                         ))}
                     </div>
 
                     <textarea
-                        className="w-full border border-neutral-300 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-black"
+                        className="w-full border border-neutral-300 dark:border-slate-700 bg-transparent dark:bg-slate-800 dark:text-white rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-slate-500 placeholder:text-neutral-400 dark:placeholder:text-slate-500"
                         rows="4"
                         placeholder="Share your experience..."
                         value={comment}
@@ -73,7 +73,7 @@ const ReviewModal = ({ isOpen, onClose, listingId, onReviewAdded }) => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-neutral-800 disabled:opacity-50"
+                        className="w-full bg-black dark:bg-slate-200 text-white dark:text-slate-900 py-3 rounded-lg font-semibold hover:bg-neutral-800 dark:hover:bg-slate-300 transition-colors disabled:opacity-50"
                     >
                         {loading ? 'Submitting...' : 'Submit Review'}
                     </button>

@@ -59,7 +59,7 @@
   }
 
   .card {
-    @apply bg-white border border-neutral-200 rounded-xl shadow-[var(--shadow-card)];
+    @apply bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-800 rounded-xl shadow-[var(--shadow-card)];
   }
 
   .table-header {

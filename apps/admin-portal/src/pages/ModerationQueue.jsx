@@ -138,13 +138,13 @@ export default function ModerationQueue() {
   return (
     <div className="space-y-6">
       {/* Title / Header */}
-      <div className="flex justify-between items-center bg-orange-50/50 p-6 rounded-2xl border border-orange-100 shadow-sm relative overflow-hidden">
+      <div className="flex justify-between items-center bg-orange-50/50 dark:bg-slate-900 p-6 rounded-2xl border border-orange-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
         {/* Decorative Background Element */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-orange-100 rounded-full blur-3xl -z-10 opacity-50 translate-x-10 -translate-y-10"></div>
 
         <div>
-          <h2 className="text-2xl font-bold text-orange-900">User Reports</h2>
-          <p className="text-orange-700 text-sm mt-1">Review and resolve community flags</p>
+          <h2 className="text-2xl font-bold text-orange-900 dark:text-orange-50">User Reports</h2>
+          <p className="text-orange-700 dark:text-orange-200/70 text-sm mt-1">Review and resolve community flags</p>
         </div>
         <div className="flex items-center gap-4 relative z-10">
           <div className="text-right">
@@ -159,9 +159,14 @@ export default function ModerationQueue() {
 
       {/* Reports List */}
       <div className="space-y-6">
-        {reports.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+            <p className="mt-4 text-neutral-500 dark:text-slate-400">Loading reports...</p>
+          </div>
+        ) : reports.length > 0 ? (
           reports.map((report) => (
-            <div key={report._id} className="group relative bg-white rounded-xl border border-neutral-200 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-[#FF385C] overflow-hidden">
+            <div key={report._id} className="group relative bg-white dark:bg-slate-900 rounded-xl border border-neutral-200 dark:border-slate-800 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-[#FF385C] overflow-hidden">
               <div className="p-5 md:p-6">
                 {/* Top Row: Report ID & Status */}
                 <div className="flex justify-between items-start mb-4">
@@ -180,7 +185,7 @@ export default function ModerationQueue() {
                 </div>
 
                 {/* Listing Title */}
-                <h3 className="text-xl font-bold text-neutral-900 mb-1 group-hover:text-[#FF385C] transition-colors">
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-1 group-hover:text-[#FF385C] transition-colors">
                   {report.listing?.title || 'Unknown Listing'}
                 </h3>
 
@@ -190,14 +195,14 @@ export default function ModerationQueue() {
                 </p>
 
                 {/* The Issue Section */}
-                <div className="bg-neutral-50 rounded-lg p-4 border border-neutral-100 mb-6 group-hover:bg-white group-hover:border-[#FF385C]/20 transition-colors">
+                <div className="bg-neutral-50 dark:bg-slate-800 rounded-lg p-4 border border-neutral-100 dark:border-slate-700 mb-6 group-hover:bg-white dark:group-hover:bg-slate-800/80 group-hover:border-[#FF385C]/20 transition-colors">
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-white rounded-full shadow-sm text-[#FF385C] shrink-0 border border-neutral-100">
+                    <div className="p-2 bg-white dark:bg-[#FF385C] rounded-full shadow-sm text-[#FF385C] dark:text-white shrink-0 border border-neutral-100 dark:border-[#FF385C]">
                       <AlertTriangle size={16} />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-neutral-900 uppercase tracking-wide mb-1">Reason: {report.reason}</h4>
-                      <p className="text-neutral-600 text-sm leading-relaxed">
+                      <h4 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wide mb-1">Reason: {report.reason}</h4>
+                      <p className="text-neutral-600 dark:text-slate-300 text-sm leading-relaxed">
                         "{report.description}"
                       </p>
                     </div>
@@ -205,7 +210,7 @@ export default function ModerationQueue() {
                 </div>
 
                 {/* Provider Section & Actions */}
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-4 border-t border-neutral-100">
+                <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-4 border-t border-neutral-100 dark:border-slate-800">
                   {/* Provider Mini Profile */}
                   <div className="flex items-center gap-3 w-full md:w-auto">
                     {report.listing?.provider ? (
@@ -223,7 +228,7 @@ export default function ModerationQueue() {
                           )}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-neutral-900 leading-tight flex items-center gap-2">
+                          <p className="text-sm font-bold text-neutral-900 dark:text-white leading-tight flex items-center gap-2">
                             {report.listing.provider.name}
                             {report.listing.provider.isVerified && <Check size={12} className="text-blue-500" />}
                           </p>
@@ -254,14 +259,14 @@ export default function ModerationQueue() {
                       <>
                         <button
                           onClick={() => setActionModal({ type: 'contact', provider: report.listing.provider, listingId: report.listing._id })}
-                          className="p-2 rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                          className="p-2 rounded-lg border border-neutral-200 dark:border-slate-700 text-neutral-600 dark:text-slate-400 hover:bg-neutral-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-200 dark:hover:border-blue-500/30 transition-all"
                           title="Contact Provider"
                         >
                           <Mail size={16} />
                         </button>
                         <button
                           onClick={() => setActionModal({ type: 'warn', provider: report.listing.provider })}
-                          className="p-2 rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-orange-600 hover:border-orange-200 transition-all"
+                          className="p-2 rounded-lg border border-neutral-200 dark:border-slate-700 text-neutral-600 dark:text-slate-400 hover:bg-neutral-50 dark:hover:bg-slate-800 hover:text-orange-600 dark:hover:text-orange-400 hover:border-orange-200 dark:hover:border-orange-500/30 transition-all"
                           title="Warn Provider"
                         >
                           <ShieldAlert size={16} />
@@ -269,17 +274,17 @@ export default function ModerationQueue() {
                         <button
                           onClick={() => handleSuspendClick(report.listing.provider)}
                           className={`p-2 rounded-lg border transition-all ${report.listing.provider.status === 'suspended'
-                            ? 'bg-red-50 border-red-200 text-red-600'
-                            : 'border-neutral-200 text-neutral-600 hover:bg-neutral-50 hover:text-red-600 hover:border-red-200'
+                            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'
+                            : 'border-neutral-200 dark:border-slate-700 text-neutral-600 dark:text-slate-400 hover:bg-neutral-50 dark:hover:bg-slate-800 hover:text-red-600 dark:hover:text-red-400 hover:border-red-200 dark:hover:border-red-500/30'
                             }`}
                           title={report.listing.provider.status === 'suspended' ? "Unsuspend Provider" : "Suspend Provider"}
                         >
                           <Ban size={16} />
                         </button>
-                        <div className="h-6 w-px bg-neutral-200 mx-1"></div>
+                        <div className="h-6 w-px bg-neutral-200 dark:bg-slate-700 mx-1"></div>
                         <button
                           onClick={() => handleViewProvider(report.listing.provider)}
-                          className="py-1.5 px-3 rounded-lg border border-neutral-200 text-neutral-700 text-sm font-semibold hover:bg-neutral-50 hover:border-neutral-300 transition-all"
+                          className="py-1.5 px-3 rounded-lg border border-neutral-200 dark:border-slate-700 text-neutral-700 dark:text-slate-300 text-sm font-semibold hover:bg-neutral-50 dark:hover:bg-slate-800 hover:border-neutral-300 dark:hover:border-slate-600 transition-all"
                         >
                           Details
                         </button>
@@ -300,12 +305,12 @@ export default function ModerationQueue() {
             </div>
           ))
         ) : (
-          <div className="text-center py-20 bg-white rounded-3xl border border-neutral-100 border-dashed">
-            <div className="mx-auto w-16 h-16 bg-neutral-50 rounded-full flex items-center justify-center mb-4">
+          <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-3xl border border-neutral-100 dark:border-slate-800 border-dashed">
+            <div className="mx-auto w-16 h-16 bg-neutral-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
               <Check size={32} className="text-emerald-500" />
             </div>
-            <h3 className="text-lg font-bold text-neutral-900">All caught up!</h3>
-            <p className="text-neutral-500">No user reports pending review.</p>
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-white">All caught up!</h3>
+            <p className="text-neutral-500 dark:text-slate-400">No user reports pending review.</p>
           </div>
         )}
       </div>
@@ -313,9 +318,9 @@ export default function ModerationQueue() {
       {/* Provider Details Modal */}
       {viewProvider && (
         <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl border border-neutral-100 overflow-hidden transform transition-all scale-100 max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-4xl shadow-2xl border border-neutral-100 dark:border-slate-800 overflow-hidden transform transition-all scale-100 max-h-[90vh] flex flex-col">
             {/* Header */}
-            <div className="p-6 border-b border-neutral-100 flex justify-between items-start bg-neutral-50">
+            <div className="p-6 border-b border-neutral-100 dark:border-slate-800 flex justify-between items-start bg-neutral-50 dark:bg-slate-800">
               <div className="flex items-center gap-4">
                 {selectedListing ? (
                   <div className="flex items-center gap-2">
@@ -326,7 +331,7 @@ export default function ModerationQueue() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-neutral-200 overflow-hidden border-2 border-white shadow-md">
+                    <div className="w-16 h-16 rounded-full bg-neutral-200 dark:bg-slate-700 overflow-hidden border-2 border-white dark:border-slate-600 shadow-md">
                       {viewProvider.profileImage ? (
                         <img src={viewProvider.profileImage} alt={viewProvider.name} className="w-full h-full object-cover" />
                       ) : (
@@ -336,11 +341,11 @@ export default function ModerationQueue() {
                       )}
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-neutral-900 flex items-center gap-2">
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
                         {viewProvider.name}
                         {viewProvider.isVerified && <Check size={18} className="text-blue-500" />}
                       </h3>
-                      <div className="text-sm text-neutral-500 space-y-1">
+                      <div className="text-sm text-neutral-500 dark:text-slate-400 space-y-1">
                         <p>{viewProvider.email}</p>
                         <p>{viewProvider.phone || 'No phone number'}</p>
                       </div>
@@ -357,7 +362,7 @@ export default function ModerationQueue() {
             </div>
 
             {/* Body - Content Switch */}
-            <div className="p-6 overflow-y-auto flex-1 bg-neutral-50/30">
+            <div className="p-6 overflow-y-auto flex-1 bg-neutral-50/30 dark:bg-slate-900">
               {selectedListing ? (
                 <div className="space-y-6">
                   {/* Listing Images Grid */}
@@ -428,30 +433,32 @@ export default function ModerationQueue() {
                       </div>
                     </div>
 
+
+
                     <div className="space-y-4">
-                      <div className="bg-white p-4 rounded-xl border border-neutral-200 shadow-sm sticky top-6">
+                      <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-neutral-200 dark:border-slate-700 shadow-sm sticky top-6">
                         <div className={`text-center py-1 px-3 rounded-full text-xs font-bold uppercase tracking-wide mb-4
-                                              ${selectedListing.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-700'}`}>
+                                            ${selectedListing.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-700'}`}>
                           {selectedListing.status}
                         </div>
 
-                        <h5 className="font-bold text-neutral-900 mb-2 border-b border-neutral-100 pb-2">Listing Stats</h5>
-                        <div className="space-y-3 text-sm">
+                        <h5 className="font-bold text-neutral-900 dark:text-white mb-2 border-b border-neutral-100 dark:border-slate-700 pb-2">Listing Stats</h5>
+                        <div className="space-y-3 text-sm text-neutral-600 dark:text-slate-300">
                           <div className="flex justify-between">
-                            <span className="text-neutral-500">Total Views</span>
-                            <span className="font-semibold">{selectedListing.stats?.views || 0}</span>
+                            <span className="text-neutral-500 dark:text-slate-400">Total Views</span>
+                            <span className="font-semibold text-neutral-900 dark:text-white">{selectedListing.stats?.views || 0}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-neutral-500">Listing Type</span>
-                            <span className="font-semibold capitalize">{selectedListing.type?.replace('_', ' ')}</span>
+                            <span className="text-neutral-500 dark:text-slate-400">Listing Type</span>
+                            <span className="font-semibold capitalize text-neutral-900 dark:text-white">{selectedListing.type?.replace('_', ' ')}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-neutral-500">Rooms</span>
-                            <span className="font-semibold">{selectedListing.rooms?.length || 0}</span>
+                            <span className="text-neutral-500 dark:text-slate-400">Rooms</span>
+                            <span className="font-semibold text-neutral-900 dark:text-white">{selectedListing.rooms?.length || 0}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-neutral-500">Gender Policy</span>
-                            <span className="font-semibold">{selectedListing.genderPolicy || 'Mixed'}</span>
+                            <span className="text-neutral-500 dark:text-slate-400">Gender Policy</span>
+                            <span className="font-semibold text-neutral-900 dark:text-white">{selectedListing.genderPolicy || 'Mixed'}</span>
                           </div>
                         </div>
                       </div>
@@ -460,7 +467,7 @@ export default function ModerationQueue() {
                 </div>
               ) : (
                 <>
-                  <h4 className="text-lg font-bold text-neutral-800 mb-4">Properties Listed by {viewProvider.name.split(' ')[0]}</h4>
+                  <h4 className="text-lg font-bold text-neutral-800 dark:text-white mb-4">Properties Listed by {viewProvider.name.split(' ')[0]}</h4>
 
                   {loadingListings ? (
                     <div className="py-12 flex justify-center">
@@ -472,7 +479,7 @@ export default function ModerationQueue() {
                         <div
                           key={listing._id}
                           onClick={() => handleViewListing(listing)}
-                          className="group relative bg-white p-4 rounded-xl border border-neutral-200 shadow-sm flex gap-4 transition-all duration-300 cursor-pointer hover:shadow-lg hover:border-[#FF385C] overflow-hidden"
+                          className="group relative bg-white dark:bg-slate-800 p-4 rounded-xl border border-neutral-200 dark:border-slate-700 shadow-sm flex gap-4 transition-all duration-300 cursor-pointer hover:shadow-lg hover:border-[#FF385C] overflow-hidden"
                         >
                           <div className="w-24 h-24 rounded-lg bg-neutral-100 shrink-0 overflow-hidden relative border border-neutral-100">
                             {listing.images?.[0] ? (
@@ -487,17 +494,17 @@ export default function ModerationQueue() {
                           </div>
 
                           <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <h5 className="font-bold text-neutral-900 truncate text-lg group-hover:text-[#FF385C] transition-colors mb-1">{listing.title}</h5>
+                            <h5 className="font-bold text-neutral-900 dark:text-white truncate text-lg group-hover:text-[#FF385C] transition-colors mb-1">{listing.title}</h5>
                             <div className="flex items-center gap-1 text-xs text-neutral-500 mb-2">
                               <div className="w-1 h-1 rounded-full bg-neutral-300"></div>
                               <p className="truncate">{listing.location?.address}, {listing.location?.city}</p>
                             </div>
 
-                            <div className="flex gap-3 text-xs text-neutral-400 font-medium">
-                              <span className="flex items-center gap-1 bg-neutral-50 px-2 py-1 rounded-md border border-neutral-100">
+                            <div className="flex gap-3 text-xs text-neutral-400 dark:text-slate-500 font-medium">
+                              <span className="flex items-center gap-1 bg-neutral-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-neutral-100 dark:border-slate-700">
                                 {listing.stats?.views || 0} Views
                               </span>
-                              <span className="flex items-center gap-1 bg-neutral-50 px-2 py-1 rounded-md border border-neutral-100 capitalize">
+                              <span className="flex items-center gap-1 bg-neutral-50 dark:bg-slate-800 px-2 py-1 rounded-md border border-neutral-100 dark:border-slate-700 capitalize">
                                 {listing.type?.replace('_', ' ')}
                               </span>
                             </div>
@@ -506,7 +513,7 @@ export default function ModerationQueue() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 text-neutral-500 bg-white rounded-xl border border-neutral-200 border-dashed">
+                    <div className="text-center py-12 text-neutral-500 dark:text-slate-400 bg-white dark:bg-slate-800 rounded-xl border border-neutral-200 dark:border-slate-700 border-dashed">
                       No listings found for this provider.
                     </div>
                   )}
@@ -515,7 +522,7 @@ export default function ModerationQueue() {
             </div>
 
             {/* Footer Stats / Actions */}
-            <div className="p-4 border-t border-neutral-100 bg-white flex justify-between items-center text-sm text-neutral-500">
+            <div className="p-4 border-t border-neutral-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center text-sm text-neutral-500 dark:text-slate-400">
               <span>Provider ID: {viewProvider._id}</span>
               <div className="flex gap-2">
                 <button
@@ -523,84 +530,87 @@ export default function ModerationQueue() {
                     setViewProvider(null);
                     setActionModal({ type: 'contact', provider: viewProvider, listingId: null });
                   }}
-                  className="px-4 py-2 border border-blue-200 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
+                  className="px-4 py-2 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 font-semibold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                 >
                   Contact
                 </button>
                 <button
                   onClick={() => handleSuspendClick(viewProvider)}
                   className={`px-4 py-2 border font-semibold rounded-lg transition-colors ${viewProvider.status === 'suspended'
-                    ? 'bg-red-50 border-red-200 text-red-700'
-                    : 'border-red-200 text-red-700 hover:bg-red-50'
+                    ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400'
+                    : 'border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
                     }`}
                 >
                   {viewProvider.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
                 </button>
                 <button
                   onClick={() => { setViewProvider(null); setSelectedListing(null); }}
-                  className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold rounded-lg transition-colors"
+                  className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold rounded-lg transition-colors dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
                 >
                   Close
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       {/* Action Modal (Contact / Warn) */}
-      {actionModal.type && (
-        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-neutral-100 p-6">
-            <h3 className="text-xl font-bold text-neutral-900 mb-4 capitalize">
-              {actionModal.type === 'warn' ? 'Issue Warning' : 'Contact Provider'}
-            </h3>
+      {
+        actionModal.type && (
+          <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl border border-neutral-100 dark:border-slate-800 p-6">
+              <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-4 capitalize">
+                {actionModal.type === 'warn' ? 'Issue Warning' : 'Contact Provider'}
+              </h3>
 
-            <div className="space-y-4">
-              {actionModal.type === 'contact' && (
+              <div className="space-y-4">
+                {actionModal.type === 'contact' && (
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-slate-300 mb-1">Subject</label>
+                    <input
+                      type="text"
+                      value={contactSubject}
+                      onChange={(e) => setContactSubject(e.target.value)}
+                      className="w-full p-2 border border-neutral-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-[#FF385C] outline-none dark:bg-slate-800 dark:text-white"
+                      placeholder="Subject..."
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Subject</label>
-                  <input
-                    type="text"
-                    value={contactSubject}
-                    onChange={(e) => setContactSubject(e.target.value)}
-                    className="w-full p-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
-                    placeholder="Subject..."
-                  />
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-slate-300 mb-1">
+                    {actionModal.type === 'warn' ? 'Reason for Warning' : 'Message'}
+                  </label>
+                  <textarea
+                    value={actionModal.type === 'warn' ? actionReason : contactMessage}
+                    onChange={(e) => actionModal.type === 'warn' ? setActionReason(e.target.value) : setContactMessage(e.target.value)}
+                    className={`w-full p-3 border border-neutral-200 dark:border-slate-700 rounded-lg h-32 resize-none focus:ring-2 outline-none dark:bg-slate-800 dark:text-white ${actionModal.type === 'warn' ? 'focus:ring-orange-500' : 'focus:ring-[#FF385C]'}`}
+                    placeholder={actionModal.type === 'warn' ? "Enter warning details..." : "Type your message..."}
+                  ></textarea>
                 </div>
-              )}
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">
-                  {actionModal.type === 'warn' ? 'Reason for Warning' : 'Message'}
-                </label>
-                <textarea
-                  value={actionModal.type === 'warn' ? actionReason : contactMessage}
-                  onChange={(e) => actionModal.type === 'warn' ? setActionReason(e.target.value) : setContactMessage(e.target.value)}
-                  className="w-full p-3 border border-neutral-200 rounded-lg h-32 resize-none focus:ring-2 focus:ring-orange-500 outline-none"
-                  placeholder={actionModal.type === 'warn' ? "Enter warning details..." : "Type your message..."}
-                ></textarea>
-              </div>
-
-              <div className="flex gap-3 justify-end pt-2">
-                <button
-                  onClick={() => setActionModal({ type: null, provider: null, listingId: null })}
-                  className="px-4 py-2 text-neutral-600 font-medium hover:bg-neutral-100 rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={submitAction}
-                  className={`px-4 py-2 text-white font-bold rounded-lg shadow-md transition-transform hover:scale-105 ${actionModal.type === 'warn' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-neutral-900 hover:bg-black'
-                    }`}
-                >
-                  {actionModal.type === 'warn' ? 'Send Warning' : 'Send Message'}
-                </button>
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    onClick={() => setActionModal({ type: null, provider: null, listingId: null })}
+                    className="px-4 py-2 text-neutral-600 dark:text-slate-400 font-medium hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitAction}
+                    className={`px-4 py-2 text-white font-bold rounded-lg shadow-md transition-transform hover:scale-105 ${actionModal.type === 'warn' ? 'bg-orange-600 hover:bg-orange-700' : 'bg-[#FF385C] hover:bg-[#e02e4d]'
+                      }`}
+                  >
+                    {actionModal.type === 'warn' ? 'Send Warning' : 'Send Message'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* Confirmation Modal for Suspend/Activate */}
       <ConfirmationModal
         isOpen={isSuspendModalOpen}
@@ -615,6 +625,6 @@ export default function ModerationQueue() {
           setUserToSuspend(null);
         }}
       />
-    </div>
+    </div >
   );
 }

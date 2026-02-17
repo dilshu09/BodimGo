@@ -90,21 +90,21 @@ const AdminInbox = () => {
         <div className="p-8">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Support Inbox</h1>
-                    <p className="text-slate-500">Manage provider inquiries and support tickets</p>
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Support Inbox</h1>
+                    <p className="text-slate-500 dark:text-slate-400">Manage provider inquiries and support tickets</p>
                 </div>
                 {/* Compose removed: Admin usually replies, but could add create ticket feature if needed */}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-200px)]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-140px)]">
                 {/* Ticket List */}
-                <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-200 bg-slate-50 flex gap-2 overflow-x-auto scrollbar-thin">
+                <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
+                    <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 flex gap-2 overflow-x-auto scrollbar-thin">
                         {['all', 'open', 'in_progress', 'resolved', 'closed'].map(f => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
-                                className={`px-4 py-2 rounded-lg text-sm font-bold capitalize ${filter === f ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:bg-white/50'}`}
+                                className={`px-4 py-2 rounded-lg text-sm font-bold capitalize ${filter === f ? 'bg-white dark:bg-slate-700 shadow text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-slate-700'}`}
                             >
                                 {f}
                             </button>
@@ -124,7 +124,7 @@ const AdminInbox = () => {
                                     setSelectedTicket(ticket);
                                     if (ticket.status === 'open') markAsInProgress(ticket._id);
                                 }}
-                                className={`p-4 rounded-xl cursor-pointer border transition-all ${selectedTicket?._id === ticket._id ? 'bg-[#FF385C]/5 border-[#FF385C]/20 shadow-sm' : 'bg-white border-transparent hover:bg-slate-50'}`}
+                                className={`p-4 rounded-xl cursor-pointer border transition-all ${selectedTicket?._id === ticket._id ? 'bg-[#FF385C]/5 border-[#FF385C]/20 shadow-sm dark:bg-[#FF385C]/10' : 'bg-white dark:bg-slate-800 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${getPriorityColor(ticket.priority)}`}>
@@ -132,24 +132,24 @@ const AdminInbox = () => {
                                     </span>
                                     <span className="text-xs text-slate-400">{new Date(ticket.createdAt).toLocaleDateString()}</span>
                                 </div>
-                                <h3 className={`font-bold text-sm mb-1 ${selectedTicket?._id === ticket._id ? 'text-[#FF385C]' : 'text-slate-800'}`}>{ticket.subject}</h3>
-                                <p className="text-xs text-slate-500 truncate">{ticket.message}</p>
-                                <p className="text-xs text-slate-400 mt-2 font-medium">{ticket.provider?.name || 'Unknown'}</p>
+                                <h3 className={`font-bold text-sm mb-1 ${selectedTicket?._id === ticket._id ? 'text-[#FF385C]' : 'text-slate-800 dark:text-white'}`}>{ticket.subject}</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{ticket.message}</p>
+                                <p className="text-xs text-slate-400 dark:text-slate-500 mt-2 font-medium">{ticket.provider?.name || 'Unknown'}</p>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Ticket Detail / Reply Area */}
-                <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                <div className="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
                     {selectedTicket ? (
                         <>
-                            <div className="p-6 border-b border-slate-200">
+                            <div className="flex-1 overflow-y-auto p-6 border-b border-slate-200 dark:border-slate-800 scrollbar-thin min-h-0">
                                 <div className="flex justify-between items-start mb-4">
                                     <div>
-                                        <h2 className="text-xl font-bold text-slate-900">{selectedTicket.subject}</h2>
-                                        <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
-                                            <span>From: <span className="font-semibold text-slate-700">{selectedTicket.provider?.name}</span></span>
+                                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{selectedTicket.subject}</h2>
+                                        <div className="flex items-center gap-2 mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                            <span>From: <span className="font-semibold text-slate-700 dark:text-slate-200">{selectedTicket.provider?.name}</span></span>
                                             <span className="text-xs">({selectedTicket.provider?.email})</span>
                                         </div>
                                     </div>
@@ -160,24 +160,24 @@ const AdminInbox = () => {
                                         {selectedTicket.status.replace('_', ' ')}
                                     </span>
                                 </div>
-                                <div className="bg-slate-50 p-4 rounded-xl text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
+                                <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl text-slate-700 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
                                     {selectedTicket.message}
                                 </div>
                                 {selectedTicket.adminResponse && (
-                                    <div className="mt-4 bg-[#FF385C]/5 p-4 rounded-xl border border-[#FF385C]/20 text-[#FF385C] text-sm">
+                                    <div className="mt-4 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-sm">
                                         <p className="font-bold mb-1 flex items-center gap-2"><CheckCircle size={14} /> Admin Response:</p>
                                         {selectedTicket.adminResponse}
                                     </div>
                                 )}
                             </div>
 
-                            <div className="flex-1 bg-slate-50 p-6">
-                                <form onSubmit={handleReply} className="h-full flex flex-col">
+                            <div className="shrink-0 bg-slate-50 dark:bg-slate-800/50 p-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+                                <form onSubmit={handleReply} className="flex flex-col">
                                     <label className="text-sm font-bold text-slate-700 mb-2">Reply to Provider</label>
                                     <textarea
                                         value={replyMessage}
                                         onChange={(e) => setReplyMessage(e.target.value)}
-                                        className="flex-1 w-full p-4 border border-slate-200 rounded-xl resize-none focus:ring-2 focus:ring-[#FF385C] outline-none"
+                                        className="w-full p-4 border border-slate-200 dark:border-slate-700 rounded-xl resize-none focus:ring-2 focus:ring-[#FF385C] outline-none dark:bg-slate-900 dark:text-white h-32"
                                         placeholder="Type your response here..."
                                     ></textarea>
                                     <div className="flex justify-end mt-4 gap-3">

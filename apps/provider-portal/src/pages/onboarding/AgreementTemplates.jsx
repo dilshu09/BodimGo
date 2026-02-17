@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FileText, Plus, Clock, Edit2, Loader, X, Eye } from 'lucide-react';
+import { FileText, Plus, Clock, Edit2, Loader, X, Eye, ShieldCheck, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import { formatDistanceToNow } from 'date-fns';
 import ReactMarkdown from 'react-markdown'; // Optional: Use if markdown content is expected
@@ -40,100 +40,82 @@ const AgreementTemplates = () => {
         <div className="p-8 max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-neutral-800">Agreement Templates</h1>
-                    <p className="text-neutral-500 mt-1">Define the legal terms for your properties.</p>
+                    <h1 className="text-2xl font-bold text-neutral-800 dark:text-white">Agreements</h1>
+                    <p className="text-neutral-500 dark:text-slate-400">Manage rental agreement templates.</p>
                 </div>
-                <Link to="/agreements/new" className="btn-primary flex items-center gap-2">
-                    <Plus size={18} />
-                    New Template
-                </Link>
+                <button
+                    onClick={() => navigate('/agreements/new')}
+                    className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-2 transition-colors"
+                >
+                    <Plus size={18} /> New Template
+                </button>
             </div>
 
-            {templates.length === 0 ? (
-                <div className="text-center py-20 bg-neutral-50 rounded-2xl border border-dashed border-neutral-300">
-                    <div className="bg-white p-4 rounded-full shadow-sm inline-block mb-4">
-                        <FileText size={32} className="text-neutral-400" />
-                    </div>
-                    <h3 className="text-lg font-bold text-neutral-700">No Templates Yet</h3>
-                    <p className="text-neutral-500 mb-6">Create your first rental agreement template to get started.</p>
-                    <Link to="/agreements/new" className="btn-primary inline-flex items-center gap-2">
-                        <Plus size={18} /> Create Template
-                    </Link>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {templates.map(tpl => (
-                        <div key={tpl._id} className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm hover:shadow-md transition-shadow relative group/card">
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                                    <FileText size={24} />
-                                </div>
-                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                                    Active
-                                </span>
-                            </div>
-                            <h3 className="font-bold text-lg mb-1">{tpl.name}</h3>
-                            <div className="flex items-center gap-4 text-xs text-neutral-500 mb-6">
-                                <span className="px-2 py-0.5 bg-neutral-100 rounded text-neutral-600">{tpl.lockPeriod}M Lock-in</span>
-                                {tpl.createdAt && (
-                                    <span className="flex items-center gap-1">
-                                        <Clock size={12} /> {formatDistanceToNow(new Date(tpl.createdAt), { addSuffix: true })}
-                                    </span>
-                                )}
-                            </div>
-                            <div className="flex items-center gap-3 mt-4 pt-4 border-t border-neutral-100">
-                                <button
-                                    onClick={() => setSelectedTemplate(tpl)}
-                                    className="flex-1 py-2.5 px-4 bg-white border border-neutral-200 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all text-sm shadow-sm flex items-center justify-center gap-2"
-                                >
-                                    <Eye size={16} className="text-neutral-400" />
-                                    Preview Terms
-                                </button>
-                                <button
-                                    onClick={() => navigate(`/agreements/edit/${tpl._id}`)}
-                                    className="p-2.5 bg-neutral-50 text-neutral-600 rounded-xl hover:bg-white hover:text-primary hover:shadow-md border border-transparent hover:border-neutral-100 transition-all group"
-                                >
-                                    <Edit2 size={18} className="group-hover:scale-110 transition-transform" />
-                                </button>
-                            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Default Template Card */}
+
+
+                {/* Custom Templates */}
+                {templates.map(template => (
+                    <div key={template._id} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-neutral-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group relative">
+                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                            <button className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-lg text-neutral-500 dark:text-slate-400">
+                                <Edit2 size={16} />
+                            </button>
+                            <button className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-500">
+                                <Trash2 size={16} />
+                            </button>
                         </div>
-                    ))}
-                </div>
-            )}
+
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4 text-primary">
+                            <FileText size={20} />
+                        </div>
+                        <h3 className="font-bold text-lg text-neutral-800 dark:text-white mb-1">{template.name}</h3>
+                        <p className="text-neutral-500 dark:text-slate-400 text-sm mb-6 line-clamp-2">Custom agreement for specific properties.</p>
+
+                        <div className="flex items-center gap-2 text-xs text-neutral-400 dark:text-slate-500 mb-4">
+                            <span>Last edited: {template.createdAt && formatDistanceToNow(new Date(template.createdAt), { addSuffix: true })}</span>
+                        </div>
+
+                        <button
+                            onClick={() => setSelectedTemplate(template)}
+                            className="w-full py-2 border border-neutral-200 dark:border-slate-700 hover:border-primary text-neutral-600 dark:text-slate-300 hover:text-primary rounded-lg text-sm font-semibold transition-colors"
+                        >
+                            View Details
+                        </button>
+                    </div>
+                ))}
+            </div>
 
             {/* Preview Modal */}
             {selectedTemplate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-6 border-b border-neutral-100">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl border border-neutral-200 dark:border-slate-800">
+                        <div className="p-6 border-b border-neutral-100 dark:border-slate-800 flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-bold text-neutral-800">{selectedTemplate.name}</h2>
-                                <p className="text-sm text-neutral-500">Previewing agreement terms</p>
+                                <h2 className="text-xl font-bold text-neutral-800 dark:text-white">{selectedTemplate.name}</h2>
+                                <p className="text-sm text-neutral-500 dark:text-slate-400">Preview Mode</p>
                             </div>
                             <button
                                 onClick={() => setSelectedTemplate(null)}
-                                className="p-2 hover:bg-neutral-100 rounded-xl transition-colors"
+                                className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-full text-neutral-500 dark:text-slate-400"
                             >
-                                <X size={20} className="text-neutral-500" />
+                                <X size={20} />
                             </button>
                         </div>
-                        <div className="p-8 overflow-y-auto custom-scrollbar bg-neutral-50/50">
-                            <div className="prose prose-sm max-w-none text-neutral-700 font-mono text-sm leading-relaxed bg-white p-8 rounded-xl border border-neutral-200 shadow-sm">
-                                <ReactMarkdown>{selectedTemplate.content}</ReactMarkdown>
-                            </div>
+                        <div className="p-8 overflow-y-auto flex-1 bg-neutral-50 dark:bg-slate-900/50 font-serif text-neutral-800 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                            {selectedTemplate.content}
+                            <p className="mt-4 italic text-neutral-400 dark:text-slate-500 text-sm">[...Full legal document content...]</p>
                         </div>
-                        <div className="p-6 border-t border-neutral-100 flex justify-end gap-3 bg-white rounded-b-2xl">
+                        <div className="p-4 border-t border-neutral-100 dark:border-slate-800 flex justify-end gap-3">
                             <button
                                 onClick={() => setSelectedTemplate(null)}
-                                className="px-5 py-2.5 text-neutral-600 font-bold hover:bg-neutral-50 rounded-xl transition-colors"
+                                className="px-4 py-2 text-neutral-600 dark:text-slate-300 font-semibold hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-lg"
                             >
-                                Close
+                                Close Preview
                             </button>
-                            <button
-                                onClick={() => navigate(`/agreements/edit/${selectedTemplate._id}`)}
-                                className="px-5 py-2.5 bg-primary text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/20 flex items-center gap-2"
-                            >
-                                <Edit2 size={16} /> Edit Template
+                            <button className="px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark">
+                                Use This Template
                             </button>
                         </div>
                     </div>

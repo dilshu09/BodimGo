@@ -18,8 +18,8 @@
 
   /* Custom Scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -27,12 +27,11 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 56, 92, 0.6);
-    border-radius: 10px;
+    @apply bg-slate-300 dark:bg-slate-700 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #FF385C;
+    @apply bg-slate-400 dark:bg-slate-600;
   }
 }
 
@@ -42,6 +41,6 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border border-neutral-300 focus:outline-none focus:border-neutral-800 focus:ring-1 focus:ring-neutral-800 transition-colors bg-white;
+    @apply w-full px-4 py-3 rounded-xl border border-neutral-300 focus:outline-none focus:border-neutral-800 focus:ring-1 focus:ring-neutral-800 transition-colors bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white dark:focus:border-white dark:focus:ring-white;
   }
 }

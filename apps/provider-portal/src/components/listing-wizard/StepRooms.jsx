@@ -100,8 +100,8 @@ const StepRooms = ({ data, update }) => {
         <div className="space-y-6 animate-fade-in max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
             <div className="flex items-center justify-between mb-2">
                 <div>
-                    <h3 className="font-bold text-xl text-neutral-800">Room Details</h3>
-                    <p className="text-neutral-500 text-sm">Add individual rooms or units.</p>
+                    <h3 className="font-bold text-xl text-neutral-800 dark:text-white">Room Details</h3>
+                    <p className="text-neutral-500 dark:text-slate-400 text-sm">Add individual rooms or units.</p>
                 </div>
                 <button
                     onClick={addRoom}
@@ -112,25 +112,25 @@ const StepRooms = ({ data, update }) => {
             </div>
 
             {data.rooms?.length === 0 && (
-                <div className="text-center py-12 bg-neutral-50 rounded-2xl border border-dashed border-neutral-300">
-                    <Hotel className="mx-auto text-neutral-300 mb-3" size={48} />
-                    <p className="text-neutral-500 font-medium">No rooms added yet</p>
+                <div className="text-center py-12 bg-neutral-50 dark:bg-slate-800 rounded-2xl border border-dashed border-neutral-300 dark:border-slate-600">
+                    <Hotel className="mx-auto text-neutral-300 dark:text-slate-500 mb-3" size={48} />
+                    <p className="text-neutral-500 dark:text-slate-400 font-medium">No rooms added yet</p>
                 </div>
             )}
 
             <div className="space-y-6">
                 {data.rooms?.map((room, index) => (
-                    <div key={room.id} className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow relative group">
+                    <div key={room.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-neutral-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-shadow relative group">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
-                            <h4 className="font-bold text-lg text-neutral-800 flex items-center gap-2">
+                            <h4 className="font-bold text-lg text-neutral-800 dark:text-white flex items-center gap-2">
                                 {room.name || `Unit #${index + 1}`}
                             </h4>
                             <div className="flex items-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => duplicateRoom(room)} className="p-2 hover:bg-neutral-100 rounded-lg text-neutral-500" title="Duplicate">
+                                <button onClick={() => duplicateRoom(room)} className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-700 rounded-lg text-neutral-500 dark:text-slate-400" title="Duplicate">
                                     <Copy size={16} />
                                 </button>
-                                <button onClick={() => removeRoom(room.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-500" title="Delete">
+                                <button onClick={() => removeRoom(room.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-500" title="Delete">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
@@ -139,63 +139,63 @@ const StepRooms = ({ data, update }) => {
                         {/* Form Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                             <div>
-                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">Room Name</label>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Room Name</label>
                                 <input
                                     type="text"
                                     value={room.name}
                                     onChange={(e) => updateRoom(room.id, 'name', e.target.value)}
-                                    className="input-field"
+                                    className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                     placeholder="e.g. Master Bedroom"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">Type</label>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Type</label>
                                 <select
                                     value={room.type}
                                     onChange={(e) => updateRoom(room.id, 'type', e.target.value)}
-                                    className="input-field"
+                                    className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 >
                                     {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">Booking Mode</label>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Booking Mode</label>
                                 <select
                                     value={room.occupancyMode}
                                     onChange={(e) => updateRoom(room.id, 'occupancyMode', e.target.value)}
-                                    className="input-field"
+                                    className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 >
                                     {OCCUPANCY_MODES.map(m => <option key={m} value={m}>{m}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">Rent (LKR)</label>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Rent (LKR)</label>
                                 <input
                                     type="number"
                                     value={room.price}
                                     onChange={(e) => updateRoom(room.id, 'price', e.target.value)}
-                                    className="input-field font-mono"
+                                    className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white font-mono"
                                     placeholder="0"
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">Capacity / Beds</label>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Capacity / Beds</label>
                                 <div className="relative">
                                     <BedDouble size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
                                     <input
                                         type="number"
                                         value={room.capacity}
                                         onChange={(e) => updateRoom(room.id, 'capacity', parseInt(e.target.value) || 1)}
-                                        className="input-field pl-9"
+                                        className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white pl-9"
                                     />
                                 </div>
                             </div>
                             <div>
-                                <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-1 block">Status</label>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Status</label>
                                 <select
                                     value={room.status}
                                     onChange={(e) => updateRoom(room.id, 'status', e.target.value)}
-                                    className="input-field"
+                                    className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 >
                                     <option value="Available">Available</option>
                                     <option value="Occupied">Occupied</option>
@@ -214,7 +214,7 @@ const StepRooms = ({ data, update }) => {
 
                         {/* Room Photos */}
                         <div>
-                            <label className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2 block flex items-center justify-between">
+                            <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-2 block flex items-center justify-between">
                                 <span>Room Photos ({room.images?.length || 0}/3)</span>
                                 <span className="text-primary normal-case font-normal text-xs bg-primary/10 px-2 py-0.5 rounded-full">
                                     Cover all angles
@@ -223,7 +223,7 @@ const StepRooms = ({ data, update }) => {
 
                             <div className="flex gap-3 overflow-x-auto pb-2">
                                 {(room.images?.length || 0) < 3 && (
-                                    <div className="relative w-24 h-24 flex-shrink-0 border-2 border-dashed border-neutral-300 rounded-xl hover:bg-neutral-50 hover:border-primary transition-colors flex flex-col items-center justify-center cursor-pointer">
+                                    <div className="relative w-24 h-24 flex-shrink-0 border-2 border-dashed border-neutral-300 dark:border-slate-600 rounded-xl hover:bg-neutral-50 dark:hover:bg-slate-700 hover:border-primary transition-colors flex flex-col items-center justify-center cursor-pointer">
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -236,8 +236,8 @@ const StepRooms = ({ data, update }) => {
                                             <Loader2 className="animate-spin text-primary" size={20} />
                                         ) : (
                                             <>
-                                                <Camera size={20} className="text-neutral-400 mb-1" />
-                                                <span className="text-[10px] text-neutral-500 font-bold">Add Photo</span>
+                                                <Camera size={20} className="text-neutral-400 dark:text-slate-500 mb-1" />
+                                                <span className="text-[10px] text-neutral-500 dark:text-slate-400 font-bold">Add Photo</span>
                                             </>
                                         )}
                                     </div>

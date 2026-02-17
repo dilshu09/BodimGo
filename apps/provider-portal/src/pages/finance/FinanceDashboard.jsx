@@ -172,8 +172,8 @@ export default function FinanceDashboard() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8 flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">Finance Dashboard</h2>
-          <p className="text-slate-600 mt-1">
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Finance Dashboard</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">
             Your financial overview and transactions
           </p>
         </div>
@@ -189,23 +189,23 @@ export default function FinanceDashboard() {
         {stats.map((stat, i) => (
           <div
             key={i}
-            className={`${stat.bg} rounded-xl p-6 border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-xl ${stat.hoverBorder} hover:-translate-y-1 group`}
+            className={`${stat.bg} dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm transition-all duration-300 hover:shadow-xl ${stat.hoverBorder} hover:-translate-y-1 group`}
           >
             <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-xs text-slate-600 font-bold uppercase tracking-wide opacity-80 group-hover:opacity-100 transition-opacity">
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wide opacity-80 group-hover:opacity-100 transition-opacity">
                   {stat.label}
                 </p>
-                <p className={`text-2xl font-black text-slate-900 mt-2 tracking-tight ${stat.hoverText} transition-colors`}>
+                <p className={`text-2xl font-black text-slate-900 dark:text-white mt-2 tracking-tight ${stat.hoverText} transition-colors`}>
                   {typeof stat.value === 'string' && stat.value.includes('Expenses') ? stat.value : `Rs. ${stat.value}`}
                 </p>
               </div>
-              <div className={`p-2.5 rounded-lg bg-white/60 ${stat.textColor} group-hover:scale-110 transition-transform shadow-sm`}>
+              <div className={`p-2.5 rounded-lg bg-white/60 dark:bg-slate-700/50 ${stat.textColor} group-hover:scale-110 transition-transform shadow-sm`}>
                 <stat.icon size={20} />
               </div>
             </div>
             <div
-              className={`text-xs font-bold uppercase tracking-wider ${stat.trend === "up" ? "text-green-600" : stat.trend === "down" ? "text-primary" : "text-slate-500"}`}
+              className={`text-xs font-bold uppercase tracking-wider ${stat.trend === "up" ? "text-green-600 dark:text-green-400" : stat.trend === "down" ? "text-primary" : "text-slate-500 dark:text-slate-400"}`}
             >
               {stat.change}
             </div>
@@ -215,9 +215,9 @@ export default function FinanceDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
-              <h3 className="text-lg font-bold text-slate-900">
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-white dark:bg-slate-900">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
                 Recent Transactions
               </h3>
             </div>
@@ -225,26 +225,26 @@ export default function FinanceDashboard() {
               {recentTransactions.map((tx) => (
                 <div
                   key={tx.id}
-                  className="p-5 flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                  className="p-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group bg-white dark:bg-slate-900"
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'Income' ? 'bg-green-100 text-green-600' : 'bg-red-50 text-primary'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'Income' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-primary dark:bg-red-900/30 dark:text-red-400'}`}>
                       {tx.type === 'Income' ? <DollarSign size={18} /> : <TrendingDown size={18} />}
                     </div>
                     <div>
-                      <p className="font-medium text-slate-900 group-hover:text-primary transition-colors">
+                      <p className="font-medium text-slate-900 dark:text-white group-hover:text-primary transition-colors">
                         {tx.description}
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">{tx.date} • {tx.type}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{tx.date} • {tx.type}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p
-                      className={`font-bold ${tx.type === "Income" ? "text-green-600" : "text-primary"}`}
+                      className={`font-bold ${tx.type === "Income" ? "text-green-600 dark:text-green-400" : "text-primary"}`}
                     >
                       {tx.amount}
                     </p>
-                    <span className="text-xs font-medium text-slate-400">
+                    <span className="text-xs font-medium text-slate-400 dark:text-slate-500">
                       {tx.status}
                     </span>
                   </div>
@@ -260,12 +260,12 @@ export default function FinanceDashboard() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-fit sticky top-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 h-fit sticky top-6">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
             Quick Actions
           </h3>
           <div className="space-y-3">
-            <Link to="/finance/invoices" className="block w-full text-center px-4 py-3 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm shadow-sm hover:shadow">
+            <Link to="/finance/invoices" className="block w-full text-center px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium text-sm shadow-sm hover:shadow">
               View Invoices
             </Link>
             <button
@@ -274,7 +274,7 @@ export default function FinanceDashboard() {
             >
               <TrendingDown size={16} /> Record Expense
             </button>
-            <Link to="/finance/reports" className="block w-full text-center px-4 py-3 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm">
+            <Link to="/finance/reports" className="block w-full text-center px-4 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium text-sm">
               View & Export Reports
             </Link>
           </div>
@@ -284,18 +284,18 @@ export default function FinanceDashboard() {
       {/* Expense Modal */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100">
-              <h3 className="text-lg font-bold text-slate-900">Record New Expense</h3>
-              <button onClick={() => setShowExpenseModal(false)}><X size={20} className="text-slate-400 hover:text-slate-600" /></button>
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-neutral-200 dark:border-slate-800">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 dark:border-slate-700">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Record New Expense</h3>
+              <button onClick={() => setShowExpenseModal(false)}><X size={20} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" /></button>
             </div>
             <form onSubmit={handleCreateExpense} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Expense Category</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Expense Category</label>
                 <select
                   value={expenseForm.category}
                   onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 >
                   <option>Utility</option>
                   <option>Maintenance</option>
@@ -308,44 +308,44 @@ export default function FinanceDashboard() {
 
               {expenseForm.category === 'Other' && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Specify Category</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Specify Category</label>
                   <input
                     type="text"
                     placeholder="e.g. Gardener, Security"
                     value={otherCategory}
                     onChange={(e) => setOtherCategory(e.target.value)}
-                    className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
                 <input
                   type="text"
                   placeholder="e.g. Broken Tap Repair"
                   value={expenseForm.description}
                   onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Amount (LKR)</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount (LKR)</label>
                 <input
                   type="number"
                   placeholder="0.00"
                   value={expenseForm.amount}
                   onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
                 <input
                   type="date"
                   value={expenseForm.date}
                   onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
-                  className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                  className="w-full p-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
               <div className="pt-2">

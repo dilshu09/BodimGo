@@ -86,8 +86,8 @@ const StepImages = ({ data, update, errors, verified }) => {
     return (
         <div className="space-y-6 animate-fade-in min-h-[400px]">
             <div className="text-center mb-6">
-                <h3 className="font-bold text-xl text-neutral-800">Property Photos</h3>
-                <p className="text-neutral-500 text-sm">Upload high-quality photos to attract more tenants.</p>
+                <h3 className="font-bold text-xl text-neutral-800 dark:text-white">Property Photos</h3>
+                <p className="text-neutral-500 dark:text-slate-400 text-sm">Upload high-quality photos to attract more tenants.</p>
             </div>
 
             {/* Verification Success */}
@@ -118,7 +118,7 @@ const StepImages = ({ data, update, errors, verified }) => {
             {/* Upload Area */}
             <div className={`
                 border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer relative transition-all duration-300
-                ${uploading ? 'bg-neutral-50 border-primary/50' : 'border-neutral-300 hover:bg-neutral-50 hover:border-primary'}
+                ${uploading ? 'bg-neutral-50 dark:bg-slate-800 border-primary/50' : 'border-neutral-300 dark:border-slate-600 hover:bg-neutral-50 dark:hover:bg-slate-800 hover:border-primary'}
             `}>
                 <input
                     ref={fileInputRef}
@@ -135,9 +135,9 @@ const StepImages = ({ data, update, errors, verified }) => {
                     </div>
                     <div>
                         <span className="font-bold text-primary text-lg block">{uploading ? 'Uploading Photos...' : 'Click to Upload Photos'}</span>
-                        <span className="text-neutral-500 text-sm">Supports JPG, PNG (Max 10MB)</span>
+                        <span className="text-neutral-500 dark:text-slate-400 text-sm">Supports JPG, PNG (Max 10MB)</span>
                     </div>
-                    {!uploading && <p className="text-xs text-neutral-400 mt-2">AI checks will apply after you click "Verify"</p>}
+                    {!uploading && <p className="text-xs text-neutral-400 dark:text-slate-500 mt-2">AI checks will apply after you click "Verify"</p>}
                 </div>
             </div>
 

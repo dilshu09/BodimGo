@@ -33,12 +33,12 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-neutral-950 px-4 py-12 transition-colors duration-200">
-            <div className="w-full max-w-md bg-white dark:bg-neutral-900 p-8 rounded-2xl shadow-xl border border-neutral-100 dark:border-neutral-800 transition-all">
+        <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-slate-950 px-4 py-12 transition-colors duration-200">
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-xl border border-neutral-100 dark:border-slate-800 transition-all">
                 <div className="text-center mb-8">
                     <img src={logo} alt="BodimGo" className="h-12 w-auto mx-auto mb-4" />
                     <h1 className="text-2xl font-bold text-neutral-800 dark:text-white">Welcome to BodimGo</h1>
-                    <p className="text-neutral-500 dark:text-neutral-400 text-sm mt-1">Log in to find your perfect place</p>
+                    <p className="text-neutral-500 dark:text-slate-400 text-sm mt-1">Log in to find your perfect place</p>
                 </div>
 
                 {error && (
@@ -52,11 +52,11 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-2">Email Address</label>
+                        <label className="block text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wide mb-2">Email Address</label>
                         <input
                             type="email"
                             required
-                            className="w-full px-4 py-3 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                            className="w-full px-4 py-3 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-neutral-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-slate-500"
                             placeholder="user@gmail.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -65,7 +65,7 @@ const Login = () => {
 
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="block text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Password</label>
+                            <label className="block text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wide">Password</label>
                             <Link to="/forgot-password" className="text-xs font-bold text-primary hover:text-primary-hover transition-colors">
                                 Forgot Password?
                             </Link>
@@ -74,14 +74,14 @@ const Login = () => {
                             <input
                                 type={showPassword ? "text" : "password"}
                                 required
-                                className="w-full px-4 py-3 rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all pr-10 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                                className="w-full px-4 py-3 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-neutral-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all pr-10 placeholder:text-neutral-400 dark:placeholder:text-slate-500"
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
                             <button
                                 type="button"
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-slate-300"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -98,8 +98,8 @@ const Login = () => {
                     </button>
                 </form>
 
-                <div className="mt-8 pt-6 border-t border-neutral-100 dark:border-neutral-800 text-center">
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <div className="mt-8 pt-6 border-t border-neutral-100 dark:border-slate-800 text-center">
+                    <p className="text-sm text-neutral-500 dark:text-slate-400">
                         Don't have an account?{' '}
                         <Link to="/register" className="text-primary font-bold hover:underline">
                             Sign up

@@ -40,8 +40,8 @@ const StepFacilities = ({ data, update }) => {
     return (
         <div className="space-y-6 animate-fade-in">
             <div className="text-center mb-8">
-                <h3 className="text-xl font-bold text-neutral-800">What does your place offer?</h3>
-                <p className="text-neutral-500 text-sm">Select all the amenities available for tenants.</p>
+                <h3 className="text-xl font-bold text-neutral-800 dark:text-white">What does your place offer?</h3>
+                <p className="text-neutral-500 dark:text-slate-400 text-sm">Select all the amenities available for tenants.</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -54,14 +54,14 @@ const StepFacilities = ({ data, update }) => {
                             className={`
                                 cursor-pointer relative group rounded-2xl p-4 border-2 transition-all duration-300 flex flex-col items-center justify-center text-center gap-3 min-h-[120px]
                                 ${isSelected
-                                    ? 'border-primary bg-primary/5 shadow-md scale-[1.02]'
-                                    : 'border-transparent bg-white shadow-sm hover:shadow-md hover:bg-neutral-50'}
+                                    ? 'border-primary bg-primary/5 dark:bg-primary/20 shadow-md scale-[1.02]'
+                                    : 'border-transparent bg-white dark:bg-slate-800 shadow-sm hover:shadow-md hover:bg-neutral-50 dark:hover:bg-slate-700'}
                             `}
                         >
-                            <div className={`p-3 rounded-full transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-neutral-100 text-neutral-500 group-hover:bg-neutral-200'}`}>
+                            <div className={`p-3 rounded-full transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-neutral-100 dark:bg-slate-700 text-neutral-500 dark:text-slate-400 group-hover:bg-neutral-200 dark:group-hover:bg-slate-600'}`}>
                                 <Icon size={24} />
                             </div>
-                            <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-neutral-600'}`}>{label}</span>
+                            <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-neutral-600 dark:text-slate-300'}`}>{label}</span>
 
                             {isSelected && (
                                 <div className="absolute top-3 right-3 w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -72,14 +72,14 @@ const StepFacilities = ({ data, update }) => {
             </div>
 
             {/* Custom Facility Input */}
-            <div className="mt-8 pt-6 border-t border-neutral-100">
-                <h4 className="font-bold text-neutral-800 mb-2">Other Amenities</h4>
+            <div className="mt-8 pt-6 border-t border-neutral-100 dark:border-slate-800">
+                <h4 className="font-bold text-neutral-800 dark:text-white mb-2">Other Amenities</h4>
                 <div className="flex gap-2">
                     <input
                         type="text"
                         id="custom-facility-input"
                         placeholder="e.g. Roof Top, Solar Power, Gym"
-                        className="input-field flex-1 border-neutral-300 focus:border-primary focus:ring-primary"
+                        className="input-field flex-1 border-neutral-300 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-primary focus:ring-primary"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();

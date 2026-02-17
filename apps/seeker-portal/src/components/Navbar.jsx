@@ -122,8 +122,8 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="border-b border-neutral-200 dark:border-slate-800 bg-white dark:bg-slate-900 sticky top-0 z-50 transition-colors duration-200">
-            <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+        <nav className="fixed top-0 left-0 w-full border-b border-neutral-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-50 transition-colors duration-200 h-20">
+            <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
                 {/* Logo */}
                 <Link to="/" className="flex items-center gap-2">
                     <img src={logo} alt="BodimGo" className="h-8 w-auto" />

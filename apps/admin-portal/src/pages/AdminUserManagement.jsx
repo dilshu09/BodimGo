@@ -248,7 +248,7 @@ const AdminUserManagement = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-neutral-200 shadow-sm">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-neutral-200 dark:border-slate-800 shadow-sm">
         {loading ? (
           <div className="p-8 text-center text-neutral-500">
             Loading users...
@@ -259,29 +259,29 @@ const AdminUserManagement = () => {
           </div>
         ) : (
           <table className="w-full text-left text-sm">
-            <thead className="bg-neutral-50 border-b border-neutral-200">
+            <thead className="bg-neutral-50 dark:bg-slate-800 border-b border-neutral-200 dark:border-slate-800">
               <tr>
-                <th className="px-6 py-4 font-semibold text-neutral-900">
+                <th className="px-6 py-4 font-semibold text-neutral-900 dark:text-white">
                   Name
                 </th>
-                <th className="px-6 py-4 font-semibold text-neutral-900">
+                <th className="px-6 py-4 font-semibold text-neutral-900 dark:text-white">
                   Email
                 </th>
-                <th className="px-6 py-4 font-semibold text-neutral-900">
+                <th className="px-6 py-4 font-semibold text-neutral-900 dark:text-white">
                   Join Date
                 </th>
-                <th className="px-6 py-4 font-semibold text-neutral-900">
+                <th className="px-6 py-4 font-semibold text-neutral-900 dark:text-white">
                   Status
                 </th>
-                <th className="px-6 py-4 font-semibold text-neutral-900">
+                <th className="px-6 py-4 font-semibold text-neutral-900 dark:text-white">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
               {filteredUsers.map((user) => (
-                <tr key={user._id} className="group hover:bg-neutral-50 transition-all border-l-4 border-transparent hover:border-[#FF385C]">
-                  <td className="px-6 py-4 font-medium text-neutral-900 flex items-center gap-2">
+                <tr key={user._id} className="group hover:bg-neutral-50 dark:hover:bg-slate-800/50 transition-all border-l-4 border-transparent hover:border-[#FF385C]">
+                  <td className="px-6 py-4 font-medium text-neutral-900 dark:text-gray-200 flex items-center gap-2">
                     {user.name}
                     {user.isVerified && <BadgeCheck size={16} className="text-blue-500" title="Verified Provider" />}
                     {user.warningCount > 0 && (
@@ -291,8 +291,8 @@ const AdminUserManagement = () => {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-neutral-600">{user.email}</td>
-                  <td className="px-6 py-4 text-neutral-600">
+                  <td className="px-6 py-4 text-neutral-600 dark:text-gray-400">{user.email}</td>
+                  <td className="px-6 py-4 text-neutral-600 dark:text-gray-400">
                     {getJoinDate(user.createdAt)}
                   </td>
                   <td className="px-6 py-4">
@@ -313,17 +313,17 @@ const AdminUserManagement = () => {
                         <MoreVertical size={18} className="text-neutral-400" />
                       </button>
                       {openMenu === user._id && (
-                        <div className="absolute right-0 mt-1 w-48 bg-white border border-neutral-200 rounded-lg shadow-lg z-10 user-actions-menu">
+                        <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 border border-neutral-200 dark:border-slate-700 rounded-lg shadow-lg z-10 user-actions-menu overflow-hidden">
                           <button
                             onClick={() => openViewModal(user)}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-neutral-700 hover:bg-neutral-50 border-b border-neutral-200"
+                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-neutral-700 dark:text-gray-200 hover:bg-neutral-50 dark:hover:bg-slate-700 border-b border-neutral-200 dark:border-slate-700 transition-colors"
                           >
                             <Eye size={16} />
                             View Details
                           </button>
                           <button
                             onClick={() => openEditModal(user)}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-neutral-700 hover:bg-neutral-50 border-b border-neutral-200"
+                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-neutral-700 dark:text-gray-200 hover:bg-neutral-50 dark:hover:bg-slate-700 border-b border-neutral-200 dark:border-slate-700 transition-colors"
                           >
                             <Edit2 size={16} />
                             Edit
@@ -334,7 +334,7 @@ const AdminUserManagement = () => {
                                 handleVerify(user._id);
                                 setOpenMenu(null);
                               }}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-left text-blue-600 hover:bg-blue-50 border-b border-neutral-200"
+                              className="w-full flex items-center gap-2 px-4 py-2 text-left text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 border-b border-neutral-200 dark:border-slate-700 transition-colors"
                             >
                               <BadgeCheck size={16} />
                               Verify Provider
@@ -366,7 +366,7 @@ const AdminUserManagement = () => {
                               handleDelete(user._id);
                               setOpenMenu(null);
                             }}
-                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-red-600 hover:bg-red-50"
+                            className="w-full flex items-center gap-2 px-4 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
                           >
                             <Trash2 size={16} />
                             Delete

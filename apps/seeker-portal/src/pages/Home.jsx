@@ -38,11 +38,11 @@ const Home = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white dark:bg-slate-950 pt-20 transition-colors duration-200">
             <Navbar />
 
             {/* Hero / Filter Section */}
-            <div className="border-b border-neutral-200 py-6 sticky top-20 bg-white z-40">
+            <div className="border-b border-neutral-200 dark:border-slate-800 py-6 sticky top-20 bg-white dark:bg-slate-950 z-40 transition-colors duration-200">
                 <div className="max-w-7xl mx-auto px-4">
                     <SearchBar onSearch={fetchListings} />
                 </div>
@@ -64,8 +64,8 @@ const Home = () => {
                     </div>
                 ) : (
                     <div className="text-center py-20">
-                        <h3 className="text-xl font-bold text-neutral-800">No matches found</h3>
-                        <p className="text-neutral-500">Try changing your filters.</p>
+                        <h3 className="text-xl font-bold text-neutral-800 dark:text-white">No matches found</h3>
+                        <p className="text-neutral-500 dark:text-slate-400">Try changing your filters.</p>
                     </div>
                 )}
             </main>

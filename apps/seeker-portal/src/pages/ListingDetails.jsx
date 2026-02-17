@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import api from "../services/api";
-import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare, Star, Bath, Bed, Maximize, Heart, Share2, Shield, Calendar, AlertTriangle } from "lucide-react";
+import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare, Star, Bath, Bed, Maximize, Heart, Share2, Shield, Calendar, AlertTriangle, X } from "lucide-react";
 import ReviewModal from "../components/ReviewModal";
 import ReportModal from "../components/ReportModal";
 import { SkeletonDetails } from "../components/Skeleton";
@@ -119,7 +119,7 @@ const ListingDetails = () => {
   if (!listing) return <div>Listing not found</div>;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 pb-20 transition-colors duration-200">
+    <div className="min-h-screen bg-white dark:bg-slate-950 pt-24 pb-20 transition-colors duration-200">
       <Navbar />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-6">
@@ -280,13 +280,13 @@ const ListingDetails = () => {
 
             {/* Location Section */}
             {listing.location && (
-              <div className="border-t border-neutral-200 pt-8">
-                <h3 className="text-xl font-bold text-neutral-800 mb-4">
+              <div className="border-t border-neutral-200 dark:border-slate-800 pt-8">
+                <h3 className="text-xl font-bold text-neutral-800 dark:text-slate-100 mb-4">
                   Where you'll be
                 </h3>
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="bg-neutral-100 p-3 rounded-full">
-                    <MapPin size={24} className="text-neutral-700" />
+                  <div className="bg-neutral-100 dark:bg-slate-800 p-3 rounded-full">
+                    <MapPin size={24} className="text-neutral-700 dark:text-slate-200" />
                   </div>
                   <div>
                     <p className="font-semibold text-neutral-900 dark:text-white text-lg">
@@ -486,14 +486,14 @@ const ListingDetails = () => {
 
         {
           showProvider && listing.provider && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-              <div className="bg-white rounded-2xl w-full max-w-md p-6 relative shadow-xl">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 relative shadow-xl border border-transparent dark:border-slate-800">
                 {/* Close button */}
                 <button
                   onClick={() => setShowProvider(false)}
-                  className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700"
+                  className="absolute top-4 right-4 text-neutral-400 hover:text-neutral-700 dark:hover:text-slate-200 transition-colors"
                 >
-                  ✕
+                  <X size={20} />
                 </button>
 
                 {/* Provider Info */}
@@ -506,28 +506,28 @@ const ListingDetails = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <User size={28} />
+                      <User size={28} className="text-neutral-500 dark:text-slate-400" />
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-900">
+                    <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
                       {listing.provider.name}
                     </h3>
-                    <p className="text-sm text-neutral-500">Boarding Provider</p>
+                    <p className="text-sm text-neutral-500 dark:text-slate-400">Boarding Provider</p>
                   </div>
                 </div>
 
                 {/* Details */}
                 <div className="space-y-3 mb-6">
                   <div>
-                    <p className="text-xs font-semibold text-neutral-500 uppercase">
+                    <p className="text-xs font-semibold text-neutral-500 dark:text-slate-500 uppercase">
                       Email
                     </p>
-                    <p className="text-neutral-800">{listing.provider.email}</p>
+                    <p className="text-neutral-800 dark:text-slate-200">{listing.provider.email}</p>
                   </div>
 
                   {listing.provider.isVerified && (
-                    <div className="flex items-center gap-2 text-sm text-green-600">
+                    <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
                       <ShieldCheck size={16} />
                       Verified Provider
                     </div>
@@ -540,7 +540,7 @@ const ListingDetails = () => {
                     setShowProvider(false);
                     setShowMessageModal(true);
                   }}
-                  className="block w-full text-center bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary-hover transition"
+                  className="block w-full text-center bg-primary text-white py-3 rounded-xl font-semibold hover:bg-primary-hover transition shadow-md hover:shadow-lg"
                 >
                   Contact Provider
                 </button>

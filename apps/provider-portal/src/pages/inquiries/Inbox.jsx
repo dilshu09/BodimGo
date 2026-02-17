@@ -204,14 +204,14 @@ export default function Inbox() {
     const currentUserId = localStorage.getItem('userId');
 
     return (
-        <div className="flex h-[calc(100vh-64px)] bg-slate-50">
+        <div className="flex h-[calc(100vh-64px)] bg-slate-50 dark:bg-slate-900">
             {/* Message List Sidebar */}
-            <div className={`${selectedMessage ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 flex-col border-r border-slate-200 bg-white`}>
-                <div className="p-4 border-b border-slate-200">
+            <div className={`${selectedMessage ? 'hidden md:flex' : 'flex'} w-full md:w-1/3 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900`}>
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-slate-800">Inbox</h2>
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white">Inbox</h2>
                         <div className="flex gap-2">
-                            <button className="p-2 hover:bg-slate-100 rounded-full text-slate-600">
+                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400">
                                 <Filter size={18} />
                             </button>
                         </div>
@@ -221,7 +221,7 @@ export default function Inbox() {
                         <input
                             type="text"
                             placeholder="Search messages..."
-                            className="w-full pl-10 pr-4 py-2 bg-slate-100 border border-transparent rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-700 hover:border-[#FF385C] hover:bg-white transition-all duration-300"
+                            className="w-full pl-10 pr-4 py-2 bg-slate-100 dark:bg-slate-800 border border-transparent rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-slate-700 dark:text-white hover:border-[#FF385C] hover:bg-white dark:hover:bg-slate-700 transition-all duration-300"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -240,26 +240,26 @@ export default function Inbox() {
                                 <div
                                     key={msg.id}
                                     onClick={() => setSelectedMessage(msg)}
-                                    className={`p-4 border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors ${selectedMessage?.id === msg.id ? "bg-blue-50" : ""
-                                        } ${!msg.read ? "bg-slate-50" : ""}`}
+                                    className={`p-4 border-b border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${selectedMessage?.id === msg.id ? "bg-blue-50 dark:bg-slate-700" : ""
+                                        } ${!msg.read ? "bg-slate-50 dark:bg-slate-800/50" : "bg-white dark:bg-slate-900"}`}
                                 >
                                     <div className="flex items-start gap-3">
-                                        <div className={`mt-1 p-2 rounded-full bg-white shadow-sm border border-slate-100`}>
+                                        <div className={`mt-1 p-2 rounded-full bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700`}>
                                             {getIcon(msg.type)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start mb-1">
-                                                <p className={`text-sm font-semibold truncate ${!msg.read ? "text-slate-900" : "text-slate-700"}`}>
+                                                <p className={`text-sm font-semibold truncate ${!msg.read ? "text-slate-900 dark:text-white" : "text-slate-700 dark:text-slate-300"}`}>
                                                     {msg.sender}
                                                 </p>
-                                                <span className="text-xs text-slate-500 whitespace-nowrap ml-2">
+                                                <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap ml-2">
                                                     {new Date(msg.date).toLocaleDateString()}
                                                 </span>
                                             </div>
-                                            <p className={`text-sm mb-1 truncate ${!msg.read ? "font-medium text-slate-900" : "text-slate-600"}`}>
+                                            <p className={`text-sm mb-1 truncate ${!msg.read ? "font-medium text-slate-900 dark:text-white" : "text-slate-600 dark:text-slate-400"}`}>
                                                 {msg.subject}
                                             </p>
-                                            <p className="text-xs text-slate-500 truncate">
+                                            <p className="text-xs text-slate-500 dark:text-slate-500 truncate">
                                                 {msg.preview}
                                             </p>
                                         </div>
@@ -271,15 +271,15 @@ export default function Inbox() {
             </div>
 
             {/* Message Detail View (Chat Interface) */}
-            <div className={`${selectedMessage ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-slate-50`}>
+            <div className={`${selectedMessage ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-slate-50 dark:bg-slate-900/50`}>
                 {selectedMessage ? (
-                    <div className="flex-1 flex flex-col bg-white m-0 md:m-4 md:rounded-lg md:shadow-sm md:border md:border-slate-200 overflow-hidden h-full">
+                    <div className="flex-1 flex flex-col bg-white dark:bg-slate-900 m-0 md:m-4 md:rounded-lg md:shadow-sm md:border md:border-slate-200 dark:border-slate-800 overflow-hidden h-full">
                         {/* Header */}
-                        <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-white shrink-0">
+                        <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 shrink-0">
                             <div className="flex items-center gap-4">
                                 <button
                                     onClick={() => setSelectedMessage(null)}
-                                    className="md:hidden p-2 -ml-2 hover:bg-slate-100 rounded-full"
+                                    className="md:hidden p-2 -ml-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400"
                                 >
                                     <Filter className="rotate-90" size={20} />
                                 </button>
@@ -288,17 +288,17 @@ export default function Inbox() {
                                     {selectedMessage.sender[0]}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-900">{selectedMessage.sender}</h3>
-                                    <p className="text-sm text-slate-500">{selectedMessage.subject}</p>
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedMessage.sender}</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">{selectedMessage.subject}</p>
                                 </div>
                             </div>
-                            <button className="p-2 hover:bg-slate-100 rounded-full text-slate-600">
+                            <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400">
                                 <MoreVertical size={20} />
                             </button>
                         </div>
 
                         {/* Chat Content */}
-                        <div className="flex-1 overflow-y-auto p-4 bg-slate-50 flex flex-col gap-4">
+                        <div className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-900 flex flex-col gap-4">
                             {conversationMessages.map((msg, index) => {
                                 // Determine if "Me" sent it
                                 // For tickets: local const isFromAdmin = ticket.source === 'admin' logic above handled "sender" object
@@ -314,7 +314,7 @@ export default function Inbox() {
 
                                 return (
                                     <div key={index} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                        <div className={`max-w-[70%] p-3 rounded-lg shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none'
+                                        <div className={`max-w-[70%] p-3 rounded-lg shadow-sm ${isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-bl-none'
                                             }`}>
                                             <p>{msg.content}</p>
                                             <span className={`text-[10px] block mt-1 ${isMe ? 'text-blue-100' : 'text-slate-400'}`}>
@@ -331,9 +331,9 @@ export default function Inbox() {
 
                         {/* Input Area */}
 
-                        <div className="p-4 bg-white border-t border-slate-200 shrink-0">
+                        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0">
                             {selectedMessage.type === 'ticket' ? (
-                                <div className="text-center text-sm text-slate-500 italic p-2 bg-slate-50 rounded">
+                                <div className="text-center text-sm text-slate-500 italic p-2 bg-slate-50 dark:bg-slate-800 rounded">
                                     This is a system notification. You cannot reply directly here.
                                     {/* Future: Add 'Create Follow-up Ticket' button */}
                                 </div>
@@ -341,7 +341,7 @@ export default function Inbox() {
                                 <form onSubmit={handleSendMessage} className="flex gap-2">
                                     <input
                                         type="text"
-                                        className="flex-1 border border-slate-300 rounded-full px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                        className="flex-1 border border-slate-300 dark:border-slate-700 rounded-full px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                                         placeholder="Type a message..."
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}

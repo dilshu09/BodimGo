@@ -69,15 +69,15 @@ const SuccessModal = ({ isOpen, onClose, onView, isFlagged }) => {
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl"
+                className="bg-white dark:bg-slate-900 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border border-neutral-200 dark:border-slate-800"
             >
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isFlagged ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 ${isFlagged ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
                     {isFlagged ? <CheckCircle size={40} strokeWidth={3} /> : <CheckCircle size={40} strokeWidth={3} />}
                 </div>
-                <h2 className="text-2xl font-bold text-neutral-800 mb-2">
+                <h2 className="text-2xl font-bold text-neutral-800 dark:text-white mb-2">
                     {isFlagged ? 'Submitted for Review' : 'Listing Published!'}
                 </h2>
-                <p className="text-neutral-500 mb-8">
+                <p className="text-neutral-500 dark:text-slate-400 mb-8">
                     {isFlagged
                         ? "Your listing contains content flagged by our safety system. It will be reviewed by an admin shortly."
                         : "Your property is now live and visible to seekers. You can manage it from your dashboard."
@@ -92,7 +92,7 @@ const SuccessModal = ({ isOpen, onClose, onView, isFlagged }) => {
                     </button>
                     <button
                         onClick={onClose}
-                        className="text-neutral-500 font-medium hover:text-neutral-800 transition-colors"
+                        className="text-neutral-500 dark:text-slate-400 font-medium hover:text-neutral-800 dark:hover:text-white transition-colors"
                     >
                         Back to Dashboard
                     </button>
@@ -382,11 +382,11 @@ const AddListing = () => {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-50 relative">
+        <div className="min-h-screen bg-neutral-50 dark:bg-slate-900 relative">
             <Toaster position="top-center" />
             <div className="max-w-5xl mx-auto px-4 pt-8">
-                <h1 className="text-3xl font-bold text-neutral-800">{editId ? 'Edit Listing' : 'Create New Listing'}</h1>
-                <p className="text-neutral-500 mt-1">{editId ? 'Update your property details.' : 'Follow the steps below to publish your property.'}</p>
+                <h1 className="text-3xl font-bold text-neutral-800 dark:text-white">{editId ? 'Edit Listing' : 'Create New Listing'}</h1>
+                <p className="text-neutral-500 dark:text-slate-400 mt-1">{editId ? 'Update your property details.' : 'Follow the steps below to publish your property.'}</p>
             </div>
 
             <AnimatePresence>
@@ -407,21 +407,21 @@ const AddListing = () => {
                 <div className="mb-8 overflow-x-auto pb-2">
                     <div className="flex items-center justify-between min-w-[600px] mb-2">
                         {STEPS.map((step) => (
-                            <div key={step.id} className={`flex flex-col items-center ${step.id <= currentStep ? 'text-primary' : 'text-neutral-400'}`}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-1 transition-colors ${step.id <= currentStep ? 'bg-primary text-white' : 'bg-neutral-200 text-neutral-500'}`}>
+                            <div key={step.id} className={`flex flex-col items-center ${step.id <= currentStep ? 'text-primary' : 'text-neutral-400 dark:text-slate-600'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm mb-1 transition-colors ${step.id <= currentStep ? 'bg-primary text-white' : 'bg-neutral-200 dark:bg-slate-800 text-neutral-500 dark:text-slate-500'}`}>
                                     {step.id < currentStep ? <CheckCircle size={16} /> : step.id}
                                 </div>
                                 <span className="text-xs font-medium whitespace-nowrap">{step.title}</span>
                             </div>
                         ))}
                     </div>
-                    <div className="h-2 bg-neutral-200 rounded-full overflow-hidden">
+                    <div className="h-2 bg-neutral-200 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div className="h-full bg-primary transition-all duration-300 ease-out" style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }} />
                     </div>
                 </div>
 
                 {/* Step Content */}
-                <div className="bg-white rounded-2xl shadow-card border border-neutral-100 p-8 min-h-[500px]">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card border border-neutral-100 dark:border-slate-800 p-8 min-h-[500px]">
                     {currentStep === 1 && <StepBasicInfo data={formData} update={updateData} errors={step1Errors} verified={step1Verified} />}
                     {currentStep === 2 && <StepLocation isMapsLoaded={isMapsLoaded} data={formData} update={updateData} errors={step2Errors} verified={step2Verified} />}
                     {currentStep === 3 && <StepHouseRules data={formData} update={updateData} />}
@@ -433,7 +433,7 @@ const AddListing = () => {
 
                 {/* Nav */}
                 <div className="flex items-center justify-between mt-8">
-                    <button onClick={prevStep} disabled={currentStep === 1} className="px-6 py-2.5 rounded-xl font-semibold text-neutral-600 hover:bg-neutral-100 disabled:opacity-50">Back</button>
+                    <button onClick={prevStep} disabled={currentStep === 1} className="px-6 py-2.5 rounded-xl font-semibold text-neutral-600 dark:text-slate-400 hover:bg-neutral-100 dark:hover:bg-slate-800 disabled:opacity-50">Back</button>
                     <div className="flex items-center gap-4">
                         <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-primary bg-primary/10 hover:bg-primary/20">
                             <Save size={18} /> Save Draft

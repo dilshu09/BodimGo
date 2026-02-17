@@ -30,34 +30,34 @@ const ConfirmationModal = ({
             onClick={onCancel}
         >
             <div
-                className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all scale-100"
+                className="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md overflow-hidden transform transition-all scale-100 border border-neutral-200 dark:border-slate-800"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="p-6">
                     <div className="flex items-start gap-4">
                         <div
-                            className={`p-3 rounded-full flex-shrink-0 ${isDanger ? "bg-red-100 text-red-600" : "bg-blue-100 text-blue-600"
+                            className={`p-3 rounded-full flex-shrink-0 ${isDanger ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                                 }`}
                         >
                             <AlertTriangle size={24} />
                         </div>
                         <div className="flex-1">
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed">{message}</p>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">{title}</h3>
+                            <p className="text-sm text-gray-600 dark:text-slate-400 leading-relaxed">{message}</p>
                         </div>
                         <button
                             onClick={onCancel}
-                            className="text-gray-400 hover:text-gray-600 transition"
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
                         >
                             <X size={20} />
                         </button>
                     </div>
                 </div>
 
-                <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
+                <div className="bg-gray-50 dark:bg-slate-800/50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100 dark:border-slate-800">
                     <button
                         onClick={onCancel}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-200 transition"
+                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-200 dark:focus:ring-slate-700 transition"
                     >
                         {cancelText}
                     </button>

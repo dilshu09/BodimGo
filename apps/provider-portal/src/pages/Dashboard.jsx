@@ -134,12 +134,12 @@ const Dashboard = () => {
 
                         <div className="flex items-center justify-between mb-8 relative z-10">
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900">Occupancy Overview</h2>
-                                <p className="text-slate-500 text-sm">Real-time room availability</p>
+                                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Occupancy Overview</h2>
+                                <p className="text-slate-500 dark:text-slate-400 text-sm">Real-time room availability</p>
                             </div>
-                            <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 rounded-full border border-slate-100">
+                            <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-slate-800 rounded-full border border-slate-100 dark:border-slate-700">
                                 <span className={`w-2 h-2 rounded-full ${stats?.occupancyRate >= 80 ? 'bg-emerald-500' : stats?.occupancyRate >= 50 ? 'bg-orange-500' : 'bg-red-500'}`}></span>
-                                <span className="text-xs font-semibold text-slate-700">
+                                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                                     {stats?.occupancyRate >= 80 ? 'High Demand' : stats?.occupancyRate >= 50 ? 'Moderate' : 'Low Occupancy'}
                                 </span>
                             </div>
@@ -190,24 +190,24 @@ const Dashboard = () => {
 
                             {/* Legend / Stats */}
                             <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center hover:bg-white hover:shadow-md transition-all duration-300 group/card">
-                                    <div className="mb-2 p-2 bg-blue-100 text-blue-600 rounded-lg group-hover/card:scale-110 transition-transform">
+                                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center text-center hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-300 group/card">
+                                    <div className="mb-2 p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg group-hover/card:scale-110 transition-transform">
                                         <Users size={20} />
                                     </div>
-                                    <span className="text-2xl font-bold text-slate-900">{stats?.totalRooms - stats?.vacantRooms || 0}</span>
-                                    <span className="text-xs font-medium text-slate-500">Occupied Rooms</span>
+                                    <span className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.totalRooms - stats?.vacantRooms || 0}</span>
+                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Occupied Rooms</span>
                                 </div>
 
-                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center text-center hover:bg-white hover:shadow-md transition-all duration-300 group/card">
-                                    <div className="mb-2 p-2 bg-emerald-100 text-emerald-600 rounded-lg group-hover/card:scale-110 transition-transform">
+                                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center text-center hover:bg-white dark:hover:bg-slate-700 hover:shadow-md transition-all duration-300 group/card">
+                                    <div className="mb-2 p-2 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg group-hover/card:scale-110 transition-transform">
                                         <Home size={20} />
                                     </div>
-                                    <span className="text-2xl font-bold text-slate-900">{stats?.vacantRooms || 0}</span>
-                                    <span className="text-xs font-medium text-slate-500">Vacant Rooms</span>
+                                    <span className="text-2xl font-bold text-slate-900 dark:text-white">{stats?.vacantRooms || 0}</span>
+                                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Vacant Rooms</span>
                                 </div>
 
                                 <div className="col-span-2 pt-2">
-                                    <div className="flex justify-between items-center px-4 py-3 bg-slate-900 text-white rounded-xl shadow-lg shadow-slate-200 cursor-pointer hover:bg-slate-800 transition-colors">
+                                    <div className="flex justify-between items-center px-4 py-3 bg-slate-900 dark:bg-slate-800 text-white rounded-xl shadow-lg shadow-slate-200 dark:shadow-none cursor-pointer hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors">
                                         <span className="font-medium text-sm">Total Capacity</span>
                                         <span className="font-bold">{stats?.totalRooms || 0} Rooms</span>
                                     </div>
@@ -221,23 +221,23 @@ const Dashboard = () => {
                 <div className="space-y-8">
 
                     {/* 1. Quick Links Card (Now on Top) */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 w-full">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-3 w-full">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Quick Actions</h3>
                         <div className="space-y-3">
-                            <Link to="/tenants/add" className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-primary/5 text-slate-700 hover:text-primary transition-all border border-transparent hover:border-primary/20 group">
-                                <div className="p-2 bg-white rounded-md text-primary shadow-sm group-hover:scale-110 transition-transform">
+                            <Link to="/tenants/add" className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-all border border-transparent hover:border-primary/20 group">
+                                <div className="p-2 bg-white dark:bg-slate-700 rounded-md text-primary shadow-sm group-hover:scale-110 transition-transform">
                                     <UserPlus size={18} />
                                 </div>
                                 <span className="font-medium text-sm">Add New Tenant</span>
                             </Link>
-                            <Link to="/finance/reports" className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-primary/5 text-slate-700 hover:text-primary transition-all border border-transparent hover:border-primary/20 group">
-                                <div className="p-2 bg-white rounded-md text-primary shadow-sm group-hover:scale-110 transition-transform">
+                            <Link to="/finance/reports" className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-all border border-transparent hover:border-primary/20 group">
+                                <div className="p-2 bg-white dark:bg-slate-700 rounded-md text-primary shadow-sm group-hover:scale-110 transition-transform">
                                     <TrendingUp size={18} />
                                 </div>
                                 <span className="font-medium text-sm">Financial Reports</span>
                             </Link>
-                            <Link to="/settings" className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-primary/5 text-slate-700 hover:text-primary transition-all border border-transparent hover:border-primary/20 group">
-                                <div className="p-2 bg-white rounded-md text-primary shadow-sm group-hover:scale-110 transition-transform">
+                            <Link to="/settings" className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg hover:bg-primary/5 dark:hover:bg-primary/10 text-slate-700 dark:text-slate-300 hover:text-primary dark:hover:text-primary transition-all border border-transparent hover:border-primary/20 group">
+                                <div className="p-2 bg-white dark:bg-slate-700 rounded-md text-primary shadow-sm group-hover:scale-110 transition-transform">
                                     <Settings size={18} />
                                 </div>
                                 <span className="font-medium text-sm">Property Settings</span>
@@ -246,26 +246,26 @@ const Dashboard = () => {
                     </div>
 
                     {/* 2. Action Center (Now below) */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col max-h-[500px]">
-                        <div className="p-3 border-b border-slate-100 flex justify-between items-center bg-white">
-                            <h2 className="text-lg font-bold text-slate-900">Action Center</h2>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col max-h-[500px]">
+                        <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Action Center</h2>
                             {actions.length > 0 && (
-                                <span className="bg-red-50 text-primary text-xs font-bold px-2 py-1 rounded-md border border-red-100">{actions.length} New</span>
+                                <span className="bg-red-50 dark:bg-red-900/20 text-primary dark:text-red-400 text-xs font-bold px-2 py-1 rounded-md border border-red-100 dark:border-red-900/30">{actions.length} New</span>
                             )}
                         </div>
 
-                        <div className="divide-y divide-slate-50 overflow-y-auto custom-scrollbar">
+                        <div className="divide-y divide-slate-50 dark:divide-slate-800 overflow-y-auto custom-scrollbar">
                             {actions.length > 0 ? (
                                 actions.map((action, i) => (
-                                    <div key={i} className="p-5 hover:bg-slate-50 transition-colors">
+                                    <div key={i} className="p-5 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                         <div className="flex gap-4">
                                             <div className={`mt-1 flex-shrink-0 ${action.urgent ? 'text-red-500' : 'text-blue-500'}`}>
                                                 <AlertTriangle size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-slate-900 mb-1">{action.message}</p>
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white mb-1">{action.message}</p>
                                                 <div className="flex items-center gap-3 mt-1">
-                                                    <span className="text-xs text-slate-500">{new Date(action.date).toLocaleDateString()}</span>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400">{new Date(action.date).toLocaleDateString()}</span>
                                                     <Link to={action.link} className="text-xs font-bold text-primary hover:underline">
                                                         Review &rarr;
                                                     </Link>
@@ -276,11 +276,11 @@ const Dashboard = () => {
                                 ))
                             ) : (
                                 <div className="p-8 text-center">
-                                    <div className="mx-auto w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 mb-3 border border-slate-100">
+                                    <div className="mx-auto w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-3 border border-slate-100 dark:border-slate-700">
                                         <CheckCircle size={24} />
                                     </div>
-                                    <p className="text-slate-900 font-medium">All caught up!</p>
-                                    <p className="text-slate-500 text-sm mt-1">No pending actions.</p>
+                                    <p className="text-slate-900 dark:text-white font-medium">All caught up!</p>
+                                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">No pending actions.</p>
                                 </div>
                             )}
                         </div>

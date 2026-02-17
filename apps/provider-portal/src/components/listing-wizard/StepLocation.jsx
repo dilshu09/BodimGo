@@ -138,12 +138,12 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
             {/* 3-Column Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-20">
                 <div>
-                    <label className="block text-sm font-bold text-neutral-700 mb-2">Province</label>
+                    <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">Province</label>
                     <select
                         name="province"
                         value={province}
                         onChange={handleChange}
-                        className={`input-field ${errors?.hierarchy ? 'border-red-500' : ''}`}
+                        className={`input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white ${errors?.hierarchy ? 'border-red-500' : ''}`}
                     >
                         <option value="">Select Province</option>
                         {PROVINCES.map(prov => (
@@ -153,12 +153,12 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold text-neutral-700 mb-2">District</label>
+                    <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">District</label>
                     <select
                         name="district"
                         value={data.location?.district}
                         onChange={handleChange}
-                        className="input-field"
+                        className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                         disabled={!province}
                     >
                         <option value="">Select District</option>
@@ -170,7 +170,7 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
 
                 {/* Custom City Autocomplete */}
                 <div ref={dropdownRef} className="relative">
-                    <label className="block text-sm font-bold text-neutral-700 mb-2">City/Town</label>
+                    <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">City/Town</label>
                     <div className="relative">
                         <input
                             type="text"
@@ -182,24 +182,24 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                                 setIsDropdownOpen(true);
                             }}
                             onFocus={() => setIsDropdownOpen(true)}
-                            className="input-field pr-10"
+                            className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white pr-10"
                             placeholder={data.location?.district ? "Search City..." : "Select District First"}
                             disabled={!data.location?.district}
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 pointer-events-none">
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 dark:text-slate-500 pointer-events-none">
                             {isDropdownOpen ? <Search size={16} /> : <ChevronDown size={16} />}
                         </div>
                     </div>
 
                     {/* Dropdown List */}
                     {isDropdownOpen && data.location?.district && (
-                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-neutral-200 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50">
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-neutral-200 dark:border-slate-700 rounded-xl shadow-lg max-h-60 overflow-y-auto z-50">
                             {filteredCities.length > 0 ? (
                                 filteredCities.map(city => (
                                     <button
                                         key={city}
                                         onClick={() => handleCitySelect(city)}
-                                        className="w-full text-left px-4 py-2 hover:bg-neutral-50 text-sm text-neutral-700 transition-colors flex items-center justify-between"
+                                        className="w-full text-left px-4 py-2 hover:bg-neutral-50 dark:hover:bg-slate-700 text-sm text-neutral-700 dark:text-slate-300 transition-colors flex items-center justify-between"
                                     >
                                         {city}
                                         {data.location?.city === city && <CheckCircle2 size={14} className="text-primary" />}
@@ -218,7 +218,7 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 z-10 relative">
                 <div className="col-span-2">
-                    <label className="block text-sm font-bold text-neutral-700 mb-2">Full Address</label>
+                    <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">Full Address</label>
                     <input
                         type="text"
                         name="address"
@@ -229,17 +229,17 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                                 geocodeLocation(`${data.location.address}, ${data.location.city}`);
                             }
                         }}
-                        className={`input-field ${errors?.addressText ? 'border-red-500' : ''}`}
+                        className={`input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white ${errors?.addressText ? 'border-red-500' : ''}`}
                         placeholder="House No, Street, Landmark"
                     />
                     {errors?.addressText && <p className="text-red-500 text-xs mt-1">{errors.addressText}</p>}
                 </div>
 
                 <div className="col-span-2">
-                    <label className="block text-sm font-bold text-neutral-700 mb-2 flex items-center gap-2">
+                    <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center gap-2">
                         <MapPin size={16} /> Pin Location on Map
                     </label>
-                    <div className={`h-80 bg-neutral-100 rounded-xl border overflow-hidden relative ${errors?.coordinates ? 'border-red-500 ring-2 ring-red-100' : 'border-neutral-200'}`}>
+                    <div className={`h-80 bg-neutral-100 dark:bg-slate-800 rounded-xl border overflow-hidden relative ${errors?.coordinates ? 'border-red-500 ring-2 ring-red-100' : 'border-neutral-200 dark:border-slate-700'}`}>
                         {!isMapsLoaded ? (
                             <div className="w-full h-full flex items-center justify-center text-neutral-400">
                                 <Loader2 className="animate-spin" /> Loading Maps...

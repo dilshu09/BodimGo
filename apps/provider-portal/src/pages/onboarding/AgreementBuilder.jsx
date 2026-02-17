@@ -117,70 +117,70 @@ const AgreementBuilder = () => {
     }
 
     return (
-        <div className="min-h-screen bg-neutral-50 p-8">
+        <div className="min-h-screen bg-neutral-50 dark:bg-slate-950 p-8">
             <div className="max-w-4xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-4 mb-8">
-                    <button onClick={() => navigate('/agreements')} className="p-2 hover:bg-neutral-200 rounded-full transition-colors">
-                        <ArrowLeft size={24} className="text-neutral-600" />
+                    <button onClick={() => navigate('/agreements')} className="p-2 hover:bg-neutral-200 dark:hover:bg-slate-800 rounded-full transition-colors">
+                        <ArrowLeft size={24} className="text-neutral-600 dark:text-slate-400" />
                     </button>
-                    <h1 className="text-2xl font-bold text-neutral-800">
+                    <h1 className="text-2xl font-bold text-neutral-800 dark:text-white">
                         {isEditMode ? 'Edit Agreement Template' : 'Create New Agreement'}
                     </h1>
                 </div>
 
                 <div className="space-y-6">
                     {/* Basic Info */}
-                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
-                        <h2 className="text-lg font-bold text-neutral-800 mb-6">Template Details</h2>
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-slate-800">
+                        <h2 className="text-lg font-bold text-neutral-800 dark:text-white mb-6">Template Details</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="md:col-span-1">
-                                <label className="block text-sm font-bold text-neutral-700 mb-2">Template Name</label>
+                                <label className="block text-sm font-bold text-neutral-700 dark:text-slate-300 mb-2">Template Name</label>
                                 <input
                                     type="text"
                                     name="name"
                                     value={formData.name}
                                     onChange={handleChange}
-                                    className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    className="w-full p-3 bg-neutral-50 dark:bg-slate-800 border border-neutral-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-neutral-800 dark:text-white placeholder-neutral-400 dark:placeholder-slate-500"
                                     placeholder="e.g. Standard 6-Month Lease"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-neutral-700 mb-2">Lock Period (Months)</label>
+                                <label className="block text-sm font-bold text-neutral-700 dark:text-slate-300 mb-2">Lock Period (Months)</label>
                                 <input
                                     type="number"
                                     name="lockPeriod"
                                     value={formData.lockPeriod}
                                     onChange={handleChange}
-                                    className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    className="w-full p-3 bg-neutral-50 dark:bg-slate-800 border border-neutral-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-neutral-800 dark:text-white"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-neutral-700 mb-2">Notice (Months)</label>
+                                <label className="block text-sm font-bold text-neutral-700 dark:text-slate-300 mb-2">Notice (Months)</label>
                                 <input
                                     type="number"
                                     name="noticePeriod"
                                     value={formData.noticePeriod}
                                     onChange={handleChange}
-                                    className="w-full p-3 bg-neutral-50 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    className="w-full p-3 bg-neutral-50 dark:bg-slate-800 border border-neutral-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-neutral-800 dark:text-white"
                                 />
                             </div>
                         </div>
                     </div>
 
                     {/* Terms & Conditions (AI Powered) */}
-                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-slate-800">
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-lg font-bold text-neutral-800">Terms & Conditions</h2>
-                            <div className="bg-purple-50 px-3 py-1 rounded-full text-xs font-bold text-purple-600 flex items-center gap-1 border border-purple-100">
+                            <h2 className="text-lg font-bold text-neutral-800 dark:text-white">Terms & Conditions</h2>
+                            <div className="bg-purple-50 dark:bg-purple-900/20 px-3 py-1 rounded-full text-xs font-bold text-purple-600 dark:text-purple-300 flex items-center gap-1 border border-purple-100 dark:border-purple-800/30">
                                 <Sparkles size={14} />
                                 <span>AI Assistant Enabled</span>
                             </div>
                         </div>
 
                         {/* AI Input Area */}
-                        <div className="bg-neutral-50 p-4 rounded-xl border border-neutral-200 mb-4 transition-all focus-within:ring-2 focus-within:ring-purple-100">
-                            <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2">
+                        <div className="bg-neutral-50 dark:bg-slate-800 p-4 rounded-xl border border-neutral-200 dark:border-slate-700 mb-4 transition-all focus-within:ring-2 focus-within:ring-purple-100 dark:focus-within:ring-purple-900/30">
+                            <label className="block text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                                 Ask AI to draft terms
                             </label>
                             <div className="flex gap-2">
@@ -189,7 +189,7 @@ const AgreementBuilder = () => {
                                     value={aiPrompt}
                                     onChange={(e) => setAiPrompt(e.target.value)}
                                     placeholder="e.g. Write a strict agreement for students, no loud music, no visitors after 10PM, rent due on 5th..."
-                                    className="flex-1 bg-white border border-neutral-200 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                    className="flex-1 bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-neutral-800 dark:text-white placeholder-neutral-400 dark:placeholder-slate-500"
                                     onKeyDown={(e) => e.key === 'Enter' && handleAIGenerate()}
                                 />
                                 <button
@@ -213,16 +213,16 @@ const AgreementBuilder = () => {
                         </div>
 
                         <div className="relative">
-                            <FileText className="absolute top-4 left-4 text-neutral-400" size={20} />
+                            <FileText className="absolute top-4 left-4 text-neutral-400 dark:text-slate-500" size={20} />
                             <textarea
                                 name="content"
                                 value={formData.content}
                                 onChange={handleChange}
-                                className="w-full p-4 pl-12 bg-white border border-neutral-200 rounded-xl h-96 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-y font-mono text-sm leading-relaxed"
+                                className="w-full p-4 pl-12 bg-white dark:bg-slate-900 border border-neutral-200 dark:border-slate-700 rounded-xl h-96 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all resize-y font-mono text-sm leading-relaxed text-neutral-800 dark:text-slate-300 placeholder-neutral-400 dark:placeholder-slate-600"
                                 placeholder="Agreement terms will appear here..."
                             />
                         </div>
-                        <p className="mt-2 text-xs text-neutral-500">
+                        <p className="mt-2 text-xs text-neutral-500 dark:text-slate-500">
                             Review the generated content carefully before saving.
                         </p>
                     </div>
@@ -231,7 +231,7 @@ const AgreementBuilder = () => {
                     <div className="flex justify-end gap-4 pt-4">
                         <button
                             onClick={() => navigate('/agreements')}
-                            className="px-6 py-3 text-neutral-600 font-bold hover:bg-neutral-100 rounded-xl transition-colors"
+                            className="px-6 py-3 text-neutral-600 dark:text-slate-400 font-bold hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                         >
                             Cancel
                         </button>

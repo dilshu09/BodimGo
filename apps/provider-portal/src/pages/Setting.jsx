@@ -241,8 +241,8 @@ export default function SettingsPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-900">Settings</h2>
-        <p className="text-slate-600 mt-1">
+        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Settings</h2>
+        <p className="text-slate-600 dark:text-slate-400 mt-1">
           Manage your profile and preferences
         </p>
       </div>
@@ -253,12 +253,12 @@ export default function SettingsPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`p-4 rounded-lg border-2 transition-all text-left ${activeTab === tab.id
-              ? "border-primary bg-primary/10"
-              : "border-slate-200 hover:border-slate-300"
+              ? "border-primary bg-primary/10 dark:bg-primary/20"
+              : "border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
               }`}
           >
             <p
-              className={`font-semibold ${activeTab === tab.id ? "text-primary" : "text-slate-900"}`}
+              className={`font-semibold ${activeTab === tab.id ? "text-primary" : "text-slate-900 dark:text-slate-300"}`}
             >
               {tab.label}
             </p>
@@ -266,14 +266,14 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8">
+      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-8">
         {activeTab === "profile" && (
           <div className="space-y-6">
 
             {/* Profile Picture Section */}
-            <div className="flex items-center gap-6 pb-6 border-b border-slate-100">
+            <div className="flex items-center gap-6 pb-6 border-b border-slate-100 dark:border-slate-800">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-slate-100 flex items-center justify-center">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-md bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                   {formData.profileImage ? (
                     <img
                       src={formData.profileImage}
@@ -281,7 +281,7 @@ export default function SettingsPage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-3xl text-slate-300 font-bold">
+                    <span className="text-3xl text-slate-300 dark:text-slate-600 font-bold">
                       {formData.name ? formData.name.charAt(0).toUpperCase() : "?"}
                     </span>
                   )}
@@ -295,8 +295,8 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex-1">
-                <h3 className="font-semibold text-slate-900">Profile Picture</h3>
-                <p className="text-sm text-slate-500 mb-3">Update your profile photo to personalize your account.</p>
+                <h3 className="font-semibold text-slate-900 dark:text-white">Profile Picture</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Update your profile photo to personalize your account.</p>
 
                 <input
                   type="file"
@@ -329,14 +329,14 @@ export default function SettingsPage() {
                 <div className="flex gap-3">
                   <label
                     htmlFor="profile-upload"
-                    className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 cursor-pointer transition-colors shadow-sm"
+                    className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 cursor-pointer transition-colors shadow-sm"
                   >
                     Upload New
                   </label>
                   {formData.profileImage && (
                     <button
                       onClick={() => setFormData(prev => ({ ...prev, profileImage: "" }))}
-                      className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      className="px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     >
                       Remove
                     </button>
@@ -347,7 +347,7 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Full Name
                 </label>
                 <input
@@ -355,11 +355,11 @@ export default function SettingsPage() {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Email Address
                 </label>
                 <input
@@ -367,11 +367,11 @@ export default function SettingsPage() {
                   name="email"
                   value={formData.email}
                   disabled
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-gray-100 dark:bg-slate-900 text-gray-500 dark:text-slate-500 cursor-not-allowed"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Phone Number
                 </label>
                 <input
@@ -379,11 +379,11 @@ export default function SettingsPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Boarding Name
                 </label>
                 <input
@@ -392,14 +392,12 @@ export default function SettingsPage() {
                   value={formData.businessName}
                   onChange={handleInputChange}
                   placeholder="Business Name"
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
               </div>
 
-
-
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
                   Address / Bio
                 </label>
                 <textarea
@@ -408,7 +406,7 @@ export default function SettingsPage() {
                   onChange={handleInputChange}
                   placeholder="Your Address"
                   rows={3}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 ></textarea>
               </div>
               <div className="flex items-end justify-end relative z-10">
@@ -428,7 +426,7 @@ export default function SettingsPage() {
         {activeTab === "security" && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <Lock size={20} className="text-primary" />
                 Change Password
               </h3>
@@ -439,7 +437,7 @@ export default function SettingsPage() {
                   value={passwordData.currentPassword}
                   onChange={handlePasswordChange}
                   placeholder="Current Password"
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
                 <input
                   type="password"
@@ -447,7 +445,7 @@ export default function SettingsPage() {
                   value={passwordData.newPassword}
                   onChange={handlePasswordChange}
                   placeholder="New Password"
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
                 <input
                   type="password"
@@ -455,7 +453,7 @@ export default function SettingsPage() {
                   value={passwordData.confirmPassword}
                   onChange={handlePasswordChange}
                   placeholder="Confirm New Password"
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-primary"
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                 />
                 <button
                   onClick={updatePassword}
@@ -466,22 +464,22 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="border-t border-slate-200 pt-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <Shield size={20} className="text-primary" />
                 Two-Factor Authentication
               </h3>
-              <p className="text-slate-600 mb-4">
+              <p className="text-slate-600 dark:text-slate-400 mb-4">
                 Add an extra layer of security to your account
               </p>
               {twoFactorEnabled ? (
                 <div className="flex items-center gap-4">
-                  <span className="text-green-600 font-bold flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                  <span className="text-green-600 dark:text-green-400 font-bold flex items-center gap-2 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-lg border border-green-100 dark:border-green-900/30">
                     <CheckCircle size={18} /> Enabled
                   </span>
                   <button
                     onClick={() => handleToggle2FA(false)}
-                    className="px-6 py-2 border border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium"
+                    className="px-6 py-2 border border-red-500 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors font-medium"
                   >
                     Disable 2FA
                   </button>
@@ -501,7 +499,7 @@ export default function SettingsPage() {
         {activeTab === "notifications" && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <Bell size={20} className="text-primary" />
                 Email Notifications
               </h3>
@@ -526,7 +524,7 @@ export default function SettingsPage() {
                 ].map((item, i) => (
                   <label
                     key={i}
-                    className="flex items-center gap-3 p-3 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer"
+                    className="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -534,8 +532,8 @@ export default function SettingsPage() {
                       className="w-4 h-4 text-primary rounded"
                     />
                     <div>
-                      <p className="font-medium text-slate-900">{item.label}</p>
-                      <p className="text-xs text-slate-600">{item.desc}</p>
+                      <p className="font-medium text-slate-900 dark:text-white">{item.label}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">{item.desc}</p>
                     </div>
                   </label>
                 ))}
@@ -547,21 +545,21 @@ export default function SettingsPage() {
         {activeTab === "payment" && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <DollarSign size={20} className="text-primary" />
                 Payout Settings (Stripe)
               </h3>
 
-              <div className="p-6 border border-slate-200 rounded-xl bg-slate-50 text-center">
+              <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-center">
                 {formData.stripeOnboardingComplete ? (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-center gap-2 text-green-600 font-bold text-lg">
+                    <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 font-bold text-lg">
                       <CheckCircle size={24} /> Payouts Active
                     </div>
-                    <p className="text-slate-600">Your Stripe account is connected and ready to receive payouts.</p>
+                    <p className="text-slate-600 dark:text-slate-400">Your Stripe account is connected and ready to receive payouts.</p>
                     <button
                       onClick={handleConnectStripe}
-                      className="px-6 py-2 border border-slate-300 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+                      className="px-6 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-700 dark:text-white rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors font-medium"
                     >
                       Update Payout Details on Stripe
                     </button>
@@ -587,28 +585,28 @@ export default function SettingsPage() {
       {/* 2FA OTP Modal */}
       {showOtpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-6 border-b border-neutral-100">
-              <h3 className="font-bold text-lg text-neutral-800 flex items-center gap-2">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-6 border-b border-neutral-100 dark:border-slate-800">
+              <h3 className="font-bold text-lg text-neutral-800 dark:text-white flex items-center gap-2">
                 <Shield size={20} className="text-primary" /> Security Verification
               </h3>
-              <button onClick={() => setShowOtpModal(false)} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
-                <X size={20} className="text-neutral-500" />
+              <button onClick={() => setShowOtpModal(false)} className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+                <X size={20} className="text-neutral-500 dark:text-slate-400" />
               </button>
             </div>
             <div className="p-6">
-              <p className="text-neutral-600 mb-6 text-sm">
+              <p className="text-neutral-600 dark:text-slate-400 mb-6 text-sm">
                 {currentAction === 'password' && "For your security, we have sent a verification code to your email. Please enter it below to confirm your password change."}
                 {currentAction === 'enable2fa' && "To enable Two-Factor Authentication, please enter the verification code sent to your email."}
                 {currentAction === 'disable2fa' && "To disable Two-Factor Authentication, please confirm your identity by entering the code sent to your email."}
               </p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5 text-neutral-700">Verification Code</label>
+                  <label className="block text-sm font-medium mb-1.5 text-neutral-700 dark:text-neutral-300">Verification Code</label>
                   <input
                     type="text"
                     maxLength={6}
-                    className="w-full input-field text-center text-2xl tracking-widest font-mono py-3"
+                    className="w-full input-field text-center text-2xl tracking-widest font-mono py-3 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     placeholder="000000"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}

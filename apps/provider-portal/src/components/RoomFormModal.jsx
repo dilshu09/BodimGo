@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle, AlertTriangle, X, Plus, Loader, PlayCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, X, Plus, Loader2, PlayCircle, BedDouble, Camera, Loader } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 
@@ -103,79 +103,107 @@ const RoomFormModal = ({ room, onSave, onClose }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between p-6 border-b border-neutral-100 flex-shrink-0">
-                    <h3 className="text-lg font-bold text-neutral-800">{room ? 'Edit Room' : 'Add New Room'}</h3>
-                    <button onClick={onClose}><X size={20} className="text-neutral-400 hover:text-neutral-600" /></button>
-                </div>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative animate-scale-up border border-neutral-200 dark:border-slate-700 shadow-xl">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-2 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-full text-neutral-500 dark:text-slate-400 z-10"
+                >
+                    <X size={20} />
+                </button>
 
-                <div className="p-6 space-y-5 overflow-y-auto custom-scrollbar flex-grow">
-                    {/* Basic Info */}
-                    <div className="space-y-4">
+                <div className="p-6">
+                    <h2 className="text-2xl font-bold text-neutral-800 dark:text-white mb-2">
+                        {room ? 'Edit Room' : 'Add New Room'}
+                    </h2>
+                    <p className="text-neutral-500 dark:text-slate-400 mb-6">
+                        {room ? 'Update the details for this room.' : 'Fill in the details for the new room.'}
+                    </p>
+
+                    <div className="space-y-6">
+                        {/* Basic Info */}
                         <div>
-                            <label className="block text-sm font-semibold text-neutral-700 mb-1">Room Name / Number</label>
-                            <input name="name" value={formData.name} onChange={handleChange} className="w-full p-2 border rounded-lg" placeholder="e.g. Room 101" />
+                            <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">Room Name</label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                placeholder="e.g. Master Bedroom"
+                            />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Type</label>
-                                <select name="type" value={formData.type} onChange={handleChange} className="w-full p-2 border rounded-lg">
+                                <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">Type</label>
+                                <select name="type" value={formData.type} onChange={handleChange} className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                                     <option>Single Room</option>
                                     <option>Double Room</option>
                                     <option>Shared Room</option>
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-neutral-700 mb-1">Capacity</label>
-                                <input type="number" name="capacity" value={formData.capacity} onChange={handleChange} className="w-full p-2 border rounded-lg" />
+                                <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">Capacity</label>
+                                <input type="number" name="capacity" value={formData.capacity} onChange={handleChange} className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
                             </div>
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-neutral-700 mb-1">Monthly Rent (LKR)</label>
-                            <input type="number" name="price" value={formData.price} onChange={handleChange} className="w-full p-2 border rounded-lg" />
+                            <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">Monthly Rent (LKR)</label>
+                            <input type="number" name="price" value={formData.price} onChange={handleChange} className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white" />
                         </div>
                         <div>
-                            <label className="block text-sm font-semibold text-neutral-700 mb-1">Bathroom</label>
-                            <select name="features.bathroomType" value={formData.features?.bathroomType} onChange={handleChange} className="w-full p-2 border rounded-lg">
+                            <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2">Bathroom</label>
+                            <select name="features.bathroomType" value={formData.features?.bathroomType} onChange={handleChange} className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                                 <option>Shared</option>
                                 <option>Attached</option>
                             </select>
                         </div>
-                    </div>
 
-                    {/* Image Upload Section */}
-                    <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <label className="block text-sm font-semibold text-neutral-700">Room Photos (Max 5)</label>
-                            {analysisStatus === 'approved' && <span className="text-xs font-bold text-green-600 flex items-center gap-1"><CheckCircle size={12} /> Verified</span>}
-                            {analysisStatus === 'rejected' && <span className="text-xs font-bold text-red-600 flex items-center gap-1"><AlertTriangle size={12} /> {analysisError}</span>}
-                        </div>
+                        {/* Photo Upload */}
+                        <div>
+                            <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex justify-between">
+                                <span>Room Photos ({formData.images?.length || 0}/3)</span>
+                                {analysisStatus === 'approved' && <span className="text-xs font-bold text-green-600 flex items-center gap-1"><CheckCircle size={12} /> Verified</span>}
+                                {analysisStatus === 'rejected' && <span className="text-xs font-bold text-red-600 flex items-center gap-1"><AlertTriangle size={12} /> {analysisError}</span>}
+                            </label>
 
-                        <div className="grid grid-cols-4 gap-2 mb-2">
-                            {formData.images?.map((img, idx) => (
-                                <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-neutral-200 group">
-                                    <img src={img} alt="" className="w-full h-full object-cover" />
-                                    <button
-                                        onClick={() => removeImage(idx)}
-                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ))}
-                            {(formData.images?.length || 0) < 5 && (
-                                <label className="aspect-square rounded-lg border-2 border-dashed border-neutral-200 flex flex-col items-center justify-center cursor-pointer hover:bg-neutral-50 hover:border-primary transition-colors text-neutral-400 hover:text-primary">
-                                    <Plus size={20} />
-                                    <span className="text-xs mt-1 font-medium">Add</span>
-                                    <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
-                                </label>
-                            )}
+                            <div className="flex gap-4 overflow-x-auto pb-2">
+                                {formData.images?.map((img, idx) => (
+                                    <div key={idx} className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden border border-neutral-200 dark:border-slate-700 group">
+                                        <img src={img} alt="" className="w-full h-full object-cover" />
+                                        <button
+                                            onClick={() => removeImage(idx)}
+                                            className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    </div>
+                                ))}
+                                {(formData.images?.length || 0) < 3 && (
+                                    <div className="relative w-24 h-24 flex-shrink-0 border-2 border-dashed border-neutral-300 dark:border-slate-600 rounded-xl hover:bg-neutral-50 dark:hover:bg-slate-700 hover:border-primary transition-colors flex flex-col items-center justify-center cursor-pointer">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            multiple
+                                            onChange={handleImageUpload}
+                                            disabled={uploading}
+                                            className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-wait"
+                                        />
+                                        {uploading ? (
+                                            <Loader2 className="animate-spin text-primary" size={20} />
+                                        ) : (
+                                            <>
+                                                <Camera size={20} className="text-neutral-400 dark:text-slate-500 mb-1" />
+                                                <span className="text-[10px] text-neutral-500 dark:text-slate-400 font-bold">Add</span>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-neutral-100 flex justify-end gap-3 flex-shrink-0 bg-white">
-                    <button onClick={onClose} className="px-4 py-2 text-neutral-600 font-semibold hover:bg-neutral-50 rounded-lg">Cancel</button>
+                <div className="p-6 border-t border-neutral-100 dark:border-slate-700 flex justify-end gap-3 flex-shrink-0 bg-white dark:bg-slate-900">
+                    <button onClick={onClose} className="px-4 py-2 text-neutral-600 dark:text-slate-300 font-semibold hover:bg-neutral-50 dark:hover:bg-slate-800 rounded-lg">Cancel</button>
 
                     {needsAnalysis ? (
                         <button

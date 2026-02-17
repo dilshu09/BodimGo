@@ -20,7 +20,7 @@ import {
 import api from '../services/api';
 
 const StatCard = ({ title, value, change, icon: Icon, color }) => (
-    <div className="bg-white dark:bg-neutral-900 p-4 rounded-xl border border-neutral-100 dark:border-neutral-800 shadow-sm hover:shadow-xl hover:border-[#FF385C] dark:hover:border-[#FF385C] transition-all duration-300 hover:-translate-y-1 group">
+    <div className="bg-white dark:bg-slate-800/50 p-4 rounded-xl border border-neutral-100 dark:border-slate-700 shadow-sm hover:shadow-xl hover:border-[#FF385C] dark:hover:border-[#FF385C] transition-all duration-300 hover:-translate-y-1 group">
         <div className="flex items-start justify-between">
             <div>
                 <p className="text-neutral-500 dark:text-neutral-400 text-xs font-bold uppercase tracking-wide mb-1 opacity-80 group-hover:opacity-100 transition-opacity">{title}</p>
@@ -116,7 +116,7 @@ export default function Dashboard() {
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-neutral-100 dark:border-neutral-800 shadow-sm lg:col-span-2">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-neutral-100 dark:border-slate-800 shadow-sm lg:col-span-2">
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h3 className="text-lg font-bold text-neutral-900 dark:text-white">User Growth</h3>
@@ -155,7 +155,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-neutral-900 p-4 rounded-2xl border border-neutral-100 dark:border-neutral-800 shadow-sm flex flex-col">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-neutral-100 dark:border-slate-800 shadow-sm flex flex-col">
                     <div className="mb-6 flex items-center justify-between">
                         <h3 className="text-lg font-bold text-neutral-900 dark:text-white">Recent Messages</h3>
                         {recentTickets.length > 0 && (
@@ -171,7 +171,7 @@ export default function Dashboard() {
                             <div
                                 key={ticket._id}
                                 onClick={() => navigate('/messages', { state: { ticketId: ticket._id } })}
-                                className="flex gap-4 p-4 rounded-xl hover:bg-neutral-50 transition-colors cursor-pointer group border border-transparent hover:border-neutral-100"
+                                className="flex gap-4 p-4 rounded-xl hover:bg-neutral-50 dark:hover:bg-slate-700 transition-colors cursor-pointer group border border-transparent hover:border-neutral-100 dark:hover:border-slate-700"
                             >
                                 <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
                                     <MessageSquare size={20} className="text-blue-500" />

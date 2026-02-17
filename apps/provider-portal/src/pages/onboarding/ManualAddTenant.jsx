@@ -117,16 +117,16 @@ const ManualAddTenant = () => {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-50 p-8">
+        <div className="min-h-screen bg-neutral-50 dark:bg-slate-950 p-8">
             <div className="max-w-3xl mx-auto">
-                <h1 className="text-3xl font-bold text-neutral-800 mb-8">Add New Tenant</h1>
+                <h1 className="text-3xl font-bold text-neutral-800 dark:text-white mb-8">Add New Tenant</h1>
 
                 {/* Stepper */}
                 <div className="flex items-center justify-between mb-8 relative">
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-neutral-200 -z-10"></div>
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-neutral-200 dark:bg-slate-800 -z-10"></div>
                     {STEPS.map((s) => (
-                        <div key={s.id} className={`flex flex-col items-center bg-neutral-50 px-2 ${step >= s.id ? 'text-primary' : 'text-neutral-400'}`}>
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-2 ${step >= s.id ? 'bg-white border-primary' : 'bg-neutral-100 border-neutral-300'}`}>
+                        <div key={s.id} className={`flex flex-col items-center bg-neutral-50 dark:bg-slate-950 px-2 ${step >= s.id ? 'text-primary' : 'text-neutral-400 dark:text-slate-600'}`}>
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 mb-2 ${step >= s.id ? 'bg-white dark:bg-slate-900 border-primary' : 'bg-neutral-100 dark:bg-slate-800 border-neutral-300 dark:border-slate-700'}`}>
                                 <s.icon size={20} />
                             </div>
                             <span className="text-xs font-bold">{s.title}</span>
@@ -135,14 +135,14 @@ const ManualAddTenant = () => {
                 </div>
 
                 {/* Content */}
-                <div className="bg-white rounded-2xl shadow-card p-8 min-h-[400px]">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-card p-8 min-h-[400px] border border-neutral-200 dark:border-slate-800">
                     {step === 1 && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-bold">Select Property & Room</h2>
+                            <h2 className="text-xl font-bold dark:text-white">Select Property & Room</h2>
                             <div>
-                                <label className="block text-sm font-medium mb-2">Property</label>
+                                <label className="block text-sm font-medium mb-2 dark:text-slate-300">Property</label>
                                 <select
-                                    className="w-full input-field"
+                                    className="w-full input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                     value={selectedListing}
                                     onChange={e => setSelectedListing(e.target.value)}
                                 >
@@ -154,9 +154,9 @@ const ManualAddTenant = () => {
                             </div>
                             {selectedListing && (
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Room</label>
+                                    <label className="block text-sm font-medium mb-2 dark:text-slate-300">Room</label>
                                     <select
-                                        className="w-full input-field"
+                                        className="w-full input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                         value={selectedRoom}
                                         onChange={e => setSelectedRoom(e.target.value)}
                                     >
@@ -174,26 +174,26 @@ const ManualAddTenant = () => {
 
                     {step === 2 && (
                         <div className="space-y-6">
-                            <h2 className="text-xl font-bold">Tenant Information</h2>
+                            <h2 className="text-xl font-bold dark:text-white">Tenant Information</h2>
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Full Name</label>
-                                    <input type="text" className="w-full input-field" value={tenantData.name} onChange={e => setTenantData({ ...tenantData, name: e.target.value })} />
+                                    <label className="block text-sm font-medium mb-1 dark:text-slate-300">Full Name</label>
+                                    <input type="text" className="w-full input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={tenantData.name} onChange={e => setTenantData({ ...tenantData, name: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">NIC No</label>
-                                    <input type="text" className="w-full input-field" value={tenantData.nic} onChange={e => setTenantData({ ...tenantData, nic: e.target.value })} />
+                                    <label className="block text-sm font-medium mb-1 dark:text-slate-300">NIC No</label>
+                                    <input type="text" className="w-full input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={tenantData.nic} onChange={e => setTenantData({ ...tenantData, nic: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Phone</label>
-                                    <input type="text" className="w-full input-field" value={tenantData.phone} onChange={e => setTenantData({ ...tenantData, phone: e.target.value })} />
+                                    <label className="block text-sm font-medium mb-1 dark:text-slate-300">Phone</label>
+                                    <input type="text" className="w-full input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={tenantData.phone} onChange={e => setTenantData({ ...tenantData, phone: e.target.value })} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Email (Optional)</label>
-                                    <input type="email" className="w-full input-field" value={tenantData.email} onChange={e => setTenantData({ ...tenantData, email: e.target.value })} />
+                                    <label className="block text-sm font-medium mb-1 dark:text-slate-300">Email (Optional)</label>
+                                    <input type="email" className="w-full input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white" value={tenantData.email} onChange={e => setTenantData({ ...tenantData, email: e.target.value })} />
                                 </div>
                             </div>
-                            <div className="bg-blue-50 p-4 rounded-xl text-sm text-blue-700">
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl text-sm text-blue-700 dark:text-blue-400">
                                 The tenant record will be created as <strong>Active</strong>. You can generate an agreement in the next step.
                             </div>
                         </div>
@@ -202,16 +202,16 @@ const ManualAddTenant = () => {
                     {step === 3 && (
                         <div className="space-y-6 text-center py-8">
                             <FileText size={48} className="mx-auto text-primary mb-4" />
-                            <h2 className="text-xl font-bold">Generate Agreement</h2>
-                            <p className="text-neutral-500 max-w-md mx-auto">
+                            <h2 className="text-xl font-bold dark:text-white">Generate Agreement</h2>
+                            <p className="text-neutral-500 dark:text-slate-400 max-w-md mx-auto">
                                 The system will generate a standardized lease agreement based on your template.
                                 You can choose to sign it now (if tenant is present) or send a link.
                             </p>
 
                             <div className="max-w-md mx-auto mb-6 text-left">
-                                <label className="block text-sm font-medium mb-2">Select Agreement Template</label>
+                                <label className="block text-sm font-medium mb-2 dark:text-slate-300">Select Agreement Template</label>
                                 <select
-                                    className="w-full input-field"
+                                    className="w-full input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                     value={selectedTemplate}
                                     onChange={(e) => setSelectedTemplate(e.target.value)}
                                 >
@@ -235,15 +235,15 @@ const ManualAddTenant = () => {
 
                     {step === 4 && (
                         <div className="space-y-6 text-center py-8">
-                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <CheckCircle size={32} />
                             </div>
-                            <h2 className="text-2xl font-bold">Signing Link Ready!</h2>
-                            <p className="text-neutral-500">Share this link with your tenant to complete the onboarding.</p>
+                            <h2 className="text-2xl font-bold dark:text-white">Signing Link Ready!</h2>
+                            <p className="text-neutral-500 dark:text-slate-400">Share this link with your tenant to complete the onboarding.</p>
 
-                            <div className="bg-neutral-100 p-4 rounded-xl flex items-center justify-between max-w-md mx-auto border border-neutral-200">
-                                <code className="text-sm font-mono text-neutral-600 truncate">{signingLink}</code>
-                                <button onClick={copyLink} className="p-2 hover:bg-white rounded-lg transition-colors">
+                            <div className="bg-neutral-100 dark:bg-slate-800 p-4 rounded-xl flex items-center justify-between max-w-md mx-auto border border-neutral-200 dark:border-slate-700">
+                                <code className="text-sm font-mono text-neutral-600 dark:text-slate-300 truncate">{signingLink}</code>
+                                <button onClick={copyLink} className="p-2 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors text-slate-500 dark:text-slate-400">
                                     <Copy size={18} />
                                 </button>
                             </div>
@@ -261,7 +261,7 @@ const ManualAddTenant = () => {
                         <button
                             disabled={step === 1}
                             onClick={() => setStep(prev => prev - 1)}
-                            className="bg-white border border-neutral-200 px-6 py-3 rounded-xl font-semibold text-neutral-600 disabled:opacity-50"
+                            className="bg-white dark:bg-slate-800 border border-neutral-200 dark:border-slate-700 px-6 py-3 rounded-xl font-semibold text-neutral-600 dark:text-slate-300 disabled:opacity-50 hover:bg-neutral-50 dark:hover:bg-slate-700"
                         >
                             Back
                         </button>

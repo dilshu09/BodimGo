@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { BedDouble } from "lucide-react";
 import api from "../../services/api";
 
 export default function AvailabilityPage() {
@@ -34,63 +35,54 @@ export default function AvailabilityPage() {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-slate-900">Room Availability</h2>
-        <p className="text-slate-600 mt-1">
+        <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Room Availability</h2>
+        <p className="text-slate-600 dark:text-slate-400 mt-1">
           View and manage rooms currently available for tenants
         </p>
       </div>
 
       {availableRooms.length === 0 ? (
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-          <p className="text-slate-600 text-lg">
+        <div className="mt-8 bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 p-12 text-center">
+          <p className="text-slate-600 dark:text-slate-400 text-lg">
             No rooms are currently marked as Available.
           </p>
         </div>
       ) : (
+
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {availableRooms.map((room) => (
-            <div key={room._id} className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
-              <div className="h-40 bg-slate-100 relative">
-                {room.image ? (
-                  <img src={room.image} alt={room.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-400">
-                    No Image
+            <div key={room._id} className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 flex flex-col justify-between hover:shadow-md transition-shadow">
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-3 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl">
+                    <BedDouble size={24} />
                   </div>
-                )}
-                <span className="absolute top-2 right-2 px-2 py-1 bg-green-500 text-white text-xs font-bold rounded">
-                  Available
-                </span>
-              </div>
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-bold text-lg text-slate-900">{room.name}</h3>
-                    <p className="text-sm text-slate-500">{room.listingTitle}</p>
-                  </div>
-                  <span className="text-sm font-medium bg-slate-100 px-2 py-1 rounded text-slate-600">
-                    {room.type}
+                  <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold uppercase rounded-full">
+                    Available
                   </span>
                 </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">{room.name}</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">{room.type} • Up to {room.capacity} people</p>
 
-                <div className="space-y-2 mt-4">
+                <div className="space-y-2 mb-6">
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Monthly Rent:</span>
-                    <span className="font-semibold text-slate-900">Rs. {room.price ? room.price.toLocaleString() : 'N/A'}</span>
+                    <span className="text-slate-600 dark:text-slate-400">Price</span>
+                    <span className="font-bold text-slate-900 dark:text-white">Rs. {room.price}/mo</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-slate-600">Capacity:</span>
-                    <span className="text-slate-900">{room.capacity} Person(s)</span>
+                    <span className="text-slate-600 dark:text-slate-400">Amenities</span>
+                    <span className="text-slate-900 dark:text-white font-medium">{room.amenities ? room.amenities.length : 0} items</span>
                   </div>
                 </div>
-
-                <button className="mt-6 w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800 transition-colors">
-                  Manage Booking
-                </button>
               </div>
+              <button className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors">
+                Manage Booking
+              </button>
             </div>
           ))}
         </div>
+
       )}
     </div>
   );

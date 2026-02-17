@@ -62,20 +62,20 @@ const OverviewTab = ({ listing, completeness, onFix }) => {
                     </div>
                 )}
 
-                <div className="bg-white rounded-2xl border border-neutral-200 p-6 min-h-[200px]">
-                    <h3 className="font-bold text-lg mb-4">Recent Activity</h3>
-                    <p className="text-neutral-400 text-sm">No recent activity.</p>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-neutral-200 dark:border-slate-800 p-6 min-h-[200px]">
+                    <h3 className="font-bold text-lg mb-4 text-neutral-900 dark:text-white">Recent Activity</h3>
+                    <p className="text-neutral-400 dark:text-slate-500 text-sm">No recent activity.</p>
                 </div>
             </div>
 
             <div className="space-y-6">
-                <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-                    <h3 className="font-bold text-neutral-800 mb-1">Occupancy</h3>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-neutral-200 dark:border-slate-800 p-6">
+                    <h3 className="font-bold text-neutral-800 dark:text-white mb-1">Occupancy</h3>
                     <div className="text-3xl font-bold text-primary mb-2">{occupancyRate}%</div>
-                    <div className="w-full bg-neutral-100 h-2 rounded-full overflow-hidden">
+                    <div className="w-full bg-neutral-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
                         <div className="bg-primary h-full transition-all duration-500" style={{ width: `${occupancyRate}%` }}></div>
                     </div>
-                    <p className="text-xs text-neutral-500 mt-2">{occupiedCount}/{totalCapacity} Beds Occupied</p>
+                    <p className="text-xs text-neutral-500 dark:text-slate-400 mt-2">{occupiedCount}/{totalCapacity} Beds Occupied</p>
                 </div>
             </div>
         </div>
@@ -148,8 +148,8 @@ const RoomsTab = ({ listing, onRefetch }) => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-neutral-800">Rooms & Beds</h2>
-                    <p className="text-neutral-500 text-sm">Manage your property's rooms.</p>
+                    <h2 className="text-xl font-bold text-neutral-800 dark:text-white">Rooms & Beds</h2>
+                    <p className="text-neutral-500 dark:text-slate-400 text-sm">Manage your property's rooms.</p>
                 </div>
                 <button onClick={openAdd} className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
                     <Plus size={16} /> Add Room
@@ -157,20 +157,20 @@ const RoomsTab = ({ listing, onRefetch }) => {
             </div>
 
             {(!listing.rooms || listing.rooms.length === 0) ? (
-                <div className="text-center py-12 bg-white rounded-2xl border border-neutral-200 dashed">
-                    <div className="bg-neutral-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-neutral-400">
+                <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-neutral-200 dark:border-slate-800 dashed">
+                    <div className="bg-neutral-50 dark:bg-slate-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-neutral-400 dark:text-slate-500">
                         <LayoutGrid size={32} />
                     </div>
-                    <h3 className="font-bold text-neutral-900 mb-2">No Rooms Added Yet</h3>
-                    <p className="text-neutral-500 text-sm mb-6 max-w-md mx-auto">Start by adding the rooms available in your property.</p>
+                    <h3 className="font-bold text-neutral-900 dark:text-white mb-2">No Rooms Added Yet</h3>
+                    <p className="text-neutral-500 dark:text-slate-400 text-sm mb-6 max-w-md mx-auto">Start by adding the rooms available in your property.</p>
                     <button onClick={openAdd} className="btn-secondary">Add Your First Room</button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {listing.rooms.map((room, idx) => (
-                        <div key={idx} className="bg-white rounded-2xl border border-neutral-200 p-5 hover:shadow-lg transition-shadow group flex flex-col h-full">
+                        <div key={idx} className="bg-white dark:bg-slate-900 rounded-2xl border border-neutral-200 dark:border-slate-800 p-5 hover:shadow-lg hover:border-primary/50 transition-all group flex flex-col h-full">
                             {/* Room Images Preview */}
-                            <div className="h-40 bg-neutral-100 rounded-xl mb-4 overflow-hidden relative">
+                            <div className="h-40 bg-neutral-100 dark:bg-slate-800 rounded-xl mb-4 overflow-hidden relative">
                                 {room.images && room.images.length > 0 ? (
                                     <div className="w-full h-full grid grid-cols-3 grid-rows-2 gap-1">
                                         <div className="col-span-2 row-span-2 relative">
@@ -187,44 +187,44 @@ const RoomsTab = ({ listing, onRefetch }) => {
                                         </div>}
                                     </div>
                                 ) : (
-                                    <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400">
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-neutral-400 dark:text-slate-600">
                                         <Bed size={32} opacity={0.3} />
                                         <span className="text-xs mt-2">No Photos</span>
                                     </div>
                                 )}
 
-                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 p-1 rounded-lg shadow-sm">
-                                    <button onClick={() => openEdit(room)} className="p-1 hover:bg-neutral-100 rounded text-neutral-600 hover:text-primary"><Edit size={14} /></button>
-                                    <button onClick={() => handleDeleteClick(room._id)} className="p-1 hover:bg-red-50 rounded text-neutral-600 hover:text-red-600"><Trash2 size={14} /></button>
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-slate-800/90 p-1 rounded-lg shadow-sm">
+                                    <button onClick={() => openEdit(room)} className="p-1 hover:bg-neutral-100 dark:hover:bg-slate-700 rounded text-neutral-600 dark:text-slate-400 hover:text-primary"><Edit size={14} /></button>
+                                    <button onClick={() => handleDeleteClick(room._id)} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-neutral-600 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400"><Trash2 size={14} /></button>
                                 </div>
                             </div>
 
                             <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-sm">
+                                    <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-sm">
                                         {idx + 1}
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-neutral-800 text-sm line-clamp-1">{room.name}</h4>
-                                        <p className="text-xs text-neutral-500">{room.type}</p>
+                                        <h4 className="font-bold text-neutral-800 dark:text-white text-sm line-clamp-1">{room.name}</h4>
+                                        <p className="text-xs text-neutral-500 dark:text-slate-400">{room.type}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="space-y-2 mb-4 flex-grow">
-                                <div className="flex items-center justify-between text-xs text-neutral-600">
+                                <div className="flex items-center justify-between text-xs text-neutral-600 dark:text-slate-400">
                                     <span className="flex items-center gap-1"><Users size={12} /> Capacity</span>
-                                    <span className="font-semibold">{room.capacity}</span>
+                                    <span className="font-semibold text-neutral-800 dark:text-slate-200">{room.capacity}</span>
                                 </div>
-                                <div className="flex items-center justify-between text-xs text-neutral-600">
+                                <div className="flex items-center justify-between text-xs text-neutral-600 dark:text-slate-400">
                                     <span className="flex items-center gap-1"><Bath size={12} /> Bathroom</span>
-                                    <span className="font-semibold">{room.features?.bathroomType}</span>
+                                    <span className="font-semibold text-neutral-800 dark:text-slate-200">{room.features?.bathroomType}</span>
                                 </div>
                             </div>
 
-                            <div className="pt-3 border-t border-neutral-100 flex items-center justify-between mt-auto">
+                            <div className="pt-3 border-t border-neutral-100 dark:border-slate-800 flex items-center justify-between mt-auto">
                                 <div className="font-bold text-primary">LKR {room.price?.toLocaleString()}</div>
-                                <span className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full ${room.status === 'Occupied' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+                                <span className={`text-[10px] uppercase tracking-wide font-bold px-2 py-0.5 rounded-full ${room.status === 'Occupied' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'}`}>
                                     {room.status || 'Available'}
                                 </span>
                             </div>
@@ -301,28 +301,28 @@ const AgreementsTab = ({ listing, onRefetch }) => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-neutral-800">Agreements</h2>
-                    <p className="text-neutral-500 text-sm">Manage rental agreements and templates.</p>
+                    <h2 className="text-xl font-bold text-neutral-800 dark:text-white">Agreements</h2>
+                    <p className="text-neutral-500 dark:text-slate-400 text-sm">Manage rental agreements and templates.</p>
                 </div>
                 <Link to="/agreements/new" className="btn-primary flex items-center gap-2 text-sm px-4 py-2">
                     <Plus size={16} /> Create Template
                 </Link>
             </div>
 
-            <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-                <h3 className="font-bold text-neutral-800 mb-4">Assigned Template</h3>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-neutral-200 dark:border-slate-800 p-6">
+                <h3 className="font-bold text-neutral-800 dark:text-white mb-4">Assigned Template</h3>
                 {listing.agreementTemplate ? (
-                    <div className="flex items-center justify-between bg-neutral-50 p-6 rounded-xl border border-neutral-200">
+                    <div className="flex items-center justify-between bg-neutral-50 dark:bg-slate-800 p-6 rounded-xl border border-neutral-200 dark:border-slate-700">
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-white rounded-xl border border-neutral-100 flex items-center justify-center text-primary shadow-sm">
+                            <div className="w-12 h-12 bg-white dark:bg-slate-900 rounded-xl border border-neutral-100 dark:border-slate-600 flex items-center justify-center text-primary shadow-sm">
                                 <FileText size={24} />
                             </div>
                             <div>
-                                <p className="font-bold text-neutral-800 text-lg">
+                                <p className="font-bold text-neutral-800 dark:text-white text-lg">
                                     {typeof listing.agreementTemplate === 'object' ? listing.agreementTemplate.name : 'Agreement Template Assigned'}
                                 </p>
-                                <div className="flex items-center gap-2 text-xs text-neutral-500 mt-1">
-                                    <span className="bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">Active</span>
+                                <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-slate-400 mt-1">
+                                    <span className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-0.5 rounded font-bold">Active</span>
                                     <span>•</span>
                                     <span>Last updated just now</span>
                                 </div>
@@ -336,15 +336,15 @@ const AgreementsTab = ({ listing, onRefetch }) => {
                         </button>
                     </div>
                 ) : (
-                    <div className="text-center py-10 bg-orange-50 rounded-2xl border border-dashed border-orange-200">
-                        <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-orange-400">
+                    <div className="text-center py-10 bg-orange-50 dark:bg-orange-900/10 rounded-2xl border border-dashed border-orange-200 dark:border-orange-800">
+                        <div className="bg-white dark:bg-slate-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm text-orange-400">
                             <AlertTriangle size={24} />
                         </div>
-                        <p className="text-orange-900 font-bold text-lg mb-1">No Template Assigned</p>
-                        <p className="text-orange-700 text-sm mb-6">You must assign an agreement template before publishing this listing.</p>
+                        <p className="text-orange-900 dark:text-orange-400 font-bold text-lg mb-1">No Template Assigned</p>
+                        <p className="text-orange-700 dark:text-orange-500/80 text-sm mb-6">You must assign an agreement template before publishing this listing.</p>
                         <button
                             onClick={() => setShowModal(true)}
-                            className="px-6 py-2.5 bg-white border border-orange-200 text-orange-700 rounded-xl text-sm font-bold shadow-sm hover:bg-orange-100 transition-colors"
+                            className="px-6 py-2.5 bg-white dark:bg-slate-800 border border-orange-200 dark:border-orange-700 text-orange-700 dark:text-orange-400 rounded-xl text-sm font-bold shadow-sm hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
                         >
                             Select Template
                         </button>
@@ -354,10 +354,10 @@ const AgreementsTab = ({ listing, onRefetch }) => {
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-6 border-b border-neutral-100">
-                            <h3 className="text-lg font-bold text-neutral-800">Select Agreement Template</h3>
-                            <button onClick={() => setShowModal(false)}><X size={20} className="text-neutral-400 hover:text-neutral-600" /></button>
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 border border-neutral-200 dark:border-slate-800">
+                        <div className="flex items-center justify-between p-6 border-b border-neutral-100 dark:border-slate-800">
+                            <h3 className="text-lg font-bold text-neutral-800 dark:text-white">Select Agreement Template</h3>
+                            <button onClick={() => setShowModal(false)}><X size={20} className="text-neutral-400 hover:text-neutral-600 dark:hover:text-slate-300" /></button>
                         </div>
 
                         <div className="p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
@@ -365,7 +365,7 @@ const AgreementsTab = ({ listing, onRefetch }) => {
                                 <div className="flex justify-center py-10"><Loader className="animate-spin text-primary" /></div>
                             ) : templates.length === 0 ? (
                                 <div className="text-center py-10">
-                                    <p className="text-neutral-500 mb-4">No templates found.</p>
+                                    <p className="text-neutral-500 dark:text-slate-400 mb-4">No templates found.</p>
                                     <Link to="/agreements/new" className="text-primary font-bold hover:underline">Create New Template</Link>
                                 </div>
                             ) : (
@@ -375,12 +375,12 @@ const AgreementsTab = ({ listing, onRefetch }) => {
                                             key={tpl._id}
                                             onClick={() => handleAssign(tpl._id)}
                                             disabled={assigning}
-                                            className="w-full text-left p-4 rounded-xl border border-neutral-200 hover:border-primary hover:bg-neutral-50 transition-all group relative"
+                                            className="w-full text-left p-4 rounded-xl border border-neutral-200 dark:border-slate-800 hover:border-primary dark:hover:border-primary hover:bg-neutral-50 dark:hover:bg-slate-800 transition-all group relative"
                                         >
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h4 className="font-bold text-neutral-800 group-hover:text-primary transition-colors">{tpl.name}</h4>
-                                                    <div className="flex items-center gap-3 text-xs text-neutral-500 mt-1">
+                                                    <h4 className="font-bold text-neutral-800 dark:text-white group-hover:text-primary transition-colors">{tpl.name}</h4>
+                                                    <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-slate-400 mt-1">
                                                         <span>{tpl.lockPeriod}M Lock-in</span>
                                                         <span>•</span>
                                                         <span>{tpl.noticePeriod}M Notice</span>
@@ -456,17 +456,17 @@ const ListingManagement = () => {
     };
 
     return (
-        <div className="min-h-screen bg-neutral-50">
+        <div className="min-h-screen bg-neutral-50 dark:bg-slate-900">
             {/* Header */}
-            <div className="bg-white border-b border-neutral-200 sticky top-0 z-40">
+            <div className="bg-white dark:bg-slate-900 border-b border-neutral-200 dark:border-slate-800 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate('/listings')} className="p-2 hover:bg-neutral-100 rounded-lg text-neutral-500 transition-colors">
+                        <button onClick={() => navigate('/listings')} className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-lg text-neutral-500 dark:text-slate-400 transition-colors">
                             <ArrowLeft size={20} />
                         </button>
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-xl font-bold text-neutral-800 line-clamp-1">{listing.title}</h1>
+                                <h1 className="text-xl font-bold text-neutral-800 dark:text-white line-clamp-1">{listing.title}</h1>
 
                                 {/* Status Badges */}
                                 {listing.status === 'Published' && (
@@ -498,7 +498,7 @@ const ListingManagement = () => {
                             <button
                                 onClick={() => handlePublish('Draft')}
                                 disabled={publishing}
-                                className="flex items-center gap-2 px-4 py-2 border border-neutral-200 rounded-lg text-sm font-bold text-neutral-600 hover:bg-neutral-50 transition-colors"
+                                className="flex items-center gap-2 px-4 py-2 border border-neutral-200 dark:border-slate-700 rounded-lg text-sm font-bold text-neutral-600 dark:text-slate-300 hover:bg-neutral-50 dark:hover:bg-slate-800 transition-colors"
                             >
                                 {publishing ? <Loader size={16} className="animate-spin" /> : <PauseCircle size={16} />}
                                 Pause Listing

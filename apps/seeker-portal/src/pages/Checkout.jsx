@@ -125,18 +125,18 @@ const Checkout = () => {
     if (!booking || !clientSecret) return <div className="p-10 text-center">Loading Checkout...</div>;
 
     return (
-        <div className="min-h-screen bg-neutral-50">
+        <div className="min-h-screen bg-neutral-50 dark:bg-slate-950 pt-24 transition-colors duration-200">
             <Navbar />
             <div className="max-w-xl mx-auto px-4 py-12">
-                <div className="bg-white p-8 rounded-2xl shadow-card">
-                    <h1 className="text-2xl font-bold mb-2">Confirm and Pay</h1>
-                    <div className="flex items-center gap-4 mb-6 pb-6 border-b border-neutral-100">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-card dark:shadow-none border border-transparent dark:border-slate-800 transition-all">
+                    <h1 className="text-2xl font-bold mb-2 text-neutral-900 dark:text-white">Confirm and Pay</h1>
+                    <div className="flex items-center gap-4 mb-6 pb-6 border-b border-neutral-100 dark:border-slate-800">
                         {booking.listing.images?.[0] && (
                             <img src={booking.listing.images[0]} className="w-20 h-20 rounded-lg object-cover" />
                         )}
                         <div>
-                            <h3 className="font-bold">{booking.listing.title}</h3>
-                            <p className="text-sm text-neutral-500">
+                            <h3 className="font-bold text-neutral-900 dark:text-white">{booking.listing.title}</h3>
+                            <p className="text-sm text-neutral-500 dark:text-slate-400">
                                 {new Date(booking.checkInDate).toLocaleDateString()} - {new Date(booking.checkOutDate).toLocaleDateString()}
                             </p>
                         </div>

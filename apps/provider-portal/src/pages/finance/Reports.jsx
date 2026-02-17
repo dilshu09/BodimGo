@@ -135,19 +135,19 @@ export default function Reports() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900">Financial Reports</h2>
-          <p className="text-slate-600 mt-2">Analyze your earnings and expenses</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Financial Reports</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-2">Analyze your earnings and expenses</p>
         </div>
-        <div className="flex bg-slate-100 p-1 rounded-lg">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('monthly')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'monthly' ? 'bg-white text-primary shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'monthly' ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             Monthly Report
           </button>
           <button
             onClick={() => setActiveTab('annual')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'annual' ? 'bg-white text-primary shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeTab === 'annual' ? 'bg-white dark:bg-slate-700 text-primary shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
           >
             Annual Report
           </button>
@@ -155,16 +155,16 @@ export default function Reports() {
       </div>
 
       {/* Controls */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           {activeTab === 'monthly' ? (
             <>
               <div className="flex items-center gap-2">
                 <Calendar size={18} className="text-slate-400" />
-                <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary">
+                <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary text-slate-800 dark:text-white">
                   {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
-                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary">
+                <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary text-slate-800 dark:text-white">
                   {Array.from({ length: 12 }, (_, i) => (
                     <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>
                   ))}
@@ -174,7 +174,7 @@ export default function Reports() {
           ) : (
             <div className="flex items-center gap-2">
               <Calendar size={18} className="text-slate-400" />
-              <select value={annualYear} onChange={(e) => setAnnualYear(Number(e.target.value))} className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary">
+              <select value={annualYear} onChange={(e) => setAnnualYear(Number(e.target.value))} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium outline-none focus:border-primary text-slate-800 dark:text-white">
                 {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
@@ -194,17 +194,17 @@ export default function Reports() {
             <div className="space-y-6">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <p className="text-sm text-slate-500 font-medium">Total Income</p>
-                  <p className="text-2xl font-bold text-green-600 mt-2">Rs. {monthlyData.summary.totalIncome.toLocaleString()}</p>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Income</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-2">Rs. {monthlyData.summary.totalIncome.toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <p className="text-sm text-slate-500 font-medium">Total Expenses</p>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total Expenses</p>
                   <p className="text-2xl font-bold text-primary mt-2">Rs. {monthlyData.summary.totalExpenses.toLocaleString()}</p>
                 </div>
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <p className="text-sm text-slate-500 font-medium">Net Profit</p>
-                  <p className={`text-2xl font-bold mt-2 ${monthlyData.summary.netProfit >= 0 ? 'text-slate-900' : 'text-primary'}`}>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Net Profit</p>
+                  <p className={`text-2xl font-bold mt-2 ${monthlyData.summary.netProfit >= 0 ? 'text-slate-900 dark:text-white' : 'text-primary'}`}>
                     Rs. {monthlyData.summary.netProfit.toLocaleString()}
                   </p>
                 </div>
@@ -212,8 +212,8 @@ export default function Reports() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Expense Chart */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-900 mb-6">Expense Distribution</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Expense Distribution</h3>
                   {monthlyData.summary.totalExpenses > 0 ? (
                     <div className="h-64">
                       <ResponsiveContainer width="100%" height="100%">
@@ -242,22 +242,22 @@ export default function Reports() {
                 </div>
 
                 {/* Breakdown List */}
-                <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                  <h3 className="text-lg font-bold text-slate-900 mb-6">Top Expenses</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Top Expenses</h3>
                   <div className="space-y-4">
                     {monthlyData.expenseBreakdown.map((item, i) => (
                       <div key={i}>
                         <div className="flex justify-between text-sm mb-1">
-                          <span className="font-medium text-slate-700">{item.category}</span>
-                          <span className="text-slate-900 font-bold">Rs. {item.amount.toLocaleString()}</span>
+                          <span className="font-medium text-slate-700 dark:text-slate-300">{item.category}</span>
+                          <span className="text-slate-900 dark:text-white font-bold">Rs. {item.amount.toLocaleString()}</span>
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
                           <div
                             className="bg-primary h-2 rounded-full"
                             style={{ width: `${item.percentage}%` }}
                           ></div>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">{item.count} transaction(s) • {item.percentage}% of total</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.count} transaction(s) • {item.percentage}% of total</p>
                       </div>
                     ))}
                     {monthlyData.expenseBreakdown.length === 0 && (
@@ -271,8 +271,8 @@ export default function Reports() {
 
           {/* Annual View */}
           {activeTab === 'annual' && annualData && (
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Annual Performance ({annualData.year})</h3>
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6">Annual Performance ({annualData.year})</h3>
               <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -290,18 +290,18 @@ export default function Reports() {
                 </ResponsiveContainer>
               </div>
 
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 pt-6">
+              <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-100 dark:border-slate-800 pt-6">
                 <div className="text-center">
-                  <p className="text-sm text-slate-500">Total Annual Income</p>
-                  <p className="text-xl font-bold text-green-600 mt-1">Rs. {annualData.summary.totalIncome.toLocaleString()}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Total Annual Income</p>
+                  <p className="text-xl font-bold text-green-600 dark:text-green-400 mt-1">Rs. {annualData.summary.totalIncome.toLocaleString()}</p>
                 </div>
-                <div className="text-center border-l border-slate-100">
-                  <p className="text-sm text-slate-500">Total Annual Expenses</p>
+                <div className="text-center border-l border-slate-100 dark:border-slate-800">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Total Annual Expenses</p>
                   <p className="text-xl font-bold text-primary mt-1">Rs. {annualData.summary.totalExpenses.toLocaleString()}</p>
                 </div>
-                <div className="text-center border-l border-slate-100">
-                  <p className="text-sm text-slate-500">Net Profit</p>
-                  <p className="text-xl font-bold text-slate-900 mt-1">Rs. {annualData.summary.netProfit.toLocaleString()}</p>
+                <div className="text-center border-l border-slate-100 dark:border-slate-800">
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Net Profit</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">Rs. {annualData.summary.netProfit.toLocaleString()}</p>
                 </div>
               </div>
             </div>
