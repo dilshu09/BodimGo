@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api'; // Ensure this points to your axios instance
-import { User, Calendar, MapPin, CheckCircle, XCircle, Mail, Phone, ArrowLeft, FileText, Briefcase } from 'lucide-react';
+import { User, Calendar, MapPin, CheckCircle, XCircle, Mail, Phone, ArrowLeft, FileText, Briefcase, Home } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import ConfirmationModal from '../components/ConfirmationModal';
 
@@ -11,13 +11,26 @@ const BookingDetails = () => {
     const [booking, setBooking] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Modal State
+    // Form state for acceptance
+    const [selectedRoomId, setSelectedRoomId] = useState('');
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [actionToConfirm, setActionToConfirm] = useState(null);
 
     useEffect(() => {
         fetchBooking();
     }, [id]);
+
+    useEffect(() => {
+        if (booking) {
+            if (booking.room) {
+                setSelectedRoomId(booking.room);
+            } else if (booking.listing?.rooms?.length > 0) {
+                // Default to first available room if none requested (fallback)
+                const firstAvailable = booking.listing.rooms.find(r => r.status === 'Available');
+                if (firstAvailable) setSelectedRoomId(firstAvailable._id);
+            }
+        }
+    }, [booking]);
 
     const fetchBooking = async () => {
         try {
@@ -39,8 +52,17 @@ const BookingDetails = () => {
     const confirmAction = async () => {
         if (!actionToConfirm) return;
 
+        if (actionToConfirm === 'accept' && !selectedRoomId) {
+            toast.error("Please select a room to assign to this tenant.");
+            setIsConfirmModalOpen(false);
+            return;
+        }
+
         try {
-            await api.put(`/bookings/${id}/status`, { action: actionToConfirm });
+            await api.put(`/bookings/${id}/status`, { 
+                action: actionToConfirm,
+                roomId: selectedRoomId 
+            });
             toast.success(`Booking ${actionToConfirm}ed successfully`);
             fetchBooking(); // Refresh
             setIsConfirmModalOpen(false);
@@ -144,16 +166,7 @@ const BookingDetails = () => {
                                 </div>
                             )}
 
-                            <div className="pt-4 flex gap-3">
-                                <a href={`mailto:${seeker.email}`} className="flex-1 btn-secondary flex items-center justify-center gap-2 py-2 rounded-lg border border-neutral-300 hover:bg-neutral-50">
-                                    <Mail size={18} /> Email
-                                </a>
-                                {applicationData?.phone && (
-                                    <a href={`tel:${applicationData.phone}`} className="flex-1 btn-secondary flex items-center justify-center gap-2 py-2 rounded-lg border border-neutral-300 hover:bg-neutral-50">
-                                        <Phone size={18} /> Call
-                                    </a>
-                                )}
-                            </div>
+                            {/* Email/Call buttons removed */}
                         </div>
                     </div>
 
@@ -174,14 +187,10 @@ const BookingDetails = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1">
                                 <div className="border border-neutral-200 p-3 rounded-lg">
                                     <p className="text-xs text-neutral-500">Check In</p>
                                     <p className="font-bold text-neutral-900">{new Date(booking.checkInDate).toLocaleDateString()}</p>
-                                </div>
-                                <div className="border border-neutral-200 p-3 rounded-lg">
-                                    <p className="text-xs text-neutral-500">Check Out</p>
-                                    <p className="font-bold text-neutral-900">{new Date(booking.checkOutDate).toLocaleDateString()}</p>
                                 </div>
                             </div>
 
@@ -199,19 +208,44 @@ const BookingDetails = () => {
 
                 {/* Actions Footer */}
                 {booking.status === 'pending' && (
-                    <div className="p-6 bg-neutral-50 border-t border-neutral-200 flex justify-end gap-3">
-                        <button
-                            onClick={() => handleActionClick('reject')}
-                            className="bg-white border border-red-200 text-red-600 px-6 py-2 rounded-xl font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
-                        >
-                            <XCircle size={18} /> Reject
-                        </button>
-                        <button
-                            onClick={() => handleActionClick('accept')}
-                            className="bg-green-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-green-700 transition-colors flex items-center gap-2 shadow-lg shadow-green-200"
-                        >
-                            <CheckCircle size={18} /> Accept Application
-                        </button>
+                    <div className="p-8 bg-neutral-50 border-t border-neutral-200">
+                        <div className="mb-6 max-w-sm">
+                            <label className="block text-sm font-bold text-neutral-700 mb-2 flex items-center gap-2">
+                                <Home size={16} className="text-primary" /> Assign Room for Tenant
+                            </label>
+                            <select 
+                                value={selectedRoomId} 
+                                onChange={(e) => setSelectedRoomId(e.target.value)}
+                                className="w-full p-3 rounded-xl border border-neutral-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all bg-white font-medium"
+                            >
+                                <option value="">-- Select Room --</option>
+                                {listing.rooms?.map(room => (
+                                    <option key={room._id} value={room._id} disabled={room.status === 'Occupied' && room._id !== booking.room}>
+                                        {room.name} ({room.type}) {room._id === booking.room ? '⭐ Requested by Seeker' : `- ${room.status}`}
+                                    </option>
+                                ))}
+                            </select>
+                            {selectedRoomId && (
+                                <p className="text-xs text-neutral-500 mt-2 italic">
+                                    Room will be marked as "Occupied" upon acceptance.
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => handleActionClick('reject')}
+                                className="bg-white border border-red-200 text-red-600 px-6 py-2.5 rounded-xl font-bold hover:bg-red-50 transition-colors flex items-center gap-2"
+                            >
+                                <XCircle size={18} /> Reject
+                            </button>
+                            <button
+                                onClick={() => handleActionClick('accept')}
+                                className="bg-primary text-white px-8 py-2.5 rounded-xl font-bold hover:bg-primary-dark transition-colors flex items-center gap-2 shadow-lg shadow-primary/20"
+                            >
+                                <CheckCircle size={18} /> Accept & Assign Room
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>

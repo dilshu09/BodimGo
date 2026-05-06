@@ -4,7 +4,7 @@ const ListingSchema = new mongoose.Schema({
   provider: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
   // --- 1. Property Info ---
-  title: { type: String, required: true, minlength: 10, index: true },
+  title: { type: String, required: true, minlength: 5, index: true },
   type: {
     type: String,
     required: true,
@@ -118,6 +118,7 @@ const ListingSchema = new mongoose.Schema({
       lat: { type: Number, required: true },
       lng: { type: Number, required: true }
     },
+    googleMapsLink: { type: String },
     nearbyLandmarks: [{ type: String }]
   },
 

@@ -23,6 +23,8 @@ export default function ActiveTenantsPage() {
   const [paymentData, setPaymentData] = useState({ amount: '', date: new Date().toISOString().split('T')[0], method: 'cash' });
   const [selectedTenantForPayment, setSelectedTenantForPayment] = useState(null);
 
+  const [availableRooms, setAvailableRooms] = useState([]);
+
   useEffect(() => {
     fetchTenants();
   }, []);
@@ -40,10 +42,12 @@ export default function ActiveTenantsPage() {
         name: t.name,
         email: t.email,
         phone: t.phone,
-        room: t.roomId, // Or handle if roomId is an ID vs string
+        room: t.roomName || t.roomId, 
+        listingId: t.listingId?._id || t.listingId,
+        listingTitle: t.listingId?.title || 'Unknown',
         address: t.address,
         nic: t.nic,
-        checkInDate: t.createdAt, // Fallback if no specific checkInDate
+        checkInDate: t.createdAt, 
         monthlyRent: t.rentAmount,
         currentMonth: t.currentMonth || { paid: false, date: null },
         status: (t.status.toLowerCase() === 'active' || t.status === 'Pending') ? 'Active' : t.status,
@@ -62,6 +66,18 @@ export default function ActiveTenantsPage() {
       console.error("Error fetching tenants:", error);
       toast.error("Failed to load tenants");
       setLoading(false);
+    }
+  };
+
+  const fetchRoomsForListing = async (listingId) => {
+    try {
+        const token = localStorage.getItem('token');
+        const res = await axios.get(`${API_URL}/listings/${listingId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        setAvailableRooms(res.data.rooms || []);
+    } catch (err) {
+        console.error("Failed to fetch rooms:", err);
     }
   };
 
@@ -86,8 +102,10 @@ export default function ActiveTenantsPage() {
         phone: tenant.phone,
         nic: tenant.nic,
         address: tenant.address,
-        rentAmount: tenant.monthlyRent
+        rentAmount: tenant.monthlyRent,
+        roomId: tenant.room
       });
+      fetchRoomsForListing(tenant.listingId);
     }
   };
 
@@ -271,6 +289,21 @@ export default function ActiveTenantsPage() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Full Name</label><input value={editFormData.name || ''} onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Assigned Room</label>
+                          <select 
+                            value={editFormData.roomId || ''} 
+                            onChange={(e) => setEditFormData({ ...editFormData, roomId: e.target.value })}
+                            className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm"
+                          >
+                            <option value="Unassigned">Unassigned</option>
+                            {availableRooms.map(r => (
+                              <option key={r._id} value={r._id}>{r.name} ({r.type})</option>
+                            ))}
+                          </select>
+                        </div>
+
                         <div><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Phone</label><input value={editFormData.phone || ''} onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
                         <div><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">NIC</label><input value={editFormData.nic || ''} onChange={(e) => setEditFormData({ ...editFormData, nic: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>
                         <div className="col-span-2"><label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Email</label><input value={editFormData.email || ''} onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-900 dark:text-white rounded-lg text-sm" /></div>

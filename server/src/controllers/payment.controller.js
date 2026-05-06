@@ -34,9 +34,7 @@ export const createPaymentIntent = async (req, res) => {
         bookingId: booking._id.toString(),
         userId: req.user._id.toString()
       },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      payment_method_types: ['card'],
     });
 
     res.json({

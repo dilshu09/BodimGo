@@ -1,9 +1,10 @@
 'use client';
 import { useState, useEffect } from "react";
-import { Edit2, Trash2, Eye, Plus, ChevronUp, ChevronDown, Home, Bath, Users, Search, Camera, Hotel } from "lucide-react";
+import { Edit2, Trash2, Eye, Plus, ChevronUp, ChevronDown, Home, Bath, Users, Search, Camera, Hotel, Settings } from "lucide-react";
 import api from "../../services/api";
 import { toast } from "react-hot-toast";
 import RoomFormModal from "../../components/RoomFormModal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState([]);
@@ -18,6 +19,10 @@ export default function RoomsPage() {
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [selectedListingId, setSelectedListingId] = useState('');
   const [editingRoom, setEditingRoom] = useState(null); // If null -> Add Mode, if set -> Edit Mode
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [roomToDeleteId, setRoomToDeleteId] = useState(null);
+
+  const [expandedListingId, setExpandedListingId] = useState(null);
 
   // Step 1 of Add Room: Select Listing
   const [showListingSelectModal, setShowListingSelectModal] = useState(false);
@@ -72,16 +77,23 @@ export default function RoomsPage() {
     }
   };
 
-  const handleDelete = async (roomId) => {
+  const handleDelete = async () => {
+    if (!roomToDeleteId) return;
     try {
-      await api.delete(`/listings/provider/rooms/${roomId}`);
+      await api.delete(`/listings/provider/rooms/${roomToDeleteId}`);
       toast.success("Room deleted");
-      setExpandedRoomId(null);
+      setIsDeleteModalOpen(false);
+      setRoomToDeleteId(null);
       fetchRooms();
     } catch (error) {
       console.error("Delete failed", error);
       toast.error("Failed to delete room");
     }
+  };
+
+  const confirmDelete = (id) => {
+    setRoomToDeleteId(id);
+    setIsDeleteModalOpen(true);
   };
 
   // --- Modal Actions ---
@@ -146,9 +158,9 @@ export default function RoomsPage() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div className="space-y-6">
         {rooms.length === 0 ? (
-          <div className="p-12 text-center">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-800">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 mb-4">
               <Home size={32} />
             </div>
@@ -157,112 +169,152 @@ export default function RoomsPage() {
             <button onClick={handleAddClick} className="text-red-600 font-medium hover:underline">Add your first room</button>
           </div>
         ) : (
-          <div className="divide-y divide-slate-200 dark:divide-slate-800">
-            {rooms.map((room) => (
-              <div key={room._id} className={`transition-all duration-200 ${expandedRoomId === room._id ? 'bg-slate-50 dark:bg-slate-800/50' : 'hover:bg-slate-50 dark:hover:bg-slate-800/30'}`}>
-
-                {/* Compact Row */}
-                <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(room._id, 'details')}>
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="w-12 h-12 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-center overflow-hidden">
-                      {room.image ? <img src={room.image} alt="" className="w-full h-full object-cover" /> : <Home size={20} className="text-slate-300 dark:text-slate-600" />}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white">{room.name}</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{room.listingTitle}</p>
+          Object.values(rooms.reduce((acc, room) => {
+            const lId = room.listingId;
+            if (!acc[lId]) {
+              acc[lId] = {
+                id: lId,
+                title: room.listingTitle,
+                city: room.location?.city,
+                address: room.location?.address,
+                image: room.image,
+                rooms: []
+              };
+            }
+            acc[lId].rooms.push(room);
+            return acc;
+          }, {})).map((listing) => (
+            <div key={listing.id} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+              {/* Listing Header Card */}
+              <div 
+                className="p-6 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors"
+                onClick={() => setExpandedListingId(expandedListingId === listing.id ? null : listing.id)}
+              >
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-slate-700">
+                    {listing.image ? <img src={listing.image} alt="" className="w-full h-full object-cover" /> : <Hotel size={24} className="text-slate-400" />}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">{listing.title}</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{listing.address}, {listing.city}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">{listing.rooms.length} Units</span>
+                      <span className="text-xs text-slate-400">•</span>
+                      <span className="text-xs text-slate-400">{listing.rooms.filter(r => r.status === 'Available').length} Available</span>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-8 mr-8 hidden md:flex">
-                    <div className="text-sm">
-                      <p className="text-slate-500 dark:text-slate-400 text-xs text-right">Type</p>
-                      <p className="font-medium text-slate-900 dark:text-white">{room.type}</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-slate-500 dark:text-slate-400 text-xs text-right">Capacity</p>
-                      <p className="font-medium text-slate-900 dark:text-white">{room.capacity} Person(s)</p>
-                    </div>
-                    <div className="text-sm">
-                      <p className="text-slate-500 dark:text-slate-400 text-xs text-right">Rent</p>
-                      <p className="font-medium text-slate-900 dark:text-white">Rs. {room.price?.toLocaleString()}</p>
-                    </div>
-                    <div className="text-sm">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${room.status === 'Available' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                        room.status === 'Occupied' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        }`}>
-                        {room.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  <button className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                    {expandedRoomId === room._id ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                  </button>
                 </div>
+                <div className="flex items-center gap-4">
+                   <div className="hidden md:block text-right">
+                      <p className="text-xs text-slate-400 uppercase font-bold">Occupancy</p>
+                      <p className="font-bold text-slate-700 dark:text-slate-200 leading-tight">
+                        {Math.round((listing.rooms.filter(r => r.status === 'Occupied').length / listing.rooms.length) * 100)}%
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium">Total Capacity: {listing.rooms.reduce((sum, r) => sum + (parseInt(r.capacity) || 0), 0)}</p>
+                   </div>
+                   <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400">
+                      {expandedListingId === listing.id ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                   </button>
+                </div>
+              </div>
 
-                {/* Expanded Section */}
-                {expandedRoomId === room._id && (
-                  <div className="px-4 pb-4 animate-in slide-in-from-top-2">
-                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 shadow-sm cursor-default" onClick={e => e.stopPropagation()}>
+              {/* Rooms List (Expanded) */}
+              {expandedListingId === listing.id && (
+                <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-900/30 p-4 space-y-3">
+                  {listing.rooms.map((room) => (
+                    <div key={room._id} className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all ${expandedRoomId === room._id ? 'ring-1 ring-primary/30 shadow-md' : 'hover:border-primary/30'}`}>
+                      {/* Room Row */}
+                      <div className="p-4 flex items-center justify-between cursor-pointer" onClick={() => toggleExpand(room._id, 'details')}>
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 flex items-center justify-center font-bold text-primary">
+                            {room.name[0]}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-800 dark:text-white text-sm">{room.name}</h4>
+                            <p className="text-[10px] text-slate-500">{room.type} • Capacity: {room.capacity}</p>
+                          </div>
+                        </div>
 
-                      {/* Header with Tabs */}
-                      <div className="flex items-center gap-4 mb-6 border-b border-slate-100 dark:border-slate-800 pb-4">
-                        <button
-                          onClick={() => setActionType('details')}
-                          className={`text-sm font-bold ${actionType === 'details' ? 'text-red-600 dark:text-red-500' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}
-                        >
-                          Details
-                        </button>
-                        <button
-                          onClick={() => toggleExpand(room._id, 'delete')}
-                          className={`text-sm font-bold ${actionType === 'delete' ? 'text-red-600 dark:text-red-500' : 'text-slate-500 dark:text-slate-400 hover:text-red-600 px-2'}`}
-                        >
-                          Delete
-                        </button>
+                        <div className="flex items-center gap-6">
+                          <div className="text-right hidden sm:block">
+                            <p className="text-[10px] text-slate-400 uppercase font-bold">Monthly Rent</p>
+                            <p className="text-sm font-bold text-slate-700 dark:text-white">LKR {room.price?.toLocaleString()}</p>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded ${room.status === 'Available' ? 'bg-green-100 text-green-700' : room.status === 'Occupied' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {room.status}
+                          </span>
+                          <button className="text-slate-400">
+                            {expandedRoomId === room._id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                          </button>
+                        </div>
                       </div>
 
-                      {/* DETAILS VIEW */}
-                      {actionType === 'details' && (
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                          <div>
-                            <label className="text-xs text-slate-500 dark:text-slate-400 uppercase">Current Tenant</label>
-                            <p className="font-medium text-slate-900 dark:text-white">{room.tenantName === 'Unknown' ? 'None' : room.tenantName}</p>
-                          </div>
-                          <div>
-                            <label className="text-xs text-slate-500 dark:text-slate-400 uppercase">Location</label>
-                            <p className="font-medium text-slate-900 dark:text-white truncate">{room.location?.city || 'N/A'}</p>
-                          </div>
-                          <div className="col-span-2 flex items-center justify-end gap-6">
-                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                              <Bath size={16} /> <span>{room.features?.bathroomType || 'Shared'}</span>
+                      {/* Room Details Expanded */}
+                      {expandedRoomId === room._id && (
+                        <div className="p-6 pt-0 border-t border-slate-50 dark:border-slate-800 animate-in slide-in-from-top-1">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
+                            {/* Tenants Info */}
+                            <div className="space-y-4">
+                              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <Users size={14} /> Current Tenants
+                              </h5>
+                              {room.tenants && room.tenants.length > 0 ? (
+                                <div className="space-y-2">
+                                  {room.tenants.map((t, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">{t.name[0]}</div>
+                                        <div>
+                                          <p className="text-sm font-bold text-slate-700 dark:text-white">{t.name}</p>
+                                          <p className="text-[10px] text-slate-500">Status: {t.status}</p>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <p className="text-[10px] text-slate-400">Paid Status</p>
+                                        <p className="text-xs font-bold text-green-600">LKR {t.rentAmount?.toLocaleString()}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 text-center">
+                                  <p className="text-sm text-slate-500 italic">{room.status === 'Occupied' ? 'Tenant details not synced.' : 'No active tenants in this room.'}</p>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                              <Users size={16} /> <span>{room.capacity} People</span>
-                            </div>
-                            <button onClick={() => toggleExpand(room._id, 'edit')} className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold ml-4">Edit <Edit2 size={12} /></button>
-                          </div>
-                        </div>
-                      )}
 
-                      {/* DELETE VIEW */}
-                      {actionType === 'delete' && (
-                        <div className="max-w-xl">
-                          <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-lg p-4 mb-4">
-                            <h4 className="text-red-800 dark:text-red-400 font-bold flex items-center gap-2 mb-1"><Trash2 size={16} /> Delete Room?</h4>
-                            <p className="text-red-700 dark:text-red-300 text-sm">Are you sure you want to delete <strong>{room.name}</strong>? This action cannot be undone.</p>
-                          </div>
-                          <div className="flex justify-end gap-3">
-                            <button onClick={() => toggleExpand(room._id, 'details')} className="px-3 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded text-sm">Cancel</button>
-                            <button onClick={() => handleDelete(room._id)} className="px-4 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-medium">Confirm Delete</button>
+                            {/* Room Actions & Features */}
+                            <div className="space-y-4">
+                               <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <Settings size={14} /> Management
+                              </h5>
+                              <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => toggleExpand(room._id, 'edit')} className="flex items-center justify-center gap-2 p-3 rounded-xl border border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400 text-sm font-bold hover:bg-blue-100 transition-colors">
+                                  <Edit2 size={16} /> Edit Room
+                                </button>
+                                <button onClick={() => confirmDelete(room._id)} className="flex items-center justify-center gap-2 p-3 rounded-xl border border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-sm font-bold hover:bg-red-100 transition-colors">
+                                  <Trash2 size={16} /> Delete
+                                </button>
+                              </div>
+                              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700">
+                                <p className="text-xs text-slate-500 mb-2">Room Features</p>
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="px-2 py-1 bg-white dark:bg-slate-900 rounded text-[10px] font-bold border border-slate-200 dark:border-slate-700">{room.features?.bathroomType || 'Shared'} Bath</span>
+                                  {room.features?.furnishing?.map((f, i) => (
+                                    <span key={i} className="px-2 py-1 bg-white dark:bg-slate-900 rounded text-[10px] font-bold border border-slate-200 dark:border-slate-700">{f}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )}
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
         )}
       </div>
 
@@ -305,6 +357,20 @@ export default function RoomsPage() {
           onClose={() => setShowRoomModal(false)}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        title="Delete Room"
+        message="Are you sure you want to delete this room? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        isDanger={true}
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setRoomToDeleteId(null);
+        }}
+      />
     </div>
   );
 }

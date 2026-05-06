@@ -41,7 +41,17 @@ export const createManualInvoice = async (req, res) => {
 // @access  Private (Provider)
 export const getProviderInvoices = async (req, res) => {
     try {
-        const invoices = await Invoice.find({ provider: req.user._id })
+        const { listingId } = req.query;
+        let query = { provider: req.user._id };
+
+        if (listingId) {
+            // Find all tenants for this listing
+            const tenants = await Tenant.find({ listingId, providerId: req.user._id });
+            const tenantIds = tenants.map(t => t._id);
+            query.tenant = { $in: tenantIds };
+        }
+
+        const invoices = await Invoice.find(query)
             .populate('tenant', 'name email roomId')
             .sort({ createdAt: -1 });
         res.json(invoices);

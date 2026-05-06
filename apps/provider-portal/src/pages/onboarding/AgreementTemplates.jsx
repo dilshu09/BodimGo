@@ -3,13 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FileText, Plus, Clock, Edit2, Loader, X, Eye, ShieldCheck, Trash2 } from 'lucide-react';
 import api from '../../services/api';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown'; // Optional: Use if markdown content is expected
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const AgreementTemplates = () => {
     const navigate = useNavigate();
     const [templates, setTemplates] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedTemplate, setSelectedTemplate] = useState(null);
+    const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null });
 
     useEffect(() => {
         fetchTemplates();
@@ -25,6 +28,22 @@ const AgreementTemplates = () => {
             console.error("Failed to fetch templates", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteModal.id) return;
+
+        try {
+            const res = await api.delete(`/agreements/templates/${deleteModal.id}`);
+            if (res.data.success) {
+                toast.success("Template deleted successfully");
+                fetchTemplates();
+                setDeleteModal({ isOpen: false, id: null });
+            }
+        } catch (error) {
+            console.error("Failed to delete template", error);
+            toast.error("Failed to delete template");
         }
     };
 
@@ -59,10 +78,16 @@ const AgreementTemplates = () => {
                 {templates.map(template => (
                     <div key={template._id} className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-neutral-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow group relative">
                         <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
-                            <button className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-lg text-neutral-500 dark:text-slate-400">
+                            <button 
+                                onClick={() => navigate(`/agreements/edit/${template._id}`)}
+                                className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-800 rounded-lg text-neutral-500 dark:text-slate-400"
+                            >
                                 <Edit2 size={16} />
                             </button>
-                            <button className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-500">
+                            <button 
+                                onClick={() => setDeleteModal({ isOpen: true, id: template._id })}
+                                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-500"
+                            >
                                 <Trash2 size={16} />
                             </button>
                         </div>
@@ -121,6 +146,17 @@ const AgreementTemplates = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={deleteModal.isOpen}
+                title="Delete Template"
+                message="Are you sure you want to delete this agreement template? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                isDanger={true}
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+            />
         </div>
     );
 };

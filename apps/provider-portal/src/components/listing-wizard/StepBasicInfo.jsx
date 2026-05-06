@@ -37,7 +37,7 @@ const StepBasicInfo = ({ data, update, errors, verified }) => {
                     {errors?.title && (
                         <p className="text-xs text-red-500 mt-1 font-medium">{errors.title}</p>
                     )}
-                    <p className="text-xs text-neutral-400 dark:text-slate-500 mt-1">Make it catchy! Min 10 characters.</p>
+                    <p className="text-xs text-neutral-400 dark:text-slate-500 mt-1">Make it catchy! Min 5 characters.</p>
                 </div>
 
                 <div>

@@ -17,6 +17,7 @@ export const createReport = async (req, res) => {
         const report = await Report.create({
             reporter: req.user.id,
             listing: listingId,
+            reason,
             description
         });
 

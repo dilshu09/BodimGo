@@ -8,9 +8,9 @@ import StepPricing from '../components/listing-wizard/StepPricing';
 import StepFacilities from '../components/listing-wizard/StepFacilities';
 import StepImages from '../components/listing-wizard/StepImages';
 import StepRooms from '../components/listing-wizard/StepRooms';
-import { Save, CheckCircle } from 'lucide-react';
+import { Save, CheckCircle, Loader } from 'lucide-react';
 import api from '../services/api';
-import { Toaster, toast } from 'react-hot-toast';
+import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const libraries = ['places'];
@@ -47,7 +47,8 @@ const INITIAL_DATA = {
         district: '',
         city: '',
         address: '',
-        coordinates: { lat: 0, lng: 0 }
+        coordinates: { lat: 0, lng: 0 },
+        googleMapsLink: ''
     },
     pricingDefaults: {
         rentModel: 'Per Room',
@@ -130,6 +131,7 @@ const AddListing = () => {
     // Track if listing is flagged by AI
     const [isFlagged, setIsFlagged] = useState(false);
     const [flagDetails, setFlagDetails] = useState([]); // Store specific reasons for Admin
+    const [submittedId, setSubmittedId] = useState(null);
 
     // --- Edit Mode Logic ---
     useEffect(() => {
@@ -138,8 +140,13 @@ const AddListing = () => {
                 try {
                     setLoading(true);
                     const res = await api.get(`/listings/${editId}`);
-                    if (res.data) {
-                        setFormData(prev => ({ ...prev, ...res.data }));
+                    const listingData = res.data.data || res.data.listing || res.data;
+                    if (listingData) {
+                        setFormData(prev => ({
+                            ...prev,
+                            ...listingData,
+                            rooms: listingData.rooms || []
+                        }));
                     }
                 } catch (err) {
                     console.error("Failed to load listing for edit", err);
@@ -206,7 +213,23 @@ const AddListing = () => {
 
 
     const verifyStep1 = async () => {
-        if (!formData.title || !formData.description) { toast.error("Please fill title/desc"); return; }
+        let errors = { title: '', description: '' };
+        let hasError = false;
+
+        if (!formData.title || formData.title.trim().length < 5) {
+            errors.title = "Property title must be at least 5 characters long.";
+            hasError = true;
+        }
+        if (!formData.description || formData.description.trim().length < 20) {
+            errors.description = "Please provide a more detailed description (min 20 chars).";
+            hasError = true;
+        }
+
+        if (hasError) {
+            setStep1Errors(errors);
+            toast.error("Please fix the errors in basic info.");
+            return;
+        }
 
         try {
             setVerifying(true);
@@ -225,7 +248,7 @@ const AddListing = () => {
                 const errorMsg = res.data.errors?.[0] || "Content flagged by AI safety guidelines.";
 
                 setStep1Errors({
-                    ...step1Errors,
+                    ...errors,
                     description: errorMsg
                 });
 
@@ -252,7 +275,23 @@ const AddListing = () => {
         }
     };
     const verifyStep2 = async () => {
-        if (!formData.location.city) { toast.error("Please fill location"); return; }
+        const { city, district, address, coordinates } = formData.location;
+        let errors = {};
+        let hasError = false;
+
+        if (!city) { errors.city = "City is required"; hasError = true; }
+        if (!district) { errors.district = "District is required"; hasError = true; }
+        if (!address || address.trim().length < 5) { errors.address = "Please provide a valid address"; hasError = true; }
+        if (!coordinates || (coordinates.lat === 0 && coordinates.lng === 0)) {
+            errors.coordinates = "Please pin the exact location on the map.";
+            hasError = true;
+        }
+
+        if (hasError) {
+            setStep2Errors(errors);
+            toast.error("Please complete all location fields.");
+            return;
+        }
 
         // Add AI Location Verification
         try {
@@ -283,6 +322,27 @@ const AddListing = () => {
             setCurrentStep(3);
         }
     };
+    const verifyStep3 = () => {
+        // No strict rules for now, just proceed
+        setCurrentStep(4);
+    };
+
+    const verifyStep4 = () => {
+        if (formData.pricingDefaults.deposit.amount < 0) {
+            toast.error("Deposit cannot be negative.");
+            return;
+        }
+        setCurrentStep(5);
+    };
+
+    const verifyStep5 = () => {
+        if (formData.facilities.length === 0) {
+            toast.error("Please select at least one facility.");
+            return;
+        }
+        setCurrentStep(6);
+    };
+
     const verifyStep6 = async () => {
         if (!formData.images.length) { toast.error("Please upload photos"); return; }
 
@@ -327,18 +387,19 @@ const AddListing = () => {
         }
     };
     const verifyStep7 = async () => {
-        if (!formData.rooms.length) { toast.error("Add a room"); return; }
+        if (!formData.rooms.length) { toast.error("Add at least one room to publish."); return; }
         handlePublish();
     };
 
 
-    const handlePublish = async () => {
+    const handlePublish = async (statusOverride = null) => {
         setLoading(true);
         const tId = toast.loading(editId ? 'Updating listing...' : 'Submitting...');
         const payload = sanitizeDataBeforeSubmit();
 
         // Determine Final Status
-        const finalStatus = isFlagged ? 'hidden_by_audit' : 'active';
+        // Use statusOverride if provided (for Save Draft), otherwise default based on flagging
+        const finalStatus = statusOverride || (isFlagged ? 'hidden_by_audit' : 'active');
 
         // Attach Audit Log if flagged
         if (isFlagged) {
@@ -346,15 +407,21 @@ const AddListing = () => {
         }
 
         try {
+            let res;
             if (editId) {
-                await api.put(`/listings/${editId}`, { ...payload, status: finalStatus });
-                toast.success("Listing Updated!");
+                res = await api.put(`/listings/${editId}`, { ...payload, status: finalStatus });
+                setSubmittedId(editId);
+                toast.success(statusOverride === 'draft' ? "Draft Saved!" : "Listing Updated!");
             } else {
-                await api.post('/listings', { ...payload, status: finalStatus });
-                toast.success("Listing Submitted!");
+                res = await api.post('/listings', { ...payload, status: finalStatus });
+                const newId = res.data?.listing?._id || res.data?.data?._id || res.data?._id;
+                setSubmittedId(newId);
+                toast.success(statusOverride === 'draft' ? "Draft Saved!" : "Listing Submitted!");
             }
             toast.dismiss(tId);
-            setShowSuccess(true);
+            if (statusOverride !== 'draft') {
+                setShowSuccess(true);
+            }
         } catch (err) {
             console.error(err);
             const msg = err.response?.data?.error || err.response?.data?.message || 'Error publishing listing';
@@ -365,10 +432,12 @@ const AddListing = () => {
     };
 
     const nextStep = () => {
-        // Skip sophisticated verification for edit mode simplicity in this fix, or re-enable
-        if (currentStep === 1 && !step1Verified) { verifyStep1(); return; }
-        if (currentStep === 2 && !step2Verified) { verifyStep2(); return; }
-        if (currentStep === 6 && !step6Verified) { verifyStep6(); return; }
+        if (currentStep === 1) { verifyStep1(); return; }
+        if (currentStep === 2) { verifyStep2(); return; }
+        if (currentStep === 3) { verifyStep3(); return; }
+        if (currentStep === 4) { verifyStep4(); return; }
+        if (currentStep === 5) { verifyStep5(); return; }
+        if (currentStep === 6) { verifyStep6(); return; }
         if (currentStep === 7) { verifyStep7(); return; }
         setCurrentStep(prev => Math.min(prev + 1, 7));
     };
@@ -383,7 +452,6 @@ const AddListing = () => {
 
     return (
         <div className="min-h-screen bg-neutral-50 dark:bg-slate-900 relative">
-            <Toaster position="top-center" />
             <div className="max-w-5xl mx-auto px-4 pt-8">
                 <h1 className="text-3xl font-bold text-neutral-800 dark:text-white">{editId ? 'Edit Listing' : 'Create New Listing'}</h1>
                 <p className="text-neutral-500 dark:text-slate-400 mt-1">{editId ? 'Update your property details.' : 'Follow the steps below to publish your property.'}</p>
@@ -394,7 +462,7 @@ const AddListing = () => {
                     <SuccessModal
                         isOpen={showSuccess}
                         onClose={() => navigate('/dashboard')}
-                        onView={() => navigate('/dashboard')}
+                        onView={() => navigate(`/listings/${submittedId}`)}
                         isFlagged={isFlagged}
                     />
                 )}
@@ -435,8 +503,13 @@ const AddListing = () => {
                 <div className="flex items-center justify-between mt-8">
                     <button onClick={prevStep} disabled={currentStep === 1} className="px-6 py-2.5 rounded-xl font-semibold text-neutral-600 dark:text-slate-400 hover:bg-neutral-100 dark:hover:bg-slate-800 disabled:opacity-50">Back</button>
                     <div className="flex items-center gap-4">
-                        <button className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-primary bg-primary/10 hover:bg-primary/20">
-                            <Save size={18} /> Save Draft
+                        <button 
+                            onClick={() => handlePublish('draft')}
+                            disabled={loading || verifying}
+                            className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-50"
+                        >
+                            {loading ? <Loader className="animate-spin" size={18} /> : <Save size={18} />}
+                            Save Draft
                         </button>
                         <button onClick={currentStep === 7 ? handlePublish : nextStep} disabled={loading || verifying} className={`btn-primary px-8 transition-all ${currentStep === 7 ? 'bg-green-600 hover:bg-green-700' : ''}`}>
                             {getNextButtonText()}

@@ -241,7 +241,6 @@ const AgreementBuilder = () => {
                             className="flex items-center gap-2 px-8 py-3 bg-primary text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save size={20} />
-                            <Save size={20} />
                             {loading ? 'Analyzing...' : (isEditMode ? 'Update & Review' : 'Save & Review')}
                         </button>
                     </div>

@@ -6,9 +6,11 @@ import User from '../models/User.js';
 // @access  Private
 export const getConversations = async (req, res) => {
     try {
-        const conversations = await Conversation.find({
-            participants: req.user._id
-        })
+        const { listingId } = req.query;
+        const query = { participants: req.user._id };
+        if (listingId) query.contextListing = listingId;
+
+        const conversations = await Conversation.find(query)
             .populate('participants', 'name email role profileImage')
             .populate('contextListing', 'title')
             .sort({ updatedAt: -1 });

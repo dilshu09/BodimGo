@@ -12,34 +12,54 @@ export default function ReviewsPage() {
     repliedCount: 0
   });
 
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchReviews = async () => {
+    try {
+      const res = await api.get('/reviews/provider');
+      const fetchedReviews = res.data.data;
+      setReviews(fetchedReviews);
+
+      // Calculate stats
+      const total = fetchedReviews.length;
+      const replied = fetchedReviews.filter(r => r.reply).length;
+      const sumRating = fetchedReviews.reduce((acc, r) => acc + r.rating, 0);
+      const avg = total > 0 ? (sumRating / total).toFixed(2) : 0;
+
+      setStats({
+        avgRating: avg,
+        totalReviews: total,
+        repliedCount: replied
+      });
+
+    } catch (error) {
+      console.error("Failed to fetch reviews", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const res = await api.get('/reviews/provider');
-        const fetchedReviews = res.data.data;
-        setReviews(fetchedReviews);
-
-        // Calculate stats
-        const total = fetchedReviews.length;
-        const replied = fetchedReviews.filter(r => r.reply).length;
-        const sumRating = fetchedReviews.reduce((acc, r) => acc + r.rating, 0);
-        const avg = total > 0 ? (sumRating / total).toFixed(2) : 0;
-
-        setStats({
-          avgRating: avg,
-          totalReviews: total,
-          repliedCount: replied
-        });
-
-      } catch (error) {
-        console.error("Failed to fetch reviews", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchReviews();
   }, []);
+
+  const handleReplySubmit = async (reviewId) => {
+    if (!replyText.trim()) return;
+    setSubmitting(true);
+    try {
+      await api.put(`/reviews/${reviewId}/reply`, { reply: replyText });
+      await fetchReviews();
+      setReplyingTo(null);
+      setReplyText("");
+    } catch (error) {
+      console.error("Failed to submit reply", error);
+      alert("Failed to submit reply. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (loading) {
     return <div className="p-8 text-center">Loading reviews...</div>;
@@ -148,14 +168,45 @@ export default function ReviewsPage() {
                 </div>
               )}
 
-              <button
-                className={`text-sm font-medium px-4 py-2 rounded transition-colors ${review.reply
-                  ? "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-                  : "text-red-600 dark:text-red-400 border border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  }`}
-              >
-                {review.reply ? "✓ Replied" : "+ Reply"}
-              </button>
+              {!review.reply && replyingTo === review._id ? (
+                <div className="mb-4 space-y-3">
+                  <textarea
+                    className="w-full p-3 border rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:ring-2 focus:ring-red-500 outline-none"
+                    placeholder="Write your reply..."
+                    rows="3"
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleReplySubmit(review._id)}
+                      disabled={submitting}
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {submitting ? "Submitting..." : "Submit Reply"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setReplyingTo(null);
+                        setReplyText("");
+                      }}
+                      className="text-slate-600 dark:text-slate-400 px-4 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => !review.reply && setReplyingTo(review._id)}
+                  className={`text-sm font-medium px-4 py-2 rounded transition-colors ${review.reply
+                    ? "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    : "text-red-600 dark:text-red-400 border border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    }`}
+                >
+                  {review.reply ? "✓ Replied" : "+ Reply"}
+                </button>
+              )}
             </div>
           ))
         )}

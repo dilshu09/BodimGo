@@ -174,7 +174,7 @@ const MyBoarding = () => {
                                 <div className="flex gap-4 pt-2">
                                     <div className="bg-neutral-50 dark:bg-slate-800 px-4 py-2 rounded-lg border border-neutral-100 dark:border-slate-700">
                                         <span className="block text-xs text-neutral-400 dark:text-slate-500 uppercase font-bold">Room</span>
-                                        <span className="font-medium text-neutral-900 dark:text-white">{roomId === 'Unassigned' ? 'Shared Space' : roomId}</span>
+                                        <span className="font-medium text-neutral-900 dark:text-white">{tenancy.roomName || (roomId === 'Unassigned' ? 'Shared Space' : roomId)}</span>
                                     </div>
                                     <div className="bg-neutral-50 dark:bg-slate-800 px-4 py-2 rounded-lg border border-neutral-100 dark:border-slate-700">
                                         <span className="block text-xs text-neutral-400 dark:text-slate-500 uppercase font-bold">Monthly Rent</span>

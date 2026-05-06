@@ -11,14 +11,19 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
     const [citySearch, setCitySearch] = useState('');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const [isManualPin, setIsManualPin] = useState(false);
 
     const mapCenter = useMemo(() => {
         return data.location?.coordinates?.lat ? data.location.coordinates : defaultCenter;
     }, [data.location?.coordinates]);
 
     // Geocoding Helper
-    const geocodeLocation = useCallback((searchText) => {
+    const geocodeLocation = useCallback((searchText, force = false) => {
         if (!window.google || !window.google.maps) return;
+        
+        // If it's a manual pin and not forced, don't geocode
+        if (isManualPin && !force) return;
+
         const geocoder = new window.google.maps.Geocoder();
 
         geocoder.geocode({ address: `${searchText}, Sri Lanka` }, (results, status) => {
@@ -30,16 +35,16 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                         coordinates: { lat: lat(), lng: lng() }
                     }
                 });
+                if (force) setIsManualPin(false);
             }
         });
-    }, [data.location, update]);
+    }, [data.location, update, isManualPin]);
 
     // Auto-update on City Select
     useEffect(() => {
         if (data.location?.city && data.location?.district) {
-            // Only geocode if coordinates are 0,0 or we just changed city (optional optimization?)
-            // For now, simple trigger:
-            geocodeLocation(`${data.location.city}, ${data.location.district}`);
+            // Major change (city) resets manual pin
+            geocodeLocation(`${data.location.city}, ${data.location.district}`, true);
         }
     }, [data.location?.city]);
 
@@ -80,11 +85,13 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                 location: { ...data.location, province: value, district: '', city: '' }
             });
             setCitySearch('');
+            setIsManualPin(false);
         } else if (name === 'district') {
             update({
                 location: { ...data.location, district: value, city: '' }
             });
             setCitySearch('');
+            setIsManualPin(false);
         } else {
             update({
                 location: { ...data.location, [name]: value }
@@ -106,6 +113,7 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
         });
         setCitySearch(city);
         setIsDropdownOpen(false);
+        setIsManualPin(false);
     };
 
     const handleMapClick = useCallback((e) => {
@@ -115,7 +123,14 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
                 coordinates: { lat: e.latLng.lat(), lng: e.latLng.lng() }
             }
         });
+        setIsManualPin(true);
     }, [data.location, update]);
+
+    const handleResetPin = () => {
+        if (data.location?.city) {
+            geocodeLocation(`${data.location.city}, ${data.location.district}`, true);
+        }
+    };
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -237,7 +252,30 @@ const StepLocation = ({ data, update, errors, verified, isMapsLoaded }) => {
 
                 <div className="col-span-2">
                     <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center gap-2">
-                        <MapPin size={16} /> Pin Location on Map
+                        <Search size={14} className="text-primary" /> Google Maps Link (Optional)
+                    </label>
+                    <input
+                        type="url"
+                        name="googleMapsLink"
+                        value={data.location?.googleMapsLink}
+                        onChange={(e) => update({ location: { ...data.location, googleMapsLink: e.target.value } })}
+                        className="input-field dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                        placeholder="https://maps.app.goo.gl/..."
+                    />
+                    <p className="text-[10px] text-neutral-400 mt-1 italic">Providers who provide a direct link often get more bookings.</p>
+                </div>
+
+                <div className="col-span-2">
+                    <label className="block text-sm font-bold text-neutral-700 dark:text-neutral-300 mb-2 flex items-center justify-between">
+                        <span className="flex items-center gap-2"><MapPin size={16} /> Pin Location on Map</span>
+                        {isManualPin && (
+                            <button
+                                onClick={handleResetPin}
+                                className="text-[10px] text-primary hover:underline font-bold uppercase tracking-wider"
+                            >
+                                Reset to City Center
+                            </button>
+                        )}
                     </label>
                     <div className={`h-80 bg-neutral-100 dark:bg-slate-800 rounded-xl border overflow-hidden relative ${errors?.coordinates ? 'border-red-500 ring-2 ring-red-100' : 'border-neutral-200 dark:border-slate-700'}`}>
                         {!isMapsLoaded ? (

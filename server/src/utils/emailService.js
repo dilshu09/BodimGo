@@ -128,3 +128,41 @@ export const sendInvoiceEmail = async (to, invoiceDetails) => {
     html
   });
 };
+
+export const sendBookingAcceptedEmail = async (seekerEmail, seekerName, bookingDetails, paymentLink) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; padding: 20px; border-radius: 12px;">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <span style="font-size: 48px;">🎉</span>
+        <h2 style="color: #22c55e; margin-top: 10px;">Booking Accepted!</h2>
+      </div>
+      
+      <p>Hi <strong>${seekerName}</strong>,</p>
+      <p>Great news! Your booking request for <strong>${bookingDetails.listingTitle}</strong> has been accepted by the provider.</p>
+      
+      <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #e2e8f0;">
+        <h3 style="margin-top: 0; color: #64748b; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">Reservation Summary</h3>
+        <p style="margin: 8px 0;"><strong>Property:</strong> ${bookingDetails.listingTitle}</p>
+        <p style="margin: 8px 0;"><strong>Monthly Rent:</strong> Rs. ${bookingDetails.rent.toLocaleString()}</p>
+        <p style="margin: 8px 0;"><strong>Security Deposit:</strong> Rs. ${bookingDetails.deposit.toLocaleString()}</p>
+        <p style="margin: 8px 0;"><strong>Check-in Date:</strong> ${new Date(bookingDetails.startDate).toLocaleDateString()}</p>
+      </div>
+
+      <p style="color: #475569; line-height: 1.6;">To secure your spot and confirm the reservation, please complete the initial payment using the button below:</p>
+
+      <div style="margin: 35px 0; text-align: center;">
+        <a href="${paymentLink}" style="background-color: #E51D54; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(229, 29, 84, 0.2);">Complete Payment</a>
+      </div>
+
+      <p style="font-size: 13px; color: #94a3b8; text-align: center; margin-top: 40px;">
+        If you have any questions, you can message the provider directly through the BodimGo app.
+      </p>
+    </div>
+  `;
+
+  await sendEmail({
+    to: seekerEmail,
+    subject: `Congratulations! Your booking for ${bookingDetails.listingTitle} was accepted`,
+    html
+  });
+};

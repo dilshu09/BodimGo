@@ -7,6 +7,10 @@ import dotenv from "dotenv";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import path from "path";
+import dns from "dns";
+
+// Fix for MongoDB SRV connection issues in some environments
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 // Routes
 import authRoutes from "./routes/auth.routes.js";

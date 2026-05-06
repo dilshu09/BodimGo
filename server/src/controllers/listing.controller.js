@@ -331,15 +331,19 @@ export const getAllProviderRooms = async (req, res) => {
 
     const tenantMap = {};
     activeTenants.forEach(t => {
-      if (t.roomId) tenantMap[t.roomId.toString()] = t;
+      if (t.roomId) {
+        const rId = t.roomId.toString();
+        if (!tenantMap[rId]) tenantMap[rId] = [];
+        tenantMap[rId].push(t);
+      }
     });
 
     let allRooms = [];
     listings.forEach(listing => {
       if (listing.rooms && listing.rooms.length > 0) {
         const roomsWithContext = listing.rooms.map(room => {
-          // Try to find tenant
-          const tenant = tenantMap[room._id.toString()];
+          // Find all tenants for this room
+          const roomTenants = tenantMap[room._id.toString()] || [];
 
           return {
             ...room,
@@ -350,8 +354,11 @@ export const getAllProviderRooms = async (req, res) => {
             // Determine display image
             image: (room.images && room.images.length > 0) ? room.images[0] : (listing.images && listing.images.length > 0 ? listing.images[0] : null),
             // Tenant Info
-            tenantName: tenant ? tenant.name : (room.status === 'Occupied' ? 'Unknown' : 'Empty'),
-            tenantStatus: tenant ? tenant.status : 'N/A'
+            tenants: roomTenants,
+            tenantName: roomTenants.length > 0 
+              ? roomTenants.map(t => t.name).join(', ') 
+              : (room.status === 'Occupied' ? 'Unknown' : 'Empty'),
+            tenantStatus: roomTenants.length > 0 ? roomTenants[0].status : 'N/A'
           };
         });
         allRooms = [...allRooms, ...roomsWithContext];

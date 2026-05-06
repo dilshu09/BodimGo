@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
+import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { toast } from 'react-hot-toast';
@@ -27,7 +27,7 @@ const CheckoutForm = ({ booking, clientSecret }) => {
         // Check booking status before confirming payment
         try {
             const bookingStatusRes = await api.get(`/bookings/${bookingId}`);
-            if (bookingStatusRes.data.status !== 'pending') { // Assuming 'pending' is the status before payment
+            if (bookingStatusRes.data.status !== 'pending_payment') { 
                 toast.error("This booking is not eligible for payment.");
                 setProcessing(false);
                 navigate('/bookings'); // Redirect to bookings page
@@ -142,7 +142,7 @@ const Checkout = () => {
                         </div>
                     </div>
 
-                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                    <Elements stripe={stripePromise}>
                         <CheckoutForm booking={booking} clientSecret={clientSecret} />
                     </Elements>
                 </div>

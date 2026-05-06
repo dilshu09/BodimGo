@@ -201,7 +201,7 @@ export const getMyBookings = async (req, res) => {
     }
 
     const bookings = await Booking.find(query)
-      .populate('listing', 'title images location')
+      .populate('listing', 'title images location rooms')
       .populate('seeker', 'name email')
       .populate('provider', 'name phone')
       .sort({ createdAt: -1 });
@@ -282,15 +282,34 @@ export const updateBookingStatus = async (req, res) => {
 
     // Notify Seeker (Log for MVP)
     if (newStatus === 'pending_payment') {
-      console.log(`Sending Acceptance Email to ${booking.seeker.email}`);
+      const requestedRoomId = booking.room;
+      const finalRoomId = req.body.roomId || requestedRoomId;
+
+      // Handle Room Switch Inventory (if provider changed the room)
+      if (requestedRoomId && finalRoomId && requestedRoomId.toString() !== finalRoomId.toString()) {
+          const listing = await Listing.findById(booking.listing._id);
+          if (listing) {
+              // Restore OLD room
+              const oldRoom = listing.rooms.id(requestedRoomId);
+              if (oldRoom) {
+                  oldRoom.availableBeds += 1;
+                  if (oldRoom.status === 'Occupied') oldRoom.status = 'Available';
+              }
+              // Reserve NEW room
+              const newRoom = listing.rooms.id(finalRoomId);
+              if (newRoom) {
+                  newRoom.availableBeds -= 1;
+                  if (newRoom.availableBeds <= 0) newRoom.status = 'Occupied';
+              }
+              await listing.save();
+          }
+      }
 
       // --- NOTIFICATION TRIGGER (ACCEPTED) ---
       const recipientId = booking.seeker._id;
-      console.log(`[DEBUG] Booking Accepted. Sending notification to Seeker ID: ${recipientId} (Provider ID was: ${booking.provider})`);
-
       const { createNotification } = await import('./notification.controller.js');
       await createNotification({
-        recipient: recipientId, // Seeker ID
+        recipient: recipientId,
         type: 'booking_accepted',
         title: 'Booking Accepted! 🎉',
         message: `Your booking for ${booking.listing.title} has been accepted! Please complete payment.`,
@@ -301,7 +320,7 @@ export const updateBookingStatus = async (req, res) => {
       try {
         await Tenant.create({
           listingId: booking.listing._id,
-          roomId: 'Unassigned', // Or map if available
+          roomId: finalRoomId || 'Unassigned',
           providerId: booking.provider,
           name: booking.applicationData?.name || booking.seeker.name,
           nic: booking.applicationData?.nic || 'Pending',
@@ -311,10 +330,39 @@ export const updateBookingStatus = async (req, res) => {
           rentAmount: booking.agreedMonthRent,
           depositAmount: booking.agreedDeposit
         });
+
+        // Update Room Status if assigned
+        if (finalRoomId && finalRoomId !== 'Unassigned') {
+            const listing = await Listing.findById(booking.listing._id);
+            if (listing) {
+                const room = listing.rooms.id(finalRoomId);
+                if (room && room.availableBeds <= 0) {
+                    room.status = 'Occupied';
+                    await listing.save();
+                }
+            }
+        }
         console.log("Tenant created successfully for accepted booking");
+
+        // --- EMAIL TRIGGER (ACCEPTED) ---
+        if (booking.seeker && booking.seeker.email) {
+          const paymentLink = `${process.env.SEEKER_URL || 'http://localhost:5173'}/checkout/${booking._id}`;
+          const { sendBookingAcceptedEmail } = await import('../utils/emailService.js');
+          
+          await sendBookingAcceptedEmail(
+            booking.seeker.email,
+            booking.applicationData?.name || booking.seeker.name,
+            {
+              listingTitle: booking.listing.title,
+              rent: booking.agreedMonthRent,
+              deposit: booking.agreedDeposit,
+              startDate: booking.checkInDate
+            },
+            paymentLink
+          );
+        }
       } catch (tenantError) {
-        console.error("Failed to auto-create tenant:", tenantError);
-        // We don't fail the request, just log it
+        console.error("Failed to auto-create tenant or send email:", tenantError);
       }
     }
 
@@ -349,6 +397,65 @@ export const deleteBooking = async (req, res) => {
     await booking.deleteOne();
 
     res.json({ message: 'Booking removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Confirm booking payment
+// @route   PUT /api/bookings/:id/pay
+export const payBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentIntentId } = req.body;
+
+    const booking = await Booking.findById(id)
+      .populate('seeker', 'name email')
+      .populate('listing', 'title');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Update Booking Status
+    booking.status = 'confirmed';
+    booking.paymentStatus = 'paid';
+    booking.paymentIntentId = paymentIntentId;
+    await booking.save();
+
+    // Update Tenant Status
+    try {
+      const tenant = await Tenant.findOne({ email: booking.seeker.email, listingId: booking.listing._id });
+      if (tenant) {
+        tenant.status = 'Active';
+        await tenant.save();
+        console.log("Tenant activated successfully after payment");
+      }
+    } catch (tenantErr) {
+      console.error("Failed to update tenant status:", tenantErr);
+    }
+
+    // --- EMAIL TRIGGER (PAYMENT SUCCESS) ---
+    if (booking.seeker && booking.seeker.email) {
+      try {
+        const { sendInvoiceEmail } = await import('../utils/emailService.js');
+        await sendInvoiceEmail(booking.seeker.email, {
+          payerName: booking.applicationData?.name || booking.seeker.name,
+          invoiceNumber: `INV-${booking._id.toString().slice(-6).toUpperCase()}`,
+          date: new Date(),
+          listingTitle: booking.listing.title,
+          payeeName: "BodimGo Platform", // Or provider name if available
+          items: [
+            { description: 'Initial Rent & Deposit', amount: booking.totalAmount }
+          ],
+          totalAmount: booking.totalAmount
+        });
+      } catch (emailErr) {
+        console.error("Failed to send payment receipt email:", emailErr);
+      }
+    }
+
+    res.json({ success: true, message: 'Payment confirmed and booking activated', booking });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

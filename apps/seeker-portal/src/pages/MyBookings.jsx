@@ -106,7 +106,14 @@ const MyBookings = () => {
                                 {/* Details */}
                                 <div className="flex-grow">
                                     <div className="flex justify-between items-start mb-2">
-                                        <h3 className="text-xl font-bold text-neutral-900 dark:text-white">{booking.listing?.title}</h3>
+                                        <div className="flex flex-col">
+                                            <h3 className="text-xl font-bold text-neutral-900 dark:text-white">{booking.listing?.title}</h3>
+                                            {booking.room && booking.listing?.rooms && (
+                                                <span className="text-sm font-medium text-primary mt-0.5">
+                                                    Room: {booking.listing.rooms.find(r => r._id === booking.room || r.name === booking.room)?.name || booking.room}
+                                                </span>
+                                            )}
+                                        </div>
                                         <div className="flex items-center gap-2">
                                             {getStatusBadge(booking.status)}
                                             <button
@@ -127,7 +134,7 @@ const MyBookings = () => {
                                         <div className="flex items-center gap-2">
                                             <Calendar size={16} className="text-neutral-400 dark:text-slate-500" />
                                             <span className="text-sm text-neutral-600 dark:text-slate-300">
-                                                {new Date(booking.checkInDate).toLocaleDateString()} - {new Date(booking.checkOutDate).toLocaleDateString()}
+                                                Starts {new Date(booking.checkInDate).toLocaleDateString()}
                                             </span>
                                         </div>
                                     </div>

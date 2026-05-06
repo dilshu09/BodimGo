@@ -159,8 +159,34 @@ export const updateTenant = async (req, res) => {
         if (nic) tenant.nic = nic;
         if (address) tenant.address = address;
         if (rentAmount) tenant.rentAmount = rentAmount;
-        // Room update might require more logic (availability check), keeping simple for now
-        // if (roomId) tenant.roomId = roomId; 
+        
+        // Handle Room Assignment / Change
+        if (roomId && roomId !== tenant.roomId) {
+            const listing = await Listing.findById(tenant.listingId);
+            if (listing) {
+                // 1. Mark OLD room as Available (if it wasn't unassigned)
+                if (tenant.roomId && tenant.roomId !== 'Unassigned') {
+                    const oldRoom = listing.rooms.id(tenant.roomId) || listing.rooms.find(r => r.name === tenant.roomId);
+                    if (oldRoom) {
+                        oldRoom.status = 'Available';
+                        // Logic for beds could go here if needed
+                    }
+                }
+
+                // 2. Mark NEW room as Occupied
+                if (roomId !== 'Unassigned') {
+                    const newRoom = listing.rooms.id(roomId) || listing.rooms.find(r => r.name === roomId);
+                    if (newRoom) {
+                        newRoom.status = 'Occupied';
+                        // Update rent amount automatically if not explicitly provided
+                        if (!rentAmount) tenant.rentAmount = newRoom.price;
+                    }
+                }
+
+                tenant.roomId = roomId;
+                await listing.save();
+            }
+        }
 
         await tenant.save();
 
@@ -233,17 +259,31 @@ export const generateAgreement = async (req, res, next) => {
 // @access  Private (Provider)
 export const getTenants = async (req, res) => {
     try {
-        const tenants = await Tenant.find({ providerId: req.user._id })
-            .populate('listingId', 'title') // Populate listing title
+        const { listingId } = req.query;
+        const query = { providerId: req.user._id };
+        if (listingId) query.listingId = listingId;
+
+        const tenants = await Tenant.find(query)
+            .populate('listingId', 'title rooms') // Populate listing title and rooms
             .sort({ createdAt: -1 });
 
         const User = (await import('../models/User.js')).default;
         const Payment = (await import('../models/Payment.js')).default;
 
-        // Augment tenants with payment info
+        // Augment tenants with payment info and human-readable room names
         const tenantsWithPayments = await Promise.all(tenants.map(async (tenant) => {
             const tenantObj = tenant.toObject();
             tenantObj.currentMonth = { paid: false, date: null };
+
+            // Resolve Room Name
+            if (tenant.listingId && tenant.listingId.rooms) {
+                const room = tenant.listingId.rooms.find(r => 
+                    r._id.toString() === tenant.roomId || r.name === tenant.roomId
+                );
+                tenantObj.roomName = room ? room.name : (tenant.roomId === 'Unassigned' ? 'Unassigned' : tenant.roomId);
+            } else {
+                tenantObj.roomName = tenant.roomId;
+            }
 
             // Find linked user by email
             if (tenant.email) {
@@ -303,7 +343,7 @@ export const getMyTenancy = async (req, res) => {
             email: userEmail,
             status: { $in: ['Active', 'Pending'] }
         })
-            .populate('listingId', 'title address images location rent deposit')
+            .populate('listingId', 'title address images location rent deposit rooms')
             .populate('providerId', 'name email phone')
             .sort({ status: 1, createdAt: -1 }); // 'Active' comes before 'Pending'? No, Alphabetical. Active < Pending. So 1 works.
 
@@ -322,6 +362,16 @@ export const getMyTenancy = async (req, res) => {
         }).sort({ createdAt: -1 });
 
         const tenantObj = activeTenant.toObject();
+        
+        // Resolve Room Name
+        if (tenantObj.listingId && tenantObj.listingId.rooms && tenantObj.roomId !== 'Unassigned') {
+            const room = tenantObj.listingId.rooms.find(r => 
+                r._id.toString() === tenantObj.roomId || r.name === tenantObj.roomId
+            );
+            tenantObj.roomName = room ? room.name : tenantObj.roomId;
+        } else {
+            tenantObj.roomName = tenantObj.roomId === 'Unassigned' ? 'Shared Space' : tenantObj.roomId;
+        }
         tenantObj.paymentHistory = payments.map(p => ({
             _id: p._id,
             month: new Date(p.createdAt).toLocaleString('default', { month: 'long', year: 'numeric' }),

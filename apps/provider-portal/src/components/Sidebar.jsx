@@ -16,37 +16,44 @@ import {
     ChevronRight,
 
     LogOut,
-    HelpCircle
+    HelpCircle,
+    ChevronLeft,
+    Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import logo from '../assets/logo.png';
 
-const SidebarItem = ({ item, isExpanded, onToggle, isActive }) => {
+const SidebarItem = ({ item, isExpanded, onToggle, isActive, isCollapsed }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
 
     return (
         <div className="mb-1">
             <div
-                onClick={() => hasSubItems && onToggle(item.id)}
-                className={`flex items-center justify-between px-4 py-3 cursor-pointer rounded-xl transition-colors
+                onClick={() => !isCollapsed && hasSubItems && onToggle(item.id)}
+                title={isCollapsed ? item.label : ""}
+                className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} px-4 py-3 cursor-pointer rounded-xl transition-all duration-300
                     ${isActive && !hasSubItems ? 'bg-primary/10 text-primary font-medium' : 'text-neutral-600 dark:text-slate-400 hover:bg-neutral-100 dark:hover:bg-slate-800 hover:text-neutral-900 dark:hover:text-slate-200'}
                 `}
             >
                 {/* Main Link Content */}
                 {hasSubItems ? (
-                    <div className="flex items-center gap-3">
-                        <item.icon size={20} />
-                        <span className="text-sm">{item.label}</span>
+                    <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center w-full' : ''}`}>
+                        <div className="flex items-center justify-center w-6 h-6 shrink-0">
+                            <item.icon size={20} />
+                        </div>
+                        {!isCollapsed && <span className="text-sm whitespace-nowrap">{item.label}</span>}
                     </div>
                 ) : (
-                    <NavLink to={item.path} className="flex items-center gap-3 w-full">
-                        <item.icon size={20} />
-                        <span className="text-sm">{item.label}</span>
+                    <NavLink to={item.path} className={`flex items-center gap-3 w-full ${isCollapsed ? 'justify-center' : ''}`}>
+                        <div className="flex items-center justify-center w-6 h-6 shrink-0">
+                            <item.icon size={20} />
+                        </div>
+                        {!isCollapsed && <span className="text-sm whitespace-nowrap">{item.label}</span>}
                     </NavLink>
                 )}
 
                 {/* Arrow for Accordion */}
-                {hasSubItems && (
+                {!isCollapsed && hasSubItems && (
                     <div className="text-neutral-400 dark:text-slate-500">
                         {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                     </div>
@@ -55,7 +62,7 @@ const SidebarItem = ({ item, isExpanded, onToggle, isActive }) => {
 
             {/* Sub Items */}
             <AnimatePresence>
-                {hasSubItems && isExpanded && (
+                {!isCollapsed && hasSubItems && isExpanded && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -187,6 +194,8 @@ const Sidebar = () => {
         setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
     };
 
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
     const handleLogout = async () => {
         try {
             // Call backend to clear cookie
@@ -204,16 +213,27 @@ const Sidebar = () => {
     };
 
     return (
-        <div className="w-64 h-screen bg-white dark:bg-slate-900 border-r border-neutral-200 dark:border-slate-800 flex flex-col sticky top-0 transition-colors duration-200">
-            {/* Logo */}
-            <div className="p-6 border-b border-neutral-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
+        <div className={`${isCollapsed ? 'w-20' : 'w-64'} h-screen bg-white dark:bg-slate-900 border-r border-neutral-200 dark:border-slate-800 flex flex-col sticky top-0 transition-all duration-300 ease-in-out`}>
+            {/* Logo & Toggle */}
+            <div className={`p-6 border-b border-neutral-100 dark:border-slate-800 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+                <div className={`flex items-center gap-2 ${isCollapsed ? 'hidden' : 'flex'}`}>
                     <img src={logo} alt="BodimGo" className="h-8 w-auto" />
                     <div>
                         <h1 className="text-xl font-bold text-primary leading-tight">BodimGo</h1>
                         <p className="text-[10px] text-neutral-400 dark:text-slate-500 font-bold tracking-wider uppercase">Provider Portal</p>
                     </div>
                 </div>
+                
+                {isCollapsed && (
+                    <img src={logo} alt="BodimGo" className="h-8 w-auto mb-1" />
+                )}
+
+                <button 
+                    onClick={() => setIsCollapsed(!isCollapsed)}
+                    className={`p-1.5 rounded-lg bg-neutral-50 dark:bg-slate-800 text-neutral-500 dark:text-slate-400 hover:text-primary transition-colors ${isCollapsed ? 'mt-2' : ''}`}
+                >
+                    {isCollapsed ? <Menu size={18} /> : <ChevronLeft size={18} />}
+                </button>
             </div>
 
             {/* Menu */}
@@ -222,6 +242,7 @@ const Sidebar = () => {
                     <SidebarItem
                         key={section.id}
                         item={section}
+                        isCollapsed={isCollapsed}
                         isExpanded={expandedSections[section.id]}
                         onToggle={toggleSection}
                         isActive={location.pathname === section.path || (section.subItems && section.subItems.some(sub => location.pathname === sub.path))}
@@ -233,10 +254,13 @@ const Sidebar = () => {
             <div className="p-4 border-t border-neutral-100 dark:border-slate-800">
                 <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-colors"
+                    title={isCollapsed ? "Log Out" : ""}
+                    className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} w-full px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all duration-300`}
                 >
-                    <LogOut size={20} />
-                    <span className="text-sm font-medium">Log Out</span>
+                    <div className="flex items-center justify-center w-6 h-6 shrink-0">
+                        <LogOut size={20} />
+                    </div>
+                    {!isCollapsed && <span className="text-sm font-medium">Log Out</span>}
                 </button>
             </div>
         </div>

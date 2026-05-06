@@ -109,3 +109,36 @@ export const getProviderReviews = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server Error', error: error.message });
     }
 };
+
+// @desc    Reply to a review
+// @route   PUT /api/reviews/:id/reply
+// @access  Private (Provider)
+export const replyReview = async (req, res) => {
+    try {
+        const { reply } = req.body;
+
+        const review = await Review.findById(req.params.id).populate('targetListing');
+
+        if (!review) {
+            return res.status(404).json({ success: false, message: 'Review not found' });
+        }
+
+        // Verify the provider owns the listing
+        if (review.targetListing.provider.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Not authorized to reply to this review' });
+        }
+
+        review.reply = reply;
+        review.replyDate = Date.now();
+
+        await review.save();
+
+        res.json({
+            success: true,
+            data: review
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+};

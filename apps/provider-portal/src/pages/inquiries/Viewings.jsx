@@ -77,8 +77,9 @@ export default function Viewings() {
 
     const getStatusColor = (status) => {
         switch (status) {
-            case "confirmed": return "bg-green-100 text-green-700";
-            case "cancelled": return "bg-red-100 text-red-700";
+            case "accepted": return "bg-green-100 text-green-700";
+            case "rejected": return "bg-red-100 text-red-700";
+            case "completed": return "bg-blue-100 text-blue-700";
             default: return "bg-yellow-100 text-yellow-700";
         }
     };
@@ -99,7 +100,7 @@ export default function Viewings() {
 
                 {/* Filters */}
                 <div className="flex gap-2">
-                    {["all", "pending", "confirmed", "cancelled"].map((f) => (
+                    {["all", "pending", "accepted", "rejected", "completed"].map((f) => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
@@ -154,12 +155,12 @@ export default function Viewings() {
                             {viewing.status === "pending" && (
                                 <div className="flex gap-3 mt-2">
                                     <button
-                                        onClick={() => handleStatusUpdate(viewing._id, 'confirmed')}
+                                        onClick={() => handleStatusUpdate(viewing._id, 'accepted')}
                                         className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm">
                                         <Check size={16} /> Accept
                                     </button>
                                     <button
-                                        onClick={() => handleStatusUpdate(viewing._id, 'cancelled')}
+                                        onClick={() => handleStatusUpdate(viewing._id, 'rejected')}
                                         className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-600 py-2 rounded-lg hover:bg-red-50 transition-colors font-medium text-sm dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20">
                                         <X size={16} /> Decline
                                     </button>

@@ -31,22 +31,30 @@ export const uploadToCloudinary = async (localUrl) => {
              throw new Error("Invalid or Missing Cloudinary Credentials in .env");
         }
 
+        // --- NEW: Handle Base64 strings directly ---
+        if (localUrl.startsWith('data:image')) {
+            console.log(`[Cloudinary] Uploading Base64 image...`);
+            const result = await cloudinary.uploader.upload(localUrl, {
+                folder: 'bodimgo_listings',
+                resource_type: 'auto'
+            });
+            return result.secure_url;
+        }
+
+        // --- Existing: Handle local file paths ---
         // Extract filename from URL
         const filename = localUrl.split('/').pop();
         if (!filename) return localUrl;
 
-        // Construct absolute path using __dirname (more robust)
-        // src/utils/../../uploads -> server/uploads
+        // Construct absolute path using __dirname
         const filePath = path.resolve(__dirname, '../../uploads', filename);
 
         console.log(`[Cloudinary] Processing file: ${filename}`);
-        console.log(`[Cloudinary] Resolved Path: ${filePath}`);
-
+        
         if (!fs.existsSync(filePath)) {
             // Check fallback for src/uploads
             const fallbackPath = path.resolve(__dirname, '../../src/uploads', filename);
             if(fs.existsSync(fallbackPath)) {
-                 // Found in src/uploads
                  console.log(`[Cloudinary] Found at fallback: ${fallbackPath}`);
                  const result = await cloudinary.uploader.upload(fallbackPath, {
                     folder: 'bodimgo_listings',

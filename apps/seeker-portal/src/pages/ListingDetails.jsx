@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import api from "../services/api";
-import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare, Star, Bath, Bed, Maximize, Heart, Share2, Shield, Calendar, AlertTriangle, X } from "lucide-react";
+import { MapPin, User, Check, ShieldCheck, Star as StarIcon, Flag, MessageSquare, Star, Bath, Bed, Maximize, Heart, Share2, Shield, Calendar, AlertTriangle, X, Loader2, ExternalLink } from "lucide-react";
 import ReviewModal from "../components/ReviewModal";
 import ReportModal from "../components/ReportModal";
 import { SkeletonDetails } from "../components/Skeleton";
@@ -10,6 +10,9 @@ import BookingWizard from "../components/BookingWizard";
 import ViewingRequestModal from "../components/ViewingRequestModal";
 import MessageModal from "../components/MessageModal";
 import { toast } from 'react-hot-toast';
+import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+
+const libraries = ['places'];
 
 const ListingDetails = () => {
   const { id } = useParams();
@@ -22,6 +25,11 @@ const ListingDetails = () => {
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [showViewingModal, setShowViewingModal] = useState(false);
+
+  const { isLoaded: isMapsLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    libraries
+  });
 
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [canReview, setCanReview] = useState(false);
@@ -104,7 +112,10 @@ const ListingDetails = () => {
 
   const onSuccessRequest = () => {
     setShowBookingWizard(false);
-    alert("Request Sent! The provider will review it shortly.");
+    toast.success("Request Sent! The provider will review it shortly.", {
+      duration: 5000,
+      icon: '🚀'
+    });
     // Maybe navigate to a "Requests" page? For now, stay here.
   };
 
@@ -299,15 +310,39 @@ const ListingDetails = () => {
                 </div>
 
                 {listing.location.coordinates && (
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${listing.location.coordinates.lat},${listing.location.coordinates.lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 border border-neutral-900 dark:border-slate-200 text-neutral-900 dark:text-slate-200 px-6 py-3 rounded-xl font-semibold hover:bg-neutral-50 dark:hover:bg-slate-800 transition-colors"
-                  >
-                    <MapPin size={18} />
-                    Show on Google Maps
-                  </a>
+                  <div className="mb-6">
+                    <div className="h-80 bg-neutral-100 dark:bg-slate-800 rounded-2xl border border-neutral-200 dark:border-slate-800 overflow-hidden relative shadow-sm">
+                      {!isMapsLoaded ? (
+                        <div className="w-full h-full flex items-center justify-center text-neutral-400">
+                          <Loader2 className="animate-spin mr-2" /> Loading Maps...
+                        </div>
+                      ) : (
+                        <GoogleMap
+                          mapContainerStyle={{ width: '100%', height: '100%' }}
+                          zoom={15}
+                          center={listing.location.coordinates}
+                          options={{ 
+                            streetViewControl: false, 
+                            mapTypeControl: false,
+                            fullscreenControl: true,
+                            gestureHandling: 'cooperative'
+                          }}
+                        >
+                          <Marker position={listing.location.coordinates} />
+                        </GoogleMap>
+                      )}
+                    </div>
+
+                    <a
+                      href={listing.location.googleMapsLink || `https://www.google.com/maps/search/?api=1&query=${listing.location.coordinates.lat},${listing.location.coordinates.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary dark:text-primary-light text-sm font-bold hover:underline"
+                    >
+                      <ExternalLink size={14} />
+                      Open in Google Maps
+                    </a>
+                  </div>
                 )}
               </div>
             )}
@@ -379,6 +414,12 @@ const ListingDetails = () => {
                         ))}
                       </div>
                       <p className="text-neutral-700 dark:text-slate-300">{review.comment}</p>
+                      {review.reply && (
+                        <div className="mt-4 ml-6 p-4 bg-neutral-50 dark:bg-slate-900 border-l-2 border-red-500 rounded-r-lg">
+                          <p className="text-xs font-bold text-red-500 mb-1 uppercase tracking-wider">Response from host</p>
+                          <p className="text-sm text-neutral-600 dark:text-slate-400 leading-relaxed italic">"{review.reply}"</p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

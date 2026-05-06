@@ -11,15 +11,15 @@ const StepRooms = ({ data, update }) => {
 
     const addRoom = () => {
         const newRoom = {
-            id: Date.now(),
+            id: `temp-${Date.now()}`, // Explicit temp ID
             name: `Unit #${(data.rooms?.length || 0) + 1}`,
             type: 'Single',
-            occupancyMode: 'Entire Room', // Fixed Key
-            price: '', // Fixed Key (was rent)
-            capacity: 1, // Fixed Key (was beds)
+            occupancyMode: 'Entire Room',
+            price: '',
+            capacity: 1,
             status: 'Available',
             images: [],
-            features: { // Ensure sub-object exists
+            features: {
                 bathroomType: 'Shared',
                 furnishing: []
             }
@@ -28,17 +28,17 @@ const StepRooms = ({ data, update }) => {
     };
 
     const removeRoom = (id) => {
-        update({ rooms: data.rooms.filter(r => r.id !== id) });
+        update({ rooms: data.rooms.filter(r => (r._id || r.id) !== id) });
     };
 
     const duplicateRoom = (room) => {
-        const newRoom = { ...room, id: Date.now(), name: `${room.name} (Copy)` };
+        const newRoom = { ...room, _id: undefined, id: `temp-${Date.now()}`, name: `${room.name} (Copy)` };
         update({ rooms: [...data.rooms, newRoom] });
     };
 
     const updateRoom = (id, field, value) => {
         update({
-            rooms: data.rooms.map(r => r.id === id ? { ...r, [field]: value } : r)
+            rooms: data.rooms.map(r => (r._id || r.id) === id ? { ...r, [field]: value } : r)
         });
     };
 
@@ -120,7 +120,7 @@ const StepRooms = ({ data, update }) => {
 
             <div className="space-y-6">
                 {data.rooms?.map((room, index) => (
-                    <div key={room.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-neutral-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-shadow relative group">
+                    <div key={room._id || room.id} className="bg-white dark:bg-slate-800 rounded-2xl border border-neutral-200 dark:border-slate-700 p-6 shadow-sm hover:shadow-md transition-shadow relative group">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
                             <h4 className="font-bold text-lg text-neutral-800 dark:text-white flex items-center gap-2">
@@ -130,7 +130,7 @@ const StepRooms = ({ data, update }) => {
                                 <button onClick={() => duplicateRoom(room)} className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-700 rounded-lg text-neutral-500 dark:text-slate-400" title="Duplicate">
                                     <Copy size={16} />
                                 </button>
-                                <button onClick={() => removeRoom(room.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-500" title="Delete">
+                                <button onClick={() => removeRoom(room._id || room.id)} className="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-500" title="Delete">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
@@ -143,7 +143,7 @@ const StepRooms = ({ data, update }) => {
                                 <input
                                     type="text"
                                     value={room.name}
-                                    onChange={(e) => updateRoom(room.id, 'name', e.target.value)}
+                                    onChange={(e) => updateRoom(room._id || room.id, 'name', e.target.value)}
                                     className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                     placeholder="e.g. Master Bedroom"
                                 />
@@ -152,7 +152,7 @@ const StepRooms = ({ data, update }) => {
                                 <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Type</label>
                                 <select
                                     value={room.type}
-                                    onChange={(e) => updateRoom(room.id, 'type', e.target.value)}
+                                    onChange={(e) => updateRoom(room._id || room.id, 'type', e.target.value)}
                                     className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 >
                                     {ROOM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -162,7 +162,7 @@ const StepRooms = ({ data, update }) => {
                                 <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Booking Mode</label>
                                 <select
                                     value={room.occupancyMode}
-                                    onChange={(e) => updateRoom(room.id, 'occupancyMode', e.target.value)}
+                                    onChange={(e) => updateRoom(room._id || room.id, 'occupancyMode', e.target.value)}
                                     className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 >
                                     {OCCUPANCY_MODES.map(m => <option key={m} value={m}>{m}</option>)}
@@ -173,7 +173,7 @@ const StepRooms = ({ data, update }) => {
                                 <input
                                     type="number"
                                     value={room.price}
-                                    onChange={(e) => updateRoom(room.id, 'price', e.target.value)}
+                                    onChange={(e) => updateRoom(room._id || room.id, 'price', e.target.value)}
                                     className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white font-mono"
                                     placeholder="0"
                                 />
@@ -185,7 +185,7 @@ const StepRooms = ({ data, update }) => {
                                     <input
                                         type="number"
                                         value={room.capacity}
-                                        onChange={(e) => updateRoom(room.id, 'capacity', parseInt(e.target.value) || 1)}
+                                        onChange={(e) => updateRoom(room._id || room.id, 'capacity', parseInt(e.target.value) || 1)}
                                         className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white pl-9"
                                     />
                                 </div>
@@ -194,7 +194,7 @@ const StepRooms = ({ data, update }) => {
                                 <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Status</label>
                                 <select
                                     value={room.status}
-                                    onChange={(e) => updateRoom(room.id, 'status', e.target.value)}
+                                    onChange={(e) => updateRoom(room._id || room.id, 'status', e.target.value)}
                                     className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 >
                                     <option value="Available">Available</option>
@@ -218,8 +218,8 @@ const StepRooms = ({ data, update }) => {
                                 <span>Room Photos ({room.images?.length || 0}/3)</span>
                                 <span className="text-primary normal-case font-normal text-xs bg-primary/10 px-2 py-0.5 rounded-full">
                                     Cover all angles
-                                </span>
-                            </label>
+                                </span >
+                            </label >
 
                             <div className="flex gap-3 overflow-x-auto pb-2">
                                 {(room.images?.length || 0) < 3 && (
@@ -228,11 +228,11 @@ const StepRooms = ({ data, update }) => {
                                             type="file"
                                             accept="image/*"
                                             multiple={true}
-                                            onChange={(e) => handleRoomImageUpload(room.id, e)}
-                                            disabled={uploadingRoomId === room.id}
+                                            onChange={(e) => handleRoomImageUpload(room._id || room.id, e)}
+                                            disabled={uploadingRoomId === (room._id || room.id)}
                                             className="absolute inset-0 opacity-0 cursor-pointer"
                                         />
-                                        {uploadingRoomId === room.id ? (
+                                        {uploadingRoomId === (room._id || room.id) ? (
                                             <Loader2 className="animate-spin text-primary" size={20} />
                                         ) : (
                                             <>
@@ -247,7 +247,7 @@ const StepRooms = ({ data, update }) => {
                                     <div key={i} className="w-24 h-24 flex-shrink-0 relative group rounded-xl overflow-hidden border border-neutral-200">
                                         <img src={img} alt="Room" className="w-full h-full object-cover" />
                                         <button
-                                            onClick={() => removeRoomImage(room.id, i)}
+                                            onClick={() => removeRoomImage(room._id || room.id, i)}
                                             className="absolute top-1 right-1 p-1 bg-white/90 text-red-500 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
                                             <X size={12} />
