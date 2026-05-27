@@ -152,7 +152,7 @@ const Header = () => {
                                         <div
                                             key={notif._id}
                                             className={`p-4 border-b border-neutral-50 dark:border-slate-800 hover:bg-neutral-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer ${!notif.isRead ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
-                                            onClick={() => markAsRead(notif._id, notif.data?.bookingId ? `/bookings/${notif.data.bookingId}` : notif.data?.viewingRequestId ? '/viewings' : null)}
+                                            onClick={() => markAsRead(notif._id, notif.data?.bookingId ? `/bookings/${notif.data.bookingId}` : notif.data?.viewingRequestId ? '/viewings' : (notif.data?.invoiceId || notif.type === 'payment_slip_uploaded') ? '/finance/invoices' : (notif.data?.roomId || notif.type === 'maintenance_request') ? '/rooms/maintenance' : null)}
                                         >
                                             <div className="flex gap-3 relative">
                                                 <button

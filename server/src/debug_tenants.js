@@ -1,8 +1,10 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
+import dns from 'dns';
 
-dotenv.config({ path: path.resolve(process.cwd(), 'server/.env') });
+dns.setServers(['8.8.8.8']);
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/bodimgo';
 
@@ -29,7 +31,7 @@ const Listing = mongoose.model('Listing', listingSchema);
 
 async function run() {
     try {
-        await mongoose.connect(mongoUri);
+        await mongoose.connect(mongoUri, { family: 4 });
         console.log('Connected to DB');
 
         const tenants = await Tenant.find({});

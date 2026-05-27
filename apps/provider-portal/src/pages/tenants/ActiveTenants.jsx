@@ -1,6 +1,7 @@
 'use client'
 import React, { useState, useEffect } from "react";
-import { Mail, Phone, CreditCard, Eye, ChevronDown, ChevronUp, Edit2, LogOut, Check, X } from 'lucide-react'
+import { Mail, Phone, CreditCard, Eye, ChevronDown, ChevronUp, Edit2, LogOut, Check, X, Bell, Search } from 'lucide-react'
+import { useLocation } from 'react-router-dom';
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -8,7 +9,9 @@ const API_URL = "http://localhost:5000/api"; // Adjust if needed
 
 export default function ActiveTenantsPage() {
   const [tenants, setTenants] = useState([]);
+  const [activeTenants, setActiveTenants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // State for inline actions
   const [expandedTenantId, setExpandedTenantId] = useState(null);
@@ -24,10 +27,8 @@ export default function ActiveTenantsPage() {
   const [selectedTenantForPayment, setSelectedTenantForPayment] = useState(null);
 
   const [availableRooms, setAvailableRooms] = useState([]);
-
-  useEffect(() => {
-    fetchTenants();
-  }, []);
+  const location = useLocation();
+  const pendingMode = location.search.includes('pending=true');
 
   const fetchTenants = async () => {
     try {
@@ -50,17 +51,18 @@ export default function ActiveTenantsPage() {
         checkInDate: t.createdAt, 
         monthlyRent: t.rentAmount,
         currentMonth: t.currentMonth || { paid: false, date: null },
-        status: (t.status.toLowerCase() === 'active' || t.status === 'Pending') ? 'Active' : t.status,
+        status: t.status,
         paymentHistory: t.paymentHistory || []
       }));
 
-      // Filter: Show anyone NOT Moved Out or Evicted (case-insensitive check)
+      // Filter: Show only active tenant records, excluding pending tenant approvals
       const activeTenantsList = formattedTenants.filter(t => {
         const s = t.status.toLowerCase();
-        return s !== 'moved out' && s !== 'evicted';
+        return s !== 'moved out' && s !== 'evicted' && s !== 'pending';
       });
 
-      setTenants(activeTenantsList);
+      setTenants(formattedTenants);
+      setActiveTenants(activeTenantsList);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching tenants:", error);
@@ -68,6 +70,11 @@ export default function ActiveTenantsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTenants();
+  }, []);
 
   const fetchRoomsForListing = async (listingId) => {
     try {
@@ -153,6 +160,11 @@ export default function ActiveTenantsPage() {
     setShowPaymentModal(true);
   };
 
+  const displayTenants = pendingMode ? tenants.filter(t => t.status.toLowerCase() === 'pending') : activeTenants;
+  const filteredDisplayTenants = displayTenants.filter(t =>
+    (t.name || "").toLowerCase().includes(searchTerm.trim().toLowerCase())
+  );
+
   const handlePaymentSubmit = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -174,6 +186,19 @@ export default function ActiveTenantsPage() {
     }
   };
 
+  const handleSendReminder = async (tenantId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API_URL}/tenants/${tenantId}/remind`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Reminder sent successfully!");
+    } catch (error) {
+      console.error("Error sending reminder:", error);
+      toast.error(error.response?.data?.message || "Failed to send reminder");
+    }
+  };
+
   if (loading) {
     return <div className="p-8"><div className="text-center text-slate-500">Loading tenants...</div></div>;
   }
@@ -182,17 +207,46 @@ export default function ActiveTenantsPage() {
     <div className="p-8 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Active Tenants</h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-1">Current tenants in your boarding</p>
+          <h2 className="text-3xl font-bold text-slate-900 dark:text-white">{pendingMode ? 'Pending Tenant Approvals' : 'Active Tenants'}</h2>
+          <p className="text-slate-600 dark:text-slate-400 mt-1">{pendingMode ? 'Review tenant verification requests before approval.' : 'Current tenants in your boarding'}</p>
         </div>
         <div className="text-right">
-          <div className="text-4xl font-bold text-red-500">{tenants.length}</div>
-          <p className="text-slate-600 dark:text-slate-400">Total Active Tenants</p>
+          <div className="text-4xl font-bold text-red-500">{displayTenants.length}</div>
+          <p className="text-slate-600 dark:text-slate-400">{pendingMode ? 'Pending Tenant Requests' : 'Total Active Tenants'}</p>
         </div>
       </div>
 
+      {/* Search Bar Section */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-all duration-300">
+        <div className="relative w-full sm:max-w-md">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+            <Search size={18} />
+          </span>
+          <input
+            type="text"
+            placeholder="Search tenants by name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-10 py-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#FF385C]/20 focus:border-[#FF385C] transition-all duration-200"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+        {searchTerm && (
+          <div className="text-sm text-slate-500 dark:text-slate-400 animate-in fade-in duration-200">
+            Found <span className="font-semibold text-slate-900 dark:text-white">{filteredDisplayTenants.length}</span> {filteredDisplayTenants.length === 1 ? 'tenant' : 'tenants'} matching &ldquo;{searchTerm}&rdquo;
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-6">
-        {tenants.map((tenant) => (
+        {filteredDisplayTenants.map((tenant) => (
           <div key={tenant.id} className={`group bg-white dark:bg-slate-900 rounded-xl shadow-sm border transition-all duration-300 ${expandedTenantId === tenant.id ? 'border-blue-200 dark:border-blue-800 ring-4 ring-blue-50 dark:ring-blue-900/20 transition-none' : 'border-slate-200 dark:border-slate-800 hover:shadow-xl hover:border-[#FF385C] dark:hover:border-[#FF385C] hover:-translate-y-1'}`}>
 
             {/* Top Row: Basic Info and Status */}
@@ -203,6 +257,13 @@ export default function ActiveTenantsPage() {
                   <p className="text-slate-600 dark:text-slate-400 text-sm">Room: {tenant.room}</p>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => handleSendReminder(tenant.id)}
+                    className="px-3 py-2 rounded-full text-sm font-semibold bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors flex items-center gap-1"
+                    title="Send Payment Reminder"
+                  >
+                    <Bell size={14} /> Remind
+                  </button>
                   {!tenant.currentMonth.paid && tenant.status !== 'Moved Out' && tenant.status !== 'Evicted' && (
                     <button
                       onClick={() => openPaymentModal(tenant)}
@@ -372,8 +433,17 @@ export default function ActiveTenantsPage() {
             </div>
           </div>
         ))}
-        {tenants.length === 0 && (
-          <div className="text-center text-slate-500 py-10">No active tenants found.</div>
+        {filteredDisplayTenants.length === 0 && (
+          <div className="text-center text-slate-500 py-12 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm w-full transition-all duration-300">
+            <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
+              {searchTerm ? "No matching tenants found" : (pendingMode ? "No pending tenants found" : "No active tenants found")}
+            </p>
+            {searchTerm && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Try checking the spelling or searching for a different name.
+              </p>
+            )}
+          </div>
         )}
       </div>
 

@@ -139,9 +139,13 @@ export const createListing = async (req, res) => {
 // @access  Public
 export const getListings = async (req, res) => {
   try {
-    const { search, gender, minPrice, maxPrice, type, city } = req.query;
+    const { search, gender, minPrice, maxPrice, type, city, facilities, availableOnly, sortBy } = req.query;
 
     let matchStage = { status: { $in: ['active', 'published', 'Published'] } };
+
+    if (availableOnly === 'true') {
+      matchStage['rooms.status'] = 'Available';
+    }
 
     // 1. Text Search (Location OR Title)
     // If 'search' is provided, it matches EITHER city OR title
@@ -157,7 +161,12 @@ export const getListings = async (req, res) => {
 
     // 2. Type Filter
     if (type) {
-      matchStage.type = type;
+      // Match multiple types if comma-separated
+      if (type.includes(',')) {
+        matchStage.type = { $in: type.split(',').map(t => t.trim()) };
+      } else {
+        matchStage.type = type;
+      }
     }
 
     // 3. Gender Filter
@@ -174,6 +183,12 @@ export const getListings = async (req, res) => {
       matchStage['rooms.price'] = { $gte: min, $lte: max };
     }
 
+    // 5. Facilities Filter
+    if (facilities) {
+      const facilitiesArray = facilities.split(',').map(f => f.trim());
+      matchStage.facilities = { $all: facilitiesArray };
+    }
+
     const listings = await Listing.aggregate([
       { $match: matchStage },
       {
@@ -181,7 +196,7 @@ export const getListings = async (req, res) => {
           // Check if ANY room has status 'Available'
           hasAvailability: {
             $cond: {
-              if: { $in: ['Available', '$rooms.status'] },
+              if: { $in: ['Available', { $ifNull: ['$rooms.status', []] }] },
               then: 1,
               else: 0
             }
@@ -189,10 +204,11 @@ export const getListings = async (req, res) => {
         }
       },
       {
-        $sort: {
-          hasAvailability: -1, // Available (1) first, then Occupied (0)
-          createdAt: -1        // Then newest first
-        }
+        $sort: sortBy === 'rating' 
+          ? { 'stats.averageRating': -1, createdAt: -1 } 
+          : sortBy === 'available'
+          ? { hasAvailability: -1, createdAt: -1 }
+          : { createdAt: -1 }
       },
       // Lookup Provider (Populate replacement)
       {

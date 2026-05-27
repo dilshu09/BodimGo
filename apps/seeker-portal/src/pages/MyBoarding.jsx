@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Home, User, Phone, Mail, MapPin, Calendar,
-    CreditCard, Upload, ExternalLink, LogOut, CheckCircle, AlertCircle
+    CreditCard, Upload, ExternalLink, LogOut, CheckCircle, AlertCircle, Wrench
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
@@ -16,6 +16,10 @@ const MyBoarding = () => {
     const [isMoveOutModalOpen, setIsMoveOutModalOpen] = useState(false);
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
+    const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
+    const [maintenanceIssue, setMaintenanceIssue] = useState("");
+    const [maintenancePriority, setMaintenancePriority] = useState("Medium");
+    const [submittingMaintenance, setSubmittingMaintenance] = useState(false);
 
     const handleFileSelect = (e) => {
         if (e.target.files && e.target.files[0]) {
@@ -68,6 +72,30 @@ const MyBoarding = () => {
             toast.error("Failed to submit payment. Please try again.");
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleMaintenanceSubmit = async () => {
+        if (!maintenanceIssue.trim()) return;
+
+        setSubmittingMaintenance(true);
+        try {
+            await api.post('/tenants/maintenance', {
+                issue: maintenanceIssue,
+                priority: maintenancePriority
+            });
+
+            toast.success("Maintenance request submitted successfully!");
+            setShowMaintenanceModal(false);
+            setMaintenanceIssue("");
+            setMaintenancePriority("Medium");
+            // Refresh logic (simple reload or re-fetch)
+            window.location.reload();
+        } catch (err) {
+            console.error("Failed to submit maintenance request", err);
+            toast.error(err.response?.data?.message || "Failed to submit maintenance request. Please try again.");
+        } finally {
+            setSubmittingMaintenance(false);
         }
     };
 
@@ -250,10 +278,18 @@ const MyBoarding = () => {
                             </button>
                         )}
 
-                        <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-slate-800">
+                        <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-slate-800 flex flex-col gap-2">
+                            {tenancy.roomId && tenancy.roomId !== 'Unassigned' && (
+                                <button
+                                    onClick={() => setShowMaintenanceModal(true)}
+                                    className="w-full py-2 text-neutral-500 dark:text-slate-400 hover:text-[#FF385C] dark:hover:text-[#FF385C] text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    <Wrench size={16} /> Report Maintenance Issue
+                                </button>
+                            )}
                             <button
                                 onClick={() => setIsMoveOutModalOpen(true)}
-                                className="w-full py-2 text-neutral-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+                                className="w-full py-2 text-neutral-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-sm font-medium flex items-center justify-center gap-2 transition-colors border-t border-neutral-50 dark:border-slate-800/50 pt-2"
                             >
                                 <LogOut size={16} /> Request Move Out
                             </button>
@@ -358,6 +394,68 @@ const MyBoarding = () => {
                                 <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span> Uploading...</>
                             ) : (
                                 'Submit Payment'
+                            )}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Maintenance Modal */}
+            {showMaintenanceModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 relative border border-transparent dark:border-slate-800 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            onClick={() => { setShowMaintenanceModal(false); setMaintenanceIssue(""); }}
+                            className="absolute top-4 right-4 text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
+                        >
+                            <LogOut size={20} className="rotate-180" />
+                        </button>
+                        <h3 className="text-xl font-bold mb-2 text-neutral-900 dark:text-white flex items-center gap-2">
+                            <Wrench className="text-primary" /> Report Maintenance Issue
+                        </h3>
+                        <p className="text-neutral-500 dark:text-slate-400 mb-6 text-xs">
+                            Submit a maintenance request for your room (<span className="font-semibold text-neutral-950 dark:text-white">{tenancy.roomName || tenancy.roomId}</span>). Your landlord will be notified to review and solve the issue.
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-neutral-500 dark:text-slate-450 uppercase tracking-wider mb-2">Priority Level</label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {['Low', 'Medium', 'High', 'Urgent'].map(p => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setMaintenancePriority(p)}
+                                            className={`py-2 text-xs font-bold rounded-lg border transition-all duration-200 ${maintenancePriority === p ? 'border-primary bg-primary text-white shadow-sm' : 'border-neutral-200 dark:border-slate-700 bg-neutral-50 dark:bg-slate-800 text-neutral-600 dark:text-slate-450 hover:bg-neutral-100 dark:hover:bg-slate-700'}`}
+                                        >
+                                            {p}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-neutral-500 dark:text-slate-450 uppercase tracking-wider mb-2">Issue Details</label>
+                                <textarea
+                                    rows={4}
+                                    placeholder="Describe the issue (e.g. leaking washroom pipe, non-functional light bulb)..."
+                                    value={maintenanceIssue}
+                                    onChange={(e) => setMaintenanceIssue(e.target.value)}
+                                    className="w-full p-3 border border-neutral-200 dark:border-slate-750 dark:bg-slate-850 dark:text-white rounded-xl text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all duration-200"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            className="w-full bg-primary text-white py-3 rounded-xl font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-6"
+                            onClick={handleMaintenanceSubmit}
+                            disabled={!maintenanceIssue.trim() || submittingMaintenance}
+                        >
+                            {submittingMaintenance ? (
+                                <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span> Submitting...</>
+                            ) : (
+                                'Submit Request'
                             )}
                         </button>
                     </div>

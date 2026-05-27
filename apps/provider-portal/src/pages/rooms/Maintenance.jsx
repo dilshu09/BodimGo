@@ -103,6 +103,7 @@ export default function MaintenancePage() {
                             <thead className="bg-neutral-50 dark:bg-slate-800 border-b border-neutral-200 dark:border-slate-700">
                                 <tr>
                                     <th className="p-4 text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Issue</th>
+                                    <th className="p-4 text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Boarding Place</th>
                                     <th className="p-4 text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Room</th>
                                     <th className="p-4 text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Priority</th>
                                     <th className="p-4 text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
@@ -114,15 +115,17 @@ export default function MaintenancePage() {
                                 {maintenanceRooms.map((room) => (
                                     <tr key={room._id} className="hover:bg-neutral-50 dark:hover:bg-slate-800 transition-colors">
                                         <td className="p-4">
-                                            <div className="font-bold text-neutral-800 dark:text-white">Routine Maintenance</div>
-                                            <div className="text-sm text-neutral-500 dark:text-slate-400 line-clamp-1">{room.name}</div>
+                                            <div className="font-bold text-neutral-800 dark:text-white leading-snug">{room.maintenanceIssue || "Routine Maintenance"}</div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="text-sm font-semibold text-neutral-800 dark:text-white">{room.listingTitle || "General Property"}</div>
                                         </td>
                                         <td className="p-4">
                                             <div className="text-sm font-medium text-neutral-700 dark:text-slate-300">{room.name}</div>
                                         </td>
                                         <td className="p-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${getPriorityColor('Medium')}`}>
-                                                Medium
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${getPriorityColor(room.maintenancePriority || 'Medium')}`}>
+                                                {room.maintenancePriority || 'Medium'}
                                             </span>
                                         </td>
                                         <td className="p-4">
@@ -131,22 +134,19 @@ export default function MaintenancePage() {
                                             </span>
                                         </td>
                                         <td className="p-4 text-sm text-neutral-500 dark:text-slate-400">
-                                            - {/* Date not available in original room object */}
+                                            {room.maintenanceReportedAt ? new Date(room.maintenanceReportedAt).toLocaleDateString() : "-"}
                                         </td>
                                         <td className="p-4 text-end">
                                             <div className="flex items-center justify-end gap-2">
-                                                {room.status !== 'Available' && ( // Changed from 'Completed' to 'Available'
+                                                {room.status !== 'Available' && (
                                                     <button
-                                                        onClick={() => handleMarkAsDone(room)} // Changed from markAsComplete(req.id)
-                                                        className="p-2 hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg transition-colors"
+                                                        onClick={() => handleMarkAsDone(room)}
+                                                        className="px-3 py-1.5 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 text-xs font-bold rounded-lg border border-green-200 dark:border-green-800/30 flex items-center gap-1.5 transition-all duration-200 active:scale-95 shadow-sm"
                                                         title="Mark as Complete"
                                                     >
-                                                        <CheckCircle2 size={18} />
+                                                        <CheckCircle2 size={14} /> Resolve
                                                     </button>
                                                 )}
-                                                <button className="p-2 hover:bg-neutral-100 dark:hover:bg-slate-700 text-neutral-400 dark:text-slate-500 rounded-lg transition-colors">
-                                                    <MoreHorizontal size={18} />
-                                                </button>
                                             </div>
                                         </td>
                                     </tr>

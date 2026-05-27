@@ -17,6 +17,7 @@ const InvoiceSchema = new mongoose.Schema({
   paidAmount: { type: Number, default: 0 },
   
   status: { type: String, enum: ['draft', 'due', 'paid', 'overdue', 'void'], default: 'draft', index: true },
+  proofImageUrl: String,
   generatedPdfUrl: String
 }, {
   timestamps: true

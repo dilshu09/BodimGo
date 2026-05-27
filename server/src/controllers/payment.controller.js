@@ -438,15 +438,49 @@ export const submitPaymentProof = async (req, res) => {
 
   try {
     const Tenant = (await import('../models/tenant.model.js')).default;
-    // Find active tenancy to identify provider
-    const tenant = await Tenant.findOne({
+    const Invoice = (await import('../models/Invoice.js')).default;
+
+    // Find active tenancy to identify provider, prioritizing valid room assignments
+    let tenant = await Tenant.findOne({
       email: req.user.email,
-      status: { $in: ['Active', 'Pending'] }
+      status: 'Active',
+      roomId: { $ne: 'Unassigned', $exists: true }
     });
+
+    if (!tenant) {
+      tenant = await Tenant.findOne({
+        email: req.user.email,
+        status: { $in: ['Active', 'Pending'] }
+      });
+    }
 
     if (!tenant) {
       return res.status(404).json({ message: 'No active tenancy found.' });
     }
+
+    const currentMonthStr = new Date().toISOString().slice(0, 7); // Format YYYY-MM
+    let invoice = await Invoice.findOne({
+      tenant: tenant._id,
+      status: { $in: ['due', 'overdue', 'draft'] }
+    }).sort({ createdAt: -1 });
+
+    if (!invoice) {
+      // If no invoice is found, auto-generate one for this amount and current month
+      invoice = await Invoice.create({
+        tenant: tenant._id,
+        provider: tenant.providerId,
+        invoiceNumber: `INV-${Date.now()}`,
+        month: currentMonthStr,
+        dueDate: new Date(),
+        items: [{ description: `Rent Payment for ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`, amount: amount }],
+        totalAmount: amount,
+        status: 'due'
+      });
+    }
+
+    // Save proofImageUrl to the invoice directly
+    invoice.proofImageUrl = proofImageUrl;
+    await invoice.save();
 
     const paymentDate = date ? new Date(date) : new Date();
 
@@ -457,10 +491,29 @@ export const submitPaymentProof = async (req, res) => {
       method: 'bank_transfer',
       status: 'pending', // Pending verification
       proofImageUrl: proofImageUrl,
+      invoice: invoice._id,
       createdAt: paymentDate
     });
 
-    // Notify Provider? (Optional for MVP)
+    // Notify Provider
+    try {
+      const { createNotification } = await import('./notification.controller.js');
+      const io = req.app.get('socketio');
+      
+      const notification = await createNotification({
+        recipient: tenant.providerId,
+        type: 'payment_slip_uploaded',
+        title: 'Payment Slip Uploaded',
+        message: `Tenant ${tenant.name} uploaded a payment slip for LKR ${amount.toLocaleString()}. Please review it.`,
+        data: { invoiceId: invoice._id }
+      });
+
+      if (io && notification) {
+        io.to(tenant.providerId.toString()).emit('new-notification', notification);
+      }
+    } catch (notifErr) {
+      console.error("Failed to create provider notification:", notifErr);
+    }
 
     res.json({
       success: true,

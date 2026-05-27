@@ -80,6 +80,40 @@ export const markInvoiceAsPaid = async (req, res) => {
         invoice.paidAt = Date.now();
         await invoice.save();
 
+        // Check if there is an associated pending payment slip for this invoice
+        const Payment = (await import('../models/Payment.js')).default;
+        const User = (await import('../models/User.js')).default;
+
+        let payment = await Payment.findOne({ invoice: invoice._id });
+        if (payment) {
+            payment.status = 'completed';
+            payment.verifiedBy = req.user._id;
+            await payment.save();
+        } else {
+            // Find the associated tenant to resolve seeker user account
+            const Tenant = (await import('../models/tenant.model.js')).default;
+            const tenant = await Tenant.findById(invoice.tenant);
+            let payerId = null;
+            if (tenant && tenant.email) {
+                const user = await User.findOne({ email: tenant.email });
+                if (user) payerId = user._id;
+            }
+
+            // Create a completed Payment record to ensure active tenants listing marks currentMonth as paid
+            if (payerId) {
+                await Payment.create({
+                    invoice: invoice._id,
+                    payer: payerId,
+                    payee: req.user._id,
+                    amount: invoice.totalAmount,
+                    method: invoice.proofImageUrl ? 'bank_transfer' : 'cash',
+                    status: 'completed',
+                    proofImageUrl: invoice.proofImageUrl,
+                    verifiedBy: req.user._id
+                });
+            }
+        }
+
         res.json(invoice);
     } catch (error) {
         console.error("Mark Paid Error:", error);

@@ -73,7 +73,7 @@ const ListingCard = ({ listing, isSaved: initialSaved = false, onToggleWishlist 
         <div className="flex items-center gap-1">
           <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
           <span className="text-sm text-neutral-600 dark:text-slate-400">
-            {listing.averageRating ? listing.averageRating.toFixed(1) : "N/A"}
+            {listing.stats?.averageRating ? listing.stats.averageRating.toFixed(1) : "N/A"}
           </span>
         </div>
       </div>

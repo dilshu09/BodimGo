@@ -162,6 +162,9 @@ const ListingSchema = new mongoose.Schema({
     deposit: { type: Number },
 
     status: { type: String, enum: ['Available', 'Reserved', 'Occupied', 'Maintenance'], default: 'Available' },
+    maintenanceIssue: { type: String },
+    maintenancePriority: { type: String, enum: ['Low', 'Medium', 'High', 'Urgent'], default: 'Medium' },
+    maintenanceReportedAt: { type: Date },
     availableFrom: { type: Date },
 
     features: {

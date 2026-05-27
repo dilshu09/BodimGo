@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { Plus, FileText, Calendar, User, Search, Loader, X, DollarSign } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import logo from '../../assets/logo.png';
 import ConfirmationModal from '../../components/ConfirmationModal';
 
@@ -116,7 +116,19 @@ export default function InvoicesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {invoices.map((parsedInvoice) => (
+                {invoices.map((parsedInvoice) => {
+                  const dueDateObj = new Date(parsedInvoice.dueDate);
+                  const diffDays = differenceInDays(dueDateObj, new Date());
+                  let timeHelper = null;
+                  
+                  if (parsedInvoice.status === 'overdue') {
+                    timeHelper = <span className="text-red-500 font-medium text-xs ml-2">({Math.abs(diffDays)} days passed)</span>;
+                  } else if (parsedInvoice.status === 'due') {
+                    if (diffDays === 0) timeHelper = <span className="text-amber-500 font-medium text-xs ml-2">(Due today)</span>;
+                    else if (diffDays > 0) timeHelper = <span className="text-slate-500 text-xs ml-2">(in {diffDays} days)</span>;
+                  }
+
+                  return (
                   <tr key={parsedInvoice._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                       {parsedInvoice.invoiceNumber}
@@ -140,12 +152,15 @@ export default function InvoicesPage() {
                       LKR {parsedInvoice.totalAmount.toLocaleString()}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                        ${parsedInvoice.status === 'paid' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
-                          parsedInvoice.status === 'overdue' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
-                            'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400'}`}>
-                        {parsedInvoice.status}
-                      </span>
+                      <div className="flex items-center">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
+                          ${parsedInvoice.status === 'paid' ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' :
+                            parsedInvoice.status === 'overdue' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400' :
+                              'bg-amber-100 dark:bg-amber-900/20 text-amber-800 dark:text-amber-400'}`}>
+                          {parsedInvoice.status}
+                        </span>
+                        {timeHelper}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
@@ -156,7 +171,7 @@ export default function InvoicesPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>
@@ -260,9 +275,9 @@ export default function InvoicesPage() {
       {/* View Invoice Modal */}
       {selectedInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 print-only border border-slate-200 dark:border-slate-800">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in zoom-in-95 duration-200 print-only border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col">
             {/* Header with Primary Color and Logo */}
-            <div className="bg-indigo-600 p-6 flex items-center justify-between text-white">
+            <div className="bg-indigo-600 p-6 flex items-center justify-between text-white shrink-0">
               <div className="flex items-center gap-3">
                 <div className="bg-white p-1.5 rounded-lg">
                   <img src={logo} alt="BodimGo" className="h-8 w-auto" />
@@ -280,7 +295,7 @@ export default function InvoicesPage() {
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
               {/* Date & Status Row */}
               <div className="flex justify-between items-center mb-6 text-sm">
                 <div>
@@ -341,6 +356,29 @@ export default function InvoicesPage() {
                   </tfoot>
                 </table>
               </div>
+
+              {/* Payment Proof Slip */}
+              {selectedInvoice.proofImageUrl && (
+                <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-300">
+                  <h5 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Uploaded Payment Proof</h5>
+                  <a
+                    href={selectedInvoice.proofImageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative group overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700 max-h-48 flex justify-center items-center bg-white dark:bg-slate-900 transition-all duration-300 cursor-pointer block"
+                    title="Click to view full image"
+                  >
+                    <img
+                      src={selectedInvoice.proofImageUrl}
+                      alt="Payment proof slip"
+                      className="max-h-48 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-semibold transition-opacity duration-200">
+                      View Full Image
+                    </div>
+                  </a>
+                </div>
+              )}
 
               {/* Footer Actions */}
               <div className="flex gap-3 mt-2 print-hidden">

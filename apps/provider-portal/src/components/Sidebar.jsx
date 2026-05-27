@@ -140,20 +140,12 @@ const Sidebar = () => {
             ]
         },
         {
-            id: 'onboarding',
-            label: 'Onboarding',
-            icon: UserPlus,
-            subItems: [
-                { label: 'Pending Approvals', path: '/approvals' },
-                { label: 'Agreements', path: '/agreements' },
-                { label: 'Manual Add', path: '/tenants/add' }
-            ]
-        },
-        {
             id: 'tenants',
             label: 'Tenants',
             icon: Users,
             subItems: [
+                { label: 'Pending Approvals', path: '/approvals' },
+                { label: 'Manual Add', path: '/tenants/add' },
                 { label: 'Active Tenants', path: '/tenants' },
                 { label: 'Move History', path: '/tenants/history' }
             ]
@@ -186,7 +178,6 @@ const Sidebar = () => {
 
     const [expandedSections, setExpandedSections] = useState({
         listings: true, // Default open
-        onboarding: false,
         finance: false
     });
 

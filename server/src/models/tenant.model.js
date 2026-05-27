@@ -42,7 +42,7 @@ const tenantSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Pending', 'Active', 'Moved Out', 'Evicted'],
+    enum: ['Pending', 'Active', 'Moved Out', 'Evicted', 'Rejected'],
     default: 'Pending'
   },
   agreementStatus: {

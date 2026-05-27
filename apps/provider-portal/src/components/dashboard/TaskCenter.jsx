@@ -41,7 +41,7 @@ const TaskCenter = ({ pendingApprovals = [], upcomingPayments = [], overdue = []
                 items={pendingApprovals}
                 icon={CheckCircle}
                 color="bg-blue-500 text-blue-600"
-                link="/bookings"
+                link="/approvals"
             />
             <TaskPanel
                 title="Payments Due Soon"

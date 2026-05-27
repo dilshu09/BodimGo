@@ -47,7 +47,7 @@ export const createReview = async (req, res) => {
         if (stats.length > 0) {
             await Listing.findByIdAndUpdate(listingId, {
                 stats: {
-                    averageRating: stats[0].averageRating.toFixed(1),
+                    averageRating: parseFloat(stats[0].averageRating.toFixed(1)),
                     reviewCount: stats[0].reviewCount
                 }
             });

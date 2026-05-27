@@ -351,8 +351,10 @@ export const getMyTenancy = async (req, res) => {
             return res.status(404).json({ success: false, message: "No active tenancy found" });
         }
 
-        // Sort in memory to be sure: Active > Pending
-        const activeTenant = tenants.find(t => t.status === 'Active') || tenants[0];
+        // Sort in memory to be sure: Active with assigned room > Active > Pending
+        const activeTenant = tenants.find(t => t.status === 'Active' && t.roomId !== 'Unassigned') ||
+                             tenants.find(t => t.status === 'Active') ||
+                             tenants[0];
 
         // Get Payments
         const Payment = (await import('../models/Payment.js')).default;
@@ -396,9 +398,20 @@ export const getMyTenancy = async (req, res) => {
 export const requestMoveOut = async (req, res) => {
     try {
         const userEmail = req.user.email;
-        const tenant = await Tenant.findOne({ email: userEmail, status: 'Active' })
+        // Prioritize active tenancy with a valid room assignment
+        let tenant = await Tenant.findOne({
+            email: userEmail,
+            status: 'Active',
+            roomId: { $ne: 'Unassigned', $exists: true }
+        })
             .populate('listingId', 'title')
             .populate('providerId', 'name');
+
+        if (!tenant) {
+            tenant = await Tenant.findOne({ email: userEmail, status: 'Active' })
+                .populate('listingId', 'title')
+                .populate('providerId', 'name');
+        }
 
         if (!tenant) {
             return res.status(404).json({ success: false, message: "No active tenancy found" });
@@ -433,6 +446,153 @@ export const requestMoveOut = async (req, res) => {
 
     } catch (err) {
         console.error("Move Out Request Error:", err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+};
+
+// @desc    Send manual payment reminder to tenant
+// @route   POST /api/tenants/:id/remind
+// @access  Private (Provider)
+export const sendManualReminder = async (req, res) => {
+    try {
+        const tenant = await Tenant.findOne({ _id: req.params.id, providerId: req.user._id })
+            .populate('listingId', 'title');
+
+        if (!tenant) {
+            return res.status(404).json({ success: false, message: "Tenant not found" });
+        }
+
+        const { sendEmail } = await import('../utils/emailService.js');
+        const Notification = (await import('../models/Notification.js')).default;
+        const User = (await import('../models/User.js')).default;
+        const io = req.app.get('socketio');
+
+        // Email to Tenant
+        if (tenant.email) {
+            const html = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; padding: 20px; border-radius: 12px;">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <span style="font-size: 48px;">🛎️</span>
+                    <h2 style="color: #4F46E5; margin-top: 10px;">Payment Reminder</h2>
+                </div>
+                <p>Hi <strong>${tenant.name}</strong>,</p>
+                <p>This is a polite reminder from your provider regarding the rent payment for <strong>${tenant.listingId?.title || 'your room'}</strong>.</p>
+                <p style="color: #475569; line-height: 1.6;">Please ensure your payment of Rs. ${tenant.rentAmount} is completed as soon as possible.</p>
+                <div style="margin: 35px 0; text-align: center;">
+                    <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/my-boarding" style="background-color: #4F46E5; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View Dashboard & Pay</a>
+                </div>
+                </div>
+            `;
+            await sendEmail({
+                to: tenant.email,
+                subject: `Reminder: Rent Payment for ${tenant.listingId?.title}`,
+                html
+            });
+        }
+
+        // Notification to Tenant
+        if (tenant.email) {
+            const seeker = await User.findOne({ email: tenant.email });
+            if (seeker) {
+                const notification = await Notification.create({
+                    recipient: seeker._id,
+                    type: 'payment_reminder',
+                    title: 'Manual Payment Reminder',
+                    message: `Your provider has sent a reminder for your rent payment of Rs. ${tenant.rentAmount}.`,
+                    link: '/my-boarding'
+                });
+                io.to(seeker._id.toString()).emit('new-notification', notification);
+            }
+        }
+
+        res.status(200).json({ success: true, message: "Reminder sent successfully" });
+    } catch (err) {
+        console.error("Manual Reminder Error:", err);
+        res.status(500).json({ success: false, message: 'Server Error', error: err.message });
+    }
+};
+
+// @desc    Report Room Maintenance (Seeker initiated)
+// @route   POST /api/tenants/maintenance
+// @access  Private (Seeker)
+export const reportMaintenance = async (req, res) => {
+    try {
+        const { issue, priority } = req.body;
+        if (!issue || !issue.trim()) {
+            return res.status(400).json({ success: false, message: "Issue description is required" });
+        }
+
+        const userEmail = req.user.email;
+        
+        // Prioritize active tenancy with a valid room assignment
+        let tenant = await Tenant.findOne({
+            email: userEmail,
+            status: 'Active',
+            roomId: { $ne: 'Unassigned', $exists: true }
+        });
+
+        if (!tenant) {
+            tenant = await Tenant.findOne({ email: userEmail, status: 'Active' });
+        }
+
+        if (!tenant) {
+            return res.status(404).json({ success: false, message: "No active tenancy found" });
+        }
+
+        if (!tenant.roomId || tenant.roomId === 'Unassigned') {
+            return res.status(400).json({ success: false, message: "No assigned room found for maintenance." });
+        }
+
+        // Find the Listing document containing the room
+        const Listing = (await import('../models/Listing.js')).default;
+        const listing = await Listing.findOne({
+            "rooms._id": tenant.roomId
+        });
+
+        if (!listing) {
+            return res.status(404).json({ success: false, message: "Listing containing your room was not found." });
+        }
+
+        // Update the specific room's status and details
+        const roomIndex = listing.rooms.findIndex(r => r._id.toString() === tenant.roomId.toString());
+        if (roomIndex === -1) {
+            return res.status(404).json({ success: false, message: "Room not found in listing." });
+        }
+
+        listing.rooms[roomIndex].status = 'Maintenance';
+        listing.rooms[roomIndex].maintenanceIssue = issue;
+        listing.rooms[roomIndex].maintenancePriority = priority || 'Medium';
+        listing.rooms[roomIndex].maintenanceReportedAt = new Date();
+
+        await listing.save();
+
+        // Create a notification for the Provider
+        try {
+            const { createNotification } = await import('./notification.controller.js');
+            const io = req.app.get('socketio');
+
+            const notification = await createNotification({
+                recipient: tenant.providerId,
+                type: 'maintenance_request',
+                title: 'Maintenance Request Raised',
+                message: `Tenant ${tenant.name} reported a maintenance issue in room ${listing.rooms[roomIndex].name}: "${issue}"`,
+                data: { roomId: tenant.roomId }
+            });
+
+            if (io && notification) {
+                io.to(tenant.providerId.toString()).emit('new-notification', notification);
+            }
+        } catch (notifErr) {
+            console.error("Failed to notify provider about maintenance:", notifErr);
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Maintenance request submitted successfully"
+        });
+
+    } catch (err) {
+        console.error("Report Maintenance Error:", err);
         res.status(500).json({ success: false, message: 'Server Error', error: err.message });
     }
 };

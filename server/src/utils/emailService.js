@@ -166,3 +166,70 @@ export const sendBookingAcceptedEmail = async (seekerEmail, seekerName, bookingD
     html
   });
 };
+
+export const sendPaymentReminderEmail = async (tenantEmail, tenantName, invoiceDetails, daysLeft) => {
+  const isToday = daysLeft === 0;
+  const timeText = isToday ? "is due today!" : `is due in ${daysLeft} days.`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #eee; padding: 20px; border-radius: 12px;">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <span style="font-size: 48px;">📅</span>
+        <h2 style="color: #4F46E5; margin-top: 10px;">Payment Reminder</h2>
+      </div>
+      
+      <p>Hi <strong>${tenantName}</strong>,</p>
+      <p>This is a friendly reminder that your payment for <strong>${invoiceDetails.listingTitle}</strong> ${timeText}</p>
+      
+      <div style="background-color: #f8fafc; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #e2e8f0;">
+        <p style="margin: 8px 0;"><strong>Invoice #:</strong> ${invoiceDetails.invoiceNumber}</p>
+        <p style="margin: 8px 0;"><strong>Amount Due:</strong> Rs. ${invoiceDetails.amount.toLocaleString()}</p>
+        <p style="margin: 8px 0;"><strong>Due Date:</strong> ${new Date(invoiceDetails.dueDate).toLocaleDateString()}</p>
+      </div>
+
+      <p style="color: #475569; line-height: 1.6;">Please ensure your payment is completed on time to avoid any late fees or disruptions.</p>
+
+      <div style="margin: 35px 0; text-align: center;">
+        <a href="${process.env.CLIENT_URL}/my-boarding" style="background-color: #4F46E5; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">View Invoice & Pay</a>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: tenantEmail,
+    subject: `Reminder: Payment Due ${isToday ? 'Today' : `in ${daysLeft} days`} - ${invoiceDetails.invoiceNumber}`,
+    html
+  });
+};
+
+export const sendOverdueNoticeEmail = async (tenantEmail, tenantName, invoiceDetails) => {
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; border: 1px solid #fee2e2; padding: 20px; border-radius: 12px;">
+      <div style="text-align: center; margin-bottom: 25px;">
+        <span style="font-size: 48px;">⚠️</span>
+        <h2 style="color: #ef4444; margin-top: 10px;">Payment Overdue</h2>
+      </div>
+      
+      <p>Hi <strong>${tenantName}</strong>,</p>
+      <p>Your payment for <strong>${invoiceDetails.listingTitle}</strong> is now <strong style="color: #ef4444;">overdue</strong>.</p>
+      
+      <div style="background-color: #fef2f2; padding: 20px; border-radius: 12px; margin: 25px 0; border: 1px solid #fecaca;">
+        <p style="margin: 8px 0;"><strong>Invoice #:</strong> ${invoiceDetails.invoiceNumber}</p>
+        <p style="margin: 8px 0;"><strong>Amount Due:</strong> Rs. ${invoiceDetails.amount.toLocaleString()}</p>
+        <p style="margin: 8px 0;"><strong>Original Due Date:</strong> ${new Date(invoiceDetails.dueDate).toLocaleDateString()}</p>
+      </div>
+
+      <p style="color: #475569; line-height: 1.6;">Please complete your payment immediately to keep your account in good standing and avoid further penalties or eviction procedures.</p>
+
+      <div style="margin: 35px 0; text-align: center;">
+        <a href="${process.env.CLIENT_URL}/my-boarding" style="background-color: #ef4444; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Pay Now</a>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: tenantEmail,
+    subject: `URGENT: Payment Overdue - ${invoiceDetails.invoiceNumber}`,
+    html
+  });
+};

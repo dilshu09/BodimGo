@@ -33,6 +33,7 @@ import invoiceRoutes from "./routes/invoice.routes.js";
 import expenseRoutes from "./routes/expense.routes.js";
 import financeRoutes from "./routes/finance.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
+import { startCronJobs } from "./services/cronService.js";
 
 import morgan from 'morgan';
 import fs from 'fs';
@@ -61,6 +62,7 @@ const io = new Server(httpServer, {
     credentials: true,
   },
 });
+app.set('socketio', io);
 
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/bodimgo";
@@ -132,6 +134,10 @@ mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log("✅ MongoDB Connected");
+    
+    // Start Cron Jobs
+    startCronJobs();
+
     httpServer.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
