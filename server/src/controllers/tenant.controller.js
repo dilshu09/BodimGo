@@ -365,6 +365,16 @@ export const getMyTenancy = async (req, res) => {
 
         const tenantObj = activeTenant.toObject();
         
+        // Compute currentMonth status
+        const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+        const lastPayment = payments.find(p => p.createdAt >= startOfMonth);
+        
+        tenantObj.currentMonth = {
+            paid: lastPayment ? lastPayment.status === 'completed' : false,
+            status: lastPayment ? lastPayment.status : 'unpaid',
+            date: lastPayment ? lastPayment.createdAt : null
+        };
+        
         // Resolve Room Name
         if (tenantObj.listingId && tenantObj.listingId.rooms && tenantObj.roomId !== 'Unassigned') {
             const room = tenantObj.listingId.rooms.find(r => 

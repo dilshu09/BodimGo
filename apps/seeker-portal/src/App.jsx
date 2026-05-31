@@ -10,6 +10,8 @@ import Wishlist from './pages/Wishlist';
 import MyBookings from './pages/MyBookings';
 import MyBoarding from './pages/MyBoarding';
 import MyViewings from './pages/MyViewings';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/bookings" element={<MyBookings />} />
         <Route path="/my-boarding" element={<MyBoarding />} />
         <Route path="/wishlist" element={<Wishlist />} />

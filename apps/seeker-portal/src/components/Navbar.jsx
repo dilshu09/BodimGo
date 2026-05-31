@@ -214,9 +214,6 @@ const Navbar = () => {
                         )}
                     </div>
 
-                    <a href="http://localhost:5175" className="text-sm font-medium hover:bg-neutral-100 dark:hover:bg-slate-800 px-4 py-2 rounded-full transition-colors hidden md:block dark:text-slate-200">
-                        Switch to Hosting
-                    </a>
                     <div className="relative" ref={profileRef}>
                         <button
                             onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -244,7 +241,6 @@ const Navbar = () => {
                                             <Link to="/login" onClick={() => setShowProfileMenu(false)} className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Log in</Link>
                                         </div>
                                         <div className="py-2">
-                                            <a href="http://localhost:5175" className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Host your home</a>
                                             <Link to="#" onClick={() => setShowProfileMenu(false)} className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Help Center</Link>
                                         </div>
                                     </>
@@ -275,7 +271,6 @@ const Navbar = () => {
                                         )}
 
                                         <div className="py-2">
-                                            <a href="http://localhost:5175" className="block px-4 py-3 text-neutral-600 dark:text-slate-400 hover:bg-neutral-50 dark:hover:bg-slate-800">Host your home</a>
                                             <button
                                                 onClick={() => {
                                                     setShowProfileMenu(false);

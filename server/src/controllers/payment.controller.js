@@ -526,3 +526,172 @@ export const submitPaymentProof = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Create Stripe Payment Intent for Rent
+// @route   POST /api/payments/rent/create-intent
+// @access  Private (Seeker)
+export const createRentPaymentIntent = async (req, res) => {
+  try {
+    const Tenant = (await import('../models/tenant.model.js')).default;
+    const Invoice = (await import('../models/Invoice.js')).default;
+
+    // Find active tenancy to identify provider, prioritizing valid room assignments
+    let tenant = await Tenant.findOne({
+      email: req.user.email,
+      status: 'Active',
+      roomId: { $ne: 'Unassigned', $exists: true }
+    });
+
+    if (!tenant) {
+      tenant = await Tenant.findOne({
+        email: req.user.email,
+        status: { $in: ['Active', 'Pending'] }
+      });
+    }
+
+    if (!tenant) {
+      return res.status(404).json({ message: 'No active tenancy found.' });
+    }
+
+    const currentMonthStr = new Date().toISOString().slice(0, 7); // Format YYYY-MM
+    let invoice = await Invoice.findOne({
+      tenant: tenant._id,
+      status: { $in: ['due', 'overdue', 'draft'] }
+    }).sort({ createdAt: -1 });
+
+    if (!invoice) {
+      // If no invoice is found, auto-generate one for this amount and current month
+      invoice = await Invoice.create({
+        tenant: tenant._id,
+        provider: tenant.providerId,
+        invoiceNumber: `INV-${Date.now()}`,
+        month: currentMonthStr,
+        dueDate: new Date(),
+        items: [{ description: `Rent Payment for ${new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}`, amount: tenant.rentAmount }],
+        totalAmount: tenant.rentAmount,
+        status: 'due'
+      });
+    }
+
+    // Amount in cents
+    const amount = Math.round(invoice.totalAmount * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'lkr',
+      metadata: {
+        tenantId: tenant._id.toString(),
+        invoiceId: invoice._id.toString(),
+        userId: req.user._id.toString()
+      },
+      payment_method_types: ['card'],
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      amount: invoice.totalAmount,
+      invoiceNumber: invoice.invoiceNumber
+    });
+
+  } catch (error) {
+    console.error('Create Rent Payment Intent Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Confirm Rent Payment
+// @route   POST /api/payments/rent/confirm
+// @access  Private (Seeker)
+export const confirmRentPayment = async (req, res) => {
+  const { paymentIntentId } = req.body;
+
+  try {
+    // Verify with Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === 'succeeded') {
+      const { tenantId, invoiceId } = paymentIntent.metadata;
+
+      const Tenant = (await import('../models/tenant.model.js')).default;
+      const Invoice = (await import('../models/Invoice.js')).default;
+      const User = (await import('../models/User.js')).default;
+
+      const tenant = await Tenant.findById(tenantId).populate('listingId');
+      const invoice = await Invoice.findById(invoiceId);
+
+      if (!invoice || !tenant) {
+        return res.status(404).json({ message: 'Invoice or tenancy not found' });
+      }
+
+      // Mark invoice as paid
+      invoice.status = 'paid';
+      invoice.paidAmount = paymentIntent.amount / 100;
+      invoice.paidAt = Date.now();
+      await invoice.save();
+
+      // Create Payment Record
+      const newPayment = await Payment.create({
+        payer: req.user._id,
+        payee: tenant.providerId,
+        invoice: invoice._id,
+        amount: paymentIntent.amount / 100,
+        method: 'stripe',
+        status: 'completed',
+        stripePaymentId: paymentIntent.id
+      });
+
+      // Prepare Invoice Details for Email
+      const providerUser = await User.findById(tenant.providerId);
+
+      const invoiceDetails = {
+        invoiceNumber: invoice.invoiceNumber,
+        date: new Date(),
+        payerName: req.user.name,
+        payeeName: providerUser ? providerUser.name : "Property Provider",
+        listingTitle: tenant.listingId ? tenant.listingId.title : "Property",
+        items: invoice.items,
+        totalAmount: invoice.totalAmount
+      };
+
+      // Send to Tenant & Provider
+      try {
+        await sendInvoiceEmail(req.user.email, invoiceDetails);
+        if (providerUser && providerUser.email) {
+          await sendInvoiceEmail(providerUser.email, invoiceDetails);
+        }
+      } catch (emailErr) {
+        console.error("Failed to send rent payment invoice email:", emailErr);
+      }
+
+      // Notify Provider
+      try {
+        const { createNotification } = await import('./notification.controller.js');
+        const io = req.app.get('socketio');
+        
+        const notification = await createNotification({
+          recipient: tenant.providerId,
+          type: 'rent_payment_received',
+          title: 'Rent Payment Received',
+          message: `Tenant ${tenant.name} paid LKR ${(paymentIntent.amount / 100).toLocaleString()} via Stripe.`,
+          data: { invoiceId: invoice._id }
+        });
+
+        if (io && notification) {
+          io.to(tenant.providerId.toString()).emit('new-notification', notification);
+        }
+      } catch (notifErr) {
+        console.error("Failed to create provider notification:", notifErr);
+      }
+
+      res.json({ success: true, message: 'Rent payment confirmed', data: newPayment });
+    } else {
+      res.status(400).json({ message: 'Payment not successful yet' });
+    }
+
+  } catch (error) {
+    console.error('Confirm Rent Payment Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+

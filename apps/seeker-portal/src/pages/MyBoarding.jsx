@@ -4,15 +4,21 @@ import {
     CreditCard, Upload, ExternalLink, LogOut, CheckCircle, AlertCircle, Wrench
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { loadStripe } from '@stripe/stripe-js';
+import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import ConfirmationModal from '../components/ConfirmationModal';
+
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const MyBoarding = () => {
     const [tenancy, setTenancy] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showPayModal, setShowPayModal] = useState(false);
+    const [showStripeModal, setShowStripeModal] = useState(false);
     const [isMoveOutModalOpen, setIsMoveOutModalOpen] = useState(false);
     const [file, setFile] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -156,6 +162,7 @@ const MyBoarding = () => {
     // "Rent for [Current Month]"
     const currentMonthName = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
     const isPaidCurrentMonth = tenancy.currentMonth?.paid;
+    const currentMonthStatus = tenancy.currentMonth?.status || 'unpaid';
 
     return (
         <div className="min-h-screen bg-neutral-50 dark:bg-slate-950 pt-20 pb-20 transition-colors duration-200">
@@ -253,29 +260,61 @@ const MyBoarding = () => {
                             <CreditCard size={18} className="text-neutral-400 dark:text-slate-500" /> Rent Status
                         </h2>
 
-                        <div className={`p-4 rounded-xl border mb-6 ${isPaidCurrentMonth ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'}`}>
+                        <div className={`p-4 rounded-xl border mb-6 ${
+                            isPaidCurrentMonth 
+                                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
+                                : currentMonthStatus === 'pending'
+                                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                                    : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                        }`}>
                             <div className="flex items-center gap-3 mb-2">
                                 {isPaidCurrentMonth ? (
                                     <CheckCircle className="text-green-600 dark:text-green-400" size={24} />
+                                ) : currentMonthStatus === 'pending' ? (
+                                    <AlertCircle className="text-amber-600 dark:text-amber-400" size={24} />
                                 ) : (
                                     <AlertCircle className="text-red-600 dark:text-red-400" size={24} />
                                 )}
-                                <span className={`font-bold ${isPaidCurrentMonth ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}`}>
+                                <span className={`font-bold ${
+                                    isPaidCurrentMonth 
+                                        ? 'text-green-800 dark:text-green-300' 
+                                        : currentMonthStatus === 'pending'
+                                            ? 'text-amber-800 dark:text-amber-300'
+                                            : 'text-red-800 dark:text-red-300'
+                                }`}>
                                     {currentMonthName}
                                 </span>
                             </div>
-                            <p className={`text-sm ${isPaidCurrentMonth ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                {isPaidCurrentMonth ? 'Rent Paid' : 'Payment Due'}
+                            <p className={`text-sm ${
+                                isPaidCurrentMonth 
+                                    ? 'text-green-600 dark:text-green-400' 
+                                    : currentMonthStatus === 'pending'
+                                        ? 'text-amber-600 dark:text-amber-400'
+                                        : 'text-red-600 dark:text-red-400'
+                            }`}>
+                                {isPaidCurrentMonth 
+                                    ? 'Rent Paid' 
+                                    : currentMonthStatus === 'pending'
+                                        ? 'Pending Verification'
+                                        : 'Payment Due'}
                             </p>
                         </div>
 
-                        {!isPaidCurrentMonth && (
-                            <button
-                                onClick={() => setShowPayModal(true)}
-                                className="w-full py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors flex items-center justify-center gap-2"
-                            >
-                                <Upload size={18} /> Upload Payment Slip
-                            </button>
+                        {(!isPaidCurrentMonth && currentMonthStatus !== 'pending') && (
+                            <div className="space-y-3">
+                                <button
+                                    onClick={() => setShowStripeModal(true)}
+                                    className="w-full py-3 bg-[#FF385C] hover:bg-[#E31C5F] text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                                >
+                                    <CreditCard size={18} /> Pay Direct via Card
+                                </button>
+                                <button
+                                    onClick={() => setShowPayModal(true)}
+                                    className="w-full py-3 border border-neutral-300 dark:border-slate-700 hover:bg-neutral-50 dark:hover:bg-slate-800 text-neutral-700 dark:text-slate-200 rounded-xl font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <Upload size={18} /> Upload Bank Slip
+                                </button>
+                            </div>
                         )}
 
                         <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-slate-800 flex flex-col gap-2">
@@ -400,6 +439,38 @@ const MyBoarding = () => {
                 </div>
             )}
 
+            {/* Stripe Direct Payment Modal */}
+            {showStripeModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 relative border border-transparent dark:border-slate-800 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                        <button
+                            onClick={() => setShowStripeModal(false)}
+                            className="absolute top-4 right-4 text-neutral-400 hover:text-black dark:hover:text-white transition-colors"
+                        >
+                            <LogOut size={20} className="rotate-180" />
+                        </button>
+                        <h3 className="text-xl font-bold mb-2 text-neutral-900 dark:text-white flex items-center gap-2">
+                            <CreditCard className="text-primary" /> Pay via Card
+                        </h3>
+                        <p className="text-neutral-500 dark:text-slate-400 mb-6 text-sm">
+                            Make a direct payment via Stripe for <span className="font-bold text-neutral-900 dark:text-white">{currentMonthName}</span>. Your rent will be confirmed paid instantly.
+                        </p>
+
+                        <Elements stripe={stripePromise}>
+                            <CardPaymentForm
+                                tenancy={tenancy}
+                                currentMonthName={currentMonthName}
+                                onClose={() => setShowStripeModal(false)}
+                                onSuccess={() => {
+                                    setShowStripeModal(false);
+                                    window.location.reload();
+                                }}
+                            />
+                        </Elements>
+                    </div>
+                </div>
+            )}
+
             {/* Maintenance Modal */}
             {showMaintenanceModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -473,6 +544,142 @@ const MyBoarding = () => {
                 onCancel={() => setIsMoveOutModalOpen(false)}
             />
         </div >
+    );
+};
+
+const CardPaymentForm = ({ tenancy, currentMonthName, onClose, onSuccess }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [processing, setProcessing] = useState(false);
+    const [clientSecret, setClientSecret] = useState('');
+    const [loadingSecret, setLoadingSecret] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchIntent = async () => {
+            try {
+                const res = await api.post('/payments/rent/create-intent');
+                setClientSecret(res.data.clientSecret);
+            } catch (err) {
+                console.error("Failed to create rent payment intent:", err);
+                setError(err.response?.data?.message || "Failed to initialize payment gateway.");
+                toast.error("Failed to load payment gateway");
+            } finally {
+                setLoadingSecret(false);
+            }
+        };
+        fetchIntent();
+    }, []);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        if (!stripe || !elements || !clientSecret) return;
+
+        setProcessing(true);
+        setError(null);
+
+        try {
+            const result = await stripe.confirmCardPayment(clientSecret, {
+                payment_method: {
+                    card: elements.getElement(CardElement),
+                    billing_details: {
+                        name: tenancy.name,
+                        email: tenancy.email
+                    },
+                },
+            });
+
+            if (result.error) {
+                setError(result.error.message);
+                toast.error(result.error.message);
+                setProcessing(false);
+            } else if (result.paymentIntent.status === 'succeeded') {
+                // Confirm on backend
+                try {
+                    await api.post('/payments/rent/confirm', {
+                        paymentIntentId: result.paymentIntent.id
+                    });
+                    toast.success("Rent payment successful!");
+                    onSuccess();
+                } catch (confirmError) {
+                    console.error("Backend payment confirmation failed:", confirmError);
+                    toast.error("Payment succeeded but failed to confirm in database. Please contact support.");
+                    setProcessing(false);
+                }
+            } else {
+                toast.error("Payment did not succeed. Please try again.");
+                setProcessing(false);
+            }
+        } catch (err) {
+            console.error("Stripe payment process error:", err);
+            setError(err.message);
+            toast.error("Payment processing error. Please try again.");
+            setProcessing(false);
+        }
+    };
+
+    if (loadingSecret) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
+                <p className="text-sm text-neutral-500 dark:text-slate-400">Loading payment gateway...</p>
+            </div>
+        );
+    }
+
+    if (error && !clientSecret) {
+        return (
+            <div className="text-center py-8">
+                <p className="text-red-500 text-sm mb-4">{error}</p>
+                <button
+                    onClick={onClose}
+                    className="px-4 py-2 bg-neutral-100 hover:bg-neutral-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-neutral-700 dark:text-slate-200 rounded-lg text-sm transition-colors"
+                >
+                    Close
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+            <div className="p-4 border border-neutral-200 dark:border-slate-750 bg-neutral-50 dark:bg-slate-850 rounded-xl">
+                <CardElement options={{
+                    style: {
+                        base: {
+                            fontSize: '16px',
+                            color: '#1e293b',
+                            fontFamily: 'Inter, sans-serif',
+                            '::placeholder': { color: '#94a3b8' },
+                        },
+                        invalid: { color: '#ef4444' },
+                    },
+                }} />
+            </div>
+            {error && <div className="text-red-500 text-xs font-medium">{error}</div>}
+            
+            <div className="flex gap-3 pt-2">
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 py-3 border border-neutral-200 dark:border-slate-700 text-neutral-700 dark:text-slate-200 rounded-xl font-bold hover:bg-neutral-50 dark:hover:bg-slate-800 transition-colors"
+                    disabled={processing}
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    disabled={!stripe || processing || !clientSecret}
+                    className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                    {processing ? (
+                        <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span> Processing...</>
+                    ) : (
+                        `Pay Rs ${tenancy.rentAmount.toLocaleString()}`
+                    )}
+                </button>
+            </div>
+        </form>
     );
 };
 

@@ -7,7 +7,9 @@ import {
     getPaymentStatus,
     getPaymentHistory,
     getPaymentStats,
-    recordManualPayment
+    recordManualPayment,
+    createRentPaymentIntent,
+    confirmRentPayment
 } from '../controllers/payment.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
@@ -15,6 +17,8 @@ const router = express.Router();
 
 router.post('/create-intent', protect, createPaymentIntent);
 router.post('/confirm', protect, confirmPayment);
+router.post('/rent/create-intent', protect, createRentPaymentIntent);
+router.post('/rent/confirm', protect, confirmRentPayment);
 router.post('/manual', protect, authorize('provider'), recordManualPayment);
 
 // Seeker Payment Proof
