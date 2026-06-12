@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import ConfirmationModal from '../components/ConfirmationModal';
-import { Calendar, MapPin, CreditCard, Clock, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, CreditCard, Clock, CheckCircle, XCircle, Trash2, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const MyBookings = () => {
@@ -81,7 +81,16 @@ const MyBookings = () => {
         <div className="min-h-screen bg-neutral-50 dark:bg-slate-950 transition-colors duration-200">
             <Navbar />
             <div className="max-w-5xl mx-auto px-4 py-8 pt-24">
-                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-8">My Bookings</h1>
+                <div className="flex items-center gap-3 mb-8">
+                    <Link
+                        to="/"
+                        className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-600 dark:text-slate-400 transition-colors"
+                        title="Back to Home"
+                    >
+                        <ArrowLeft size={24} />
+                    </Link>
+                    <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">My Bookings</h1>
+                </div>
 
                 {bookings.length === 0 ? (
                     <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-neutral-100 dark:border-slate-800 transition-colors">

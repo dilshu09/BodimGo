@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
     Home, User, Phone, Mail, MapPin, Calendar,
-    CreditCard, Upload, ExternalLink, LogOut, CheckCircle, AlertCircle, Wrench
+    CreditCard, Upload, ExternalLink, LogOut, CheckCircle, AlertCircle, Wrench, ArrowLeft
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { loadStripe } from '@stripe/stripe-js';
@@ -170,11 +171,20 @@ const MyBoarding = () => {
 
             {/* Header */}
             <div className="bg-white dark:bg-slate-900 border-b border-neutral-200 dark:border-slate-800 sticky top-20 z-10 px-4 md:px-8 py-4 flex justify-between items-center shadow-sm transition-colors">
-                <div>
-                    <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                        <Home className="text-primary" /> My Boarding Place
-                    </h1>
-                    <p className="text-sm text-neutral-500 dark:text-slate-400">Manage your stay and payments</p>
+                <div className="flex items-center gap-3">
+                    <Link
+                        to="/"
+                        className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-600 dark:text-slate-400 transition-colors"
+                        title="Back to Home"
+                    >
+                        <ArrowLeft size={24} />
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                            <Home className="text-primary" /> My Boarding Place
+                        </h1>
+                        <p className="text-sm text-neutral-500 dark:text-slate-400">Manage your stay and payments</p>
+                    </div>
                 </div>
                 <div>
                     <span className={`px-3 py-1 rounded-full text-xs font-bold border ${tenancy.status === 'Active' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800'}`}>

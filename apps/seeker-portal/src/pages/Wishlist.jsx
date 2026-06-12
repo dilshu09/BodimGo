@@ -1,5 +1,7 @@
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ListingCard from '../components/ListingCard';
 import ConfirmationModal from '../components/ConfirmationModal';
@@ -49,7 +51,16 @@ const Wishlist = () => {
             <div className="min-h-screen bg-white dark:bg-slate-950 pt-24 transition-colors duration-200">
                 <Navbar />
                 <div className="max-w-7xl mx-auto px-4 py-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-8">Wishlist</h1>
+                    <div className="flex items-center gap-3 mb-8">
+                        <Link
+                            to="/"
+                            className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-600 dark:text-slate-400 transition-colors"
+                            title="Back to Home"
+                        >
+                            <ArrowLeft size={24} />
+                        </Link>
+                        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Wishlist</h1>
+                    </div>
                     <div className="text-neutral-500 dark:text-slate-400">Loading...</div>
                 </div>
             </div>
@@ -60,7 +71,16 @@ const Wishlist = () => {
         <div className="min-h-screen bg-white dark:bg-slate-950 pt-24 transition-colors duration-200">
             <Navbar />
             <div className="max-w-7xl mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-8">Wishlist</h1>
+                <div className="flex items-center gap-3 mb-8">
+                    <Link
+                        to="/"
+                        className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-600 dark:text-slate-400 transition-colors"
+                        title="Back to Home"
+                    >
+                        <ArrowLeft size={24} />
+                    </Link>
+                    <h1 className="text-3xl font-bold text-neutral-900 dark:text-white">Wishlist</h1>
+                </div>
 
                 {wishlist.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Calendar, MapPin, Clock, MessageSquare, Loader2, Home } from "lucide-react";
+import { Calendar, MapPin, Clock, MessageSquare, Loader2, Home, ArrowLeft } from "lucide-react";
 import api from "../services/api";
 import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import Navbar from "../components/Navbar";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { SkeletonList } from "../components/Skeleton";
 
@@ -59,6 +60,7 @@ export default function MyViewings() {
 
     if (loading) return (
         <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50 dark:bg-slate-950 transition-colors duration-200">
+            <Navbar />
             <div className="max-w-5xl mx-auto">
                 <SkeletonList />
             </div>
@@ -67,10 +69,20 @@ export default function MyViewings() {
 
     return (
         <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50 dark:bg-slate-950 transition-colors duration-200">
+            <Navbar />
             <div className="max-w-5xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Viewings</h1>
-                    <p className="text-gray-600 dark:text-slate-400 mt-2">Track the status of your property viewing requests.</p>
+                <div className="flex items-start gap-3 mb-8">
+                    <Link
+                        to="/"
+                        className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-slate-800 text-neutral-600 dark:text-slate-400 transition-colors mt-1"
+                        title="Back to Home"
+                    >
+                        <ArrowLeft size={24} />
+                    </Link>
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Viewings</h1>
+                        <p className="text-gray-600 dark:text-slate-400 mt-2">Track the status of your property viewing requests.</p>
+                    </div>
                 </div>
 
                 {viewings.length === 0 ? (
