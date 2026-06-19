@@ -8,7 +8,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logo from '../../assets/logo.png';
 
-const API_URL = "http://localhost:5000/api"; // Adjust if needed
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api"; // Adjust if needed
 
 export default function TenantHistoryPage() {
   const [tenants, setTenants] = useState([]);

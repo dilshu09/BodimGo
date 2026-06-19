@@ -3,6 +3,8 @@ import { CheckCircle, Clock, FileText, ChevronRight, AlertCircle, Check, Trash2 
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function PendingApprovals() {
     const [tasks, setTasks] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
@@ -16,7 +18,7 @@ export default function PendingApprovals() {
         const fetchTasks = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const res = await fetch('http://localhost:5000/api/listings/pending-approvals', {
+                const res = await fetch(`${API_URL}/listings/pending-approvals`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
@@ -40,7 +42,7 @@ export default function PendingApprovals() {
         setLoadingPendingTenant(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/tenants', {
+            const res = await fetch(`${API_URL}/tenants`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -72,7 +74,7 @@ export default function PendingApprovals() {
         setActionLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:5000/api/tenants/${selectedPendingTenant._id}/status`, {
+            const res = await fetch(`${API_URL}/tenants/${selectedPendingTenant._id}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -86,7 +88,7 @@ export default function PendingApprovals() {
                 setSelectedTask(null);
                 setSelectedPendingTenant(null);
                 // Refresh tasks list
-                const taskRes = await fetch('http://localhost:5000/api/listings/pending-approvals', {
+                const taskRes = await fetch(`${API_URL}/listings/pending-approvals`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const taskData = await taskRes.json();
@@ -111,7 +113,7 @@ export default function PendingApprovals() {
         setActionLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`http://localhost:5000/api/tenants/${selectedPendingTenant._id}/status`, {
+            const res = await fetch(`${API_URL}/tenants/${selectedPendingTenant._id}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -125,7 +127,7 @@ export default function PendingApprovals() {
                 setSelectedTask(null);
                 setSelectedPendingTenant(null);
                 // Refresh tasks list
-                const taskRes = await fetch('http://localhost:5000/api/listings/pending-approvals', {
+                const taskRes = await fetch(`${API_URL}/listings/pending-approvals`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const taskData = await taskRes.json();

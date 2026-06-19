@@ -100,7 +100,7 @@ const Register = () => {
                             type="text"
                             required
                             className="w-full px-4 py-3 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-neutral-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-slate-500"
-                            placeholder="John Doe"
+                            placeholder="Kasun Perera"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         />
@@ -112,7 +112,7 @@ const Register = () => {
                             type="email"
                             required
                             className="w-full px-4 py-3 rounded-lg border border-neutral-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-neutral-900 dark:text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-slate-500"
-                            placeholder="john@example.com"
+                            placeholder="kasun@gmail.com"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         />

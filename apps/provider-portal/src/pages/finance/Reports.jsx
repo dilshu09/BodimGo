@@ -9,7 +9,7 @@ import { Download, Printer, Calendar } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 const COLORS = ['#FF385C', '#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function Reports() {

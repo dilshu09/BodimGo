@@ -13,7 +13,7 @@ import {
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
-const API_URL = "http://localhost:5000/api"; // Adjust if needed
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api"; // Adjust if needed
 
 export default function Inbox() {
     const [messages, setMessages] = useState([]);
