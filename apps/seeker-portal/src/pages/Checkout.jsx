@@ -7,8 +7,10 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { toast } from 'react-hot-toast';
 
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+// Initialize Stripe safely
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+    ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+    : null;
 
 const CheckoutForm = ({ booking, clientSecret }) => {
     const stripe = useStripe();
@@ -121,6 +123,22 @@ const Checkout = () => {
             toast.error(err.response?.data?.message || "Failed to load checkout");
         });
     }, [bookingId]);
+
+    if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
+        return (
+            <div className="min-h-screen bg-neutral-50 dark:bg-slate-950 pt-24 transition-colors duration-200">
+                <Navbar />
+                <div className="max-w-xl mx-auto px-4 py-12">
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-card border border-red-200 dark:border-red-900/50">
+                        <h1 className="text-2xl font-bold mb-4 text-red-500">Stripe Configuration Missing</h1>
+                        <p className="text-neutral-600 dark:text-slate-400">
+                            The Stripe publishable key is not configured on the hosting server. Please set the <code>VITE_STRIPE_PUBLISHABLE_KEY</code> environment variable in your Netlify site settings.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (!booking || !clientSecret) return <div className="p-10 text-center">Loading Checkout...</div>;
 

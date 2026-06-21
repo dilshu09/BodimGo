@@ -5,14 +5,9 @@ import {
     CreditCard, Upload, ExternalLink, LogOut, CheckCircle, AlertCircle, Wrench, ArrowLeft
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { loadStripe } from '@stripe/stripe-js';
-import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import ConfirmationModal from '../components/ConfirmationModal';
-
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const MyBoarding = () => {
     const [tenancy, setTenancy] = useState(null);

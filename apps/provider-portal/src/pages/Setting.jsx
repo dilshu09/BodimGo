@@ -6,7 +6,9 @@ import api from "../services/api";
 import { loadStripe } from '@stripe/stripe-js';
 import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 function SettingsPageContent() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -802,6 +804,22 @@ const CommissionPaymentForm = ({ amount, onClose, onSuccess }) => {
   const [clientSecret, setClientSecret] = useState('');
   const [loadingSecret, setLoadingSecret] = useState(true);
   const [error, setError] = useState(null);
+
+  if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-red-500 text-sm mb-4 font-medium">
+          Stripe publishable key is missing. Please set the <code className="bg-red-50 dark:bg-red-950/30 px-1.5 py-0.5 rounded text-red-600">VITE_STRIPE_PUBLISHABLE_KEY</code> environment variable in your Netlify settings.
+        </p>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-bold"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const fetchIntent = async () => {
