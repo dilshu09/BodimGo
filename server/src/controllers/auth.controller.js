@@ -46,15 +46,20 @@ export const register = async (req, res) => {
       await SeekerProfile.create({ user: user._id });
     }
 
+    let emailSent = true;
     try {
       await sendEmail(email, 'BodimGo Verification Code', `Your verification code is: ${otp}`);
     } catch (emailError) {
       console.error('Email send failed:', emailError);
+      emailSent = false;
     }
 
     res.status(201).json({
-      message: 'Registration successful. Please check your email.',
-      email: user.email
+      message: emailSent 
+        ? 'Registration successful. Please check your email.' 
+        : `Registration successful. (Dev Mode: verification code is ${otp})`,
+      email: user.email,
+      otp: emailSent ? undefined : otp
     });
 
   } catch (error) {
@@ -135,9 +140,20 @@ export const resendOtp = async (req, res) => {
     user.otpExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    await sendEmail(email, 'BodimGo Verification Code (Resent)', `Your new verification code is: ${otp}`);
+    let emailSent = true;
+    try {
+      await sendEmail(email, 'BodimGo Verification Code (Resent)', `Your new verification code is: ${otp}`);
+    } catch (emailError) {
+      console.error('Email send failed:', emailError);
+      emailSent = false;
+    }
 
-    res.json({ message: 'OTP resent successfully' });
+    res.json({ 
+      message: emailSent 
+        ? 'OTP resent successfully' 
+        : `OTP resent. (Dev Mode: new verification code is ${otp})`,
+      otp: emailSent ? undefined : otp
+    });
 
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -468,9 +484,20 @@ export const forgotPassword = async (req, res) => {
     user.otpExpires = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    await sendEmail(email, 'BodimGo Password Reset', `Your password reset code is: ${resetCode}`);
+    let emailSent = true;
+    try {
+      await sendEmail(email, 'BodimGo Password Reset', `Your password reset code is: ${resetCode}`);
+    } catch (emailError) {
+      console.error('Email send failed:', emailError);
+      emailSent = false;
+    }
 
-    res.json({ message: 'Password reset code sent to email' });
+    res.json({ 
+      message: emailSent 
+        ? 'Password reset code sent to email' 
+        : `Password reset code generated. (Dev Mode: code is ${resetCode})`,
+      otp: emailSent ? undefined : resetCode
+    });
 
   } catch (error) {
     res.status(500).json({ message: error.message });

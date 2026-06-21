@@ -55,6 +55,12 @@ const VerifyOtp = () => {
                     We sent a 6-digit code to <span className="font-medium text-neutral-800">{email}</span>
                 </p>
 
+                {location.state?.otp && (
+                    <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-sm rounded-xl text-left">
+                        <span className="font-bold">Presentation Notice:</span> Since Render blocks standard email SMTP ports by default, your verification code is: <code className="bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded font-bold text-amber-900 dark:text-amber-100 select-all">{location.state.otp}</code>
+                    </div>
+                )}
+
                 {error && (
                     <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm text-left">
                         {error}

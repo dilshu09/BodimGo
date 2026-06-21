@@ -42,6 +42,12 @@ const ResetPassword = () => {
                 <img src={logo} alt="BodimGo" className="h-12 w-auto mx-auto mb-4" />
                 <h1 className="text-xl font-bold text-neutral-800 mb-2">Set New Password</h1>
 
+                {location.state?.otp && (
+                    <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-sm rounded-xl text-left">
+                        <span className="font-bold">Presentation Notice:</span> Since Render blocks standard email SMTP ports by default, your password reset code is: <code className="bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded font-bold text-amber-900 dark:text-amber-100 select-all">{location.state.otp}</code>
+                    </div>
+                )}
+
                 {message && <div className="mb-4 p-3 bg-green-50 text-green-600 rounded-lg text-sm">{message}</div>}
                 {error && <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">{error}</div>}
 

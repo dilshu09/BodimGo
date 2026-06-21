@@ -66,11 +66,11 @@ const Register = () => {
         try {
             // Remove confirmPassword before sending to API
             const { confirmPassword, ...submitData } = formData;
-            await api.post('/auth/register', {
+            const res = await api.post('/auth/register', {
                 ...submitData,
                 role: 'provider'
             });
-            navigate('/verify', { state: { email: formData.email } });
+            navigate('/verify', { state: { email: formData.email, otp: res.data?.otp, message: res.data?.message } });
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
         } finally {

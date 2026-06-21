@@ -8,6 +8,7 @@ const ForgotPassword = () => {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [otp, setOtp] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -16,8 +17,11 @@ const ForgotPassword = () => {
         setMessage('');
 
         try {
-            await api.post('/auth/forgot-password', { email });
-            setMessage('Password reset code sent to your email.');
+            const res = await api.post('/auth/forgot-password', { email });
+            setMessage(res.data?.message || 'Password reset code sent to your email.');
+            if (res.data?.otp) {
+                setOtp(res.data.otp);
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send reset email');
         } finally {
@@ -54,7 +58,7 @@ const ForgotPassword = () => {
                 </form>
 
                 <div className="mt-6 text-sm">
-                    <Link to="/reset-password" state={{ email }} className="text-primary font-medium hover:underline">
+                    <Link to="/reset-password" state={{ email, otp }} className="text-primary font-medium hover:underline">
                         I have a code
                     </Link>
                 </div>

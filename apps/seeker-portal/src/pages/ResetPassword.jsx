@@ -46,6 +46,11 @@ const ResetPassword = () => {
                     <h1 className="text-2xl font-bold text-neutral-800 dark:text-white">Set New Password</h1>
                     <p className="text-neutral-500 dark:text-slate-400 text-sm mt-1">Enter code received on email and new password</p>
                 </div>
+                {location.state?.otp && (
+                    <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-250 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-sm rounded-2xl text-left">
+                        <span className="font-bold">Presentation Notice:</span> Since Render blocks standard email SMTP ports by default, your password reset code is: <code className="bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded font-bold text-amber-900 dark:text-amber-100 select-all">{location.state.otp}</code>
+                    </div>
+                )}
 
                 {message && (
                     <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-xl text-sm font-medium flex items-center border border-green-100 dark:border-green-800">

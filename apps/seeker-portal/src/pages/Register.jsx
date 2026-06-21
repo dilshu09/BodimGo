@@ -63,11 +63,11 @@ const Register = () => {
 
         try {
             const { confirmPassword, ...submitData } = formData;
-            await api.post('/auth/register', {
+            const res = await api.post('/auth/register', {
                 ...submitData,
                 role: 'seeker'
             });
-            navigate('/verify', { state: { email: formData.email } });
+            navigate('/verify', { state: { email: formData.email, otp: res.data?.otp, message: res.data?.message } });
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed');
         } finally {

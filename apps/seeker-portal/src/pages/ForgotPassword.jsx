@@ -17,11 +17,11 @@ const ForgotPassword = () => {
         setMessage('');
 
         try {
-            await api.post('/auth/forgot-password', { email });
-            setMessage('Password reset code sent to your email.');
+            const res = await api.post('/auth/forgot-password', { email });
+            setMessage(res.data?.message || 'Password reset code sent to your email.');
             // Automatically route to reset password page after 1.5 seconds, passing the email in state
             setTimeout(() => {
-                navigate('/reset-password', { state: { email } });
+                navigate('/reset-password', { state: { email, otp: res.data?.otp } });
             }, 1500);
         } catch (err) {
             setError(err.response?.data?.message || 'Failed to send reset email');
