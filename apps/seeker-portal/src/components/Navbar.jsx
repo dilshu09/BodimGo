@@ -236,12 +236,9 @@ const Navbar = () => {
                             <div className="absolute right-0 top-12 w-60 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-neutral-100 dark:border-slate-800 overflow-hidden z-50">
                                 {!user ? (
                                     <>
-                                        <div className="py-2 border-b border-neutral-100">
+                                        <div className="py-2">
                                             <Link to="/register" onClick={() => setShowProfileMenu(false)} className="block px-4 py-3 font-bold text-neutral-800 hover:bg-neutral-50">Sign up</Link>
                                             <Link to="/login" onClick={() => setShowProfileMenu(false)} className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Log in</Link>
-                                        </div>
-                                        <div className="py-2">
-                                            <Link to="#" onClick={() => setShowProfileMenu(false)} className="block px-4 py-3 text-neutral-600 hover:bg-neutral-50">Help Center</Link>
                                         </div>
                                     </>
                                 ) : (

@@ -25,9 +25,11 @@ export const createPaymentIntent = async (req, res) => {
     // Amount in cents (LKR usually supported, or USD)
     const amount = Math.round(booking.totalAmount * 100);
 
-    // Create a NEW PaymentIntent every time for now to avoid "succeeded" state issues on retry
-    // In production, you might want to reuse pending intents.
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Fetch provider's Stripe Connect profile
+    const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+    const providerProfile = await ProviderProfile.findOne({ user: booking.provider });
+
+    const paymentIntentOptions = {
       amount: amount,
       currency: 'lkr',
       metadata: {
@@ -35,7 +37,17 @@ export const createPaymentIntent = async (req, res) => {
         userId: req.user._id.toString()
       },
       payment_method_types: ['card'],
-    });
+    };
+
+    // If provider has connected their Stripe account and completed onboarding, split the payment (2% platform commission)
+    if (providerProfile && providerProfile.stripeAccountId && providerProfile.stripeOnboardingComplete) {
+      paymentIntentOptions.application_fee_amount = Math.round(amount * 0.02); // 2% platform fee
+      paymentIntentOptions.transfer_data = {
+        destination: providerProfile.stripeAccountId,
+      };
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
 
     res.json({
       clientSecret: paymentIntent.client_secret,
@@ -230,6 +242,19 @@ export const recordManualPayment = async (req, res) => {
       createdAt: paymentDate // Override timestamp for manual entry
     });
 
+    // Update Provider's unpaid commission debt (2% of payment amount)
+    try {
+      const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+      const providerProfile = await ProviderProfile.findOne({ user: req.user._id });
+      if (providerProfile) {
+        const commission = amount * 0.02;
+        providerProfile.unpaidCommission = (providerProfile.unpaidCommission || 0) + commission;
+        await providerProfile.save();
+      }
+    } catch (profileErr) {
+      console.error("Failed to update provider commission balance on manual payment:", profileErr);
+    }
+
     res.json({
       success: true,
       data: newPayment,
@@ -254,7 +279,23 @@ export const createConnectAccount = async (req, res) => {
       providerProfile = new ProviderProfile({ user: user._id });
     }
 
-    if (!providerProfile.stripeAccountId) {
+    let createNew = !providerProfile.stripeAccountId;
+
+    if (providerProfile.stripeAccountId) {
+      // Validate that the account exists on Stripe
+      try {
+        await stripe.accounts.retrieve(providerProfile.stripeAccountId);
+      } catch (stripeErr) {
+        if (stripeErr.message.includes('No such account') || stripeErr.message.includes('does not have access to account') || stripeErr.statusCode === 400) {
+          console.warn(`Stored Stripe account ${providerProfile.stripeAccountId} is invalid. Will create a new one.`);
+          createNew = true;
+        } else {
+          throw stripeErr;
+        }
+      }
+    }
+
+    if (createNew) {
       const account = await stripe.accounts.create({
         type: 'express',
         country: 'US', // Defaulting to US for simplicity, can make dynamic later or use 'standard'
@@ -266,6 +307,7 @@ export const createConnectAccount = async (req, res) => {
       });
 
       providerProfile.stripeAccountId = account.id;
+      providerProfile.stripeOnboardingComplete = false;
       await providerProfile.save();
     }
 
@@ -285,20 +327,58 @@ export const createConnectAccount = async (req, res) => {
 export const getAccountLink = async (req, res) => {
   try {
     const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
-    const providerProfile = await ProviderProfile.findOne({ user: req.user._id });
+    let providerProfile = await ProviderProfile.findOne({ user: req.user._id });
 
     if (!providerProfile || !providerProfile.stripeAccountId) {
       return res.status(400).json({ message: 'Stripe account not found' });
     }
 
-    const accountLink = await stripe.accountLinks.create({
-      account: providerProfile.stripeAccountId,
-      refresh_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/settings?stripe=refresh`,
-      return_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/settings?stripe=return`,
-      type: 'account_onboarding',
-    });
+    try {
+      const accountLink = await stripe.accountLinks.create({
+        account: providerProfile.stripeAccountId,
+        refresh_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/settings?stripe=refresh`,
+        return_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/settings?stripe=return`,
+        type: 'account_onboarding',
+      });
 
-    res.json({ url: accountLink.url });
+      res.json({ url: accountLink.url });
+    } catch (stripeErr) {
+      // If the account ID does not exist or access is revoked (e.g. Stripe API key changed/sandbox cleared)
+      if (stripeErr.message.includes('No such account') || stripeErr.message.includes('does not have access to account') || stripeErr.statusCode === 400) {
+        console.warn(`Stripe account ${providerProfile.stripeAccountId} is invalid or has access revoked. Resetting and creating a new one...`);
+        
+        // 1. Clear invalid account ID
+        providerProfile.stripeAccountId = undefined;
+        providerProfile.stripeOnboardingComplete = false;
+        await providerProfile.save();
+        
+        // 2. Create a new one
+        const account = await stripe.accounts.create({
+          type: 'express',
+          country: 'US',
+          email: req.user.email,
+          capabilities: {
+            card_payments: { requested: true },
+            transfers: { requested: true },
+          },
+        });
+        
+        providerProfile.stripeAccountId = account.id;
+        await providerProfile.save();
+        
+        // 3. Create account link with new ID
+        const accountLink = await stripe.accountLinks.create({
+          account: account.id,
+          refresh_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/settings?stripe=refresh`,
+          return_url: `${process.env.CLIENT_URL || 'http://localhost:5173'}/settings?stripe=return`,
+          type: 'account_onboarding',
+        });
+        
+        res.json({ url: accountLink.url });
+      } else {
+        throw stripeErr;
+      }
+    }
 
   } catch (error) {
     console.error('Stripe Link Error:', error);
@@ -321,7 +401,24 @@ export const getPaymentStatus = async (req, res) => {
       });
     }
 
-    const account = await stripe.accounts.retrieve(providerProfile.stripeAccountId);
+    let account;
+    try {
+      account = await stripe.accounts.retrieve(providerProfile.stripeAccountId);
+    } catch (stripeErr) {
+      // If the account ID does not exist or access is revoked, clear it in our DB
+      if (stripeErr.message.includes('No such account') || stripeErr.message.includes('does not have access to account') || stripeErr.statusCode === 400) {
+        console.warn(`Stripe account ${providerProfile.stripeAccountId} is invalid. Clearing from database.`);
+        providerProfile.stripeAccountId = undefined;
+        providerProfile.stripeOnboardingComplete = false;
+        await providerProfile.save();
+        return res.json({
+          stripeAccountId: null,
+          onboardingComplete: false,
+          detailsSubmitted: false
+        });
+      }
+      throw stripeErr;
+    }
 
     // Update local status if changed
     const isComplete = account.details_submitted && account.payouts_enabled;
@@ -576,7 +673,11 @@ export const createRentPaymentIntent = async (req, res) => {
     // Amount in cents
     const amount = Math.round(invoice.totalAmount * 100);
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Fetch provider's Stripe Connect profile
+    const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+    const providerProfile = await ProviderProfile.findOne({ user: tenant.providerId });
+
+    const paymentIntentOptions = {
       amount: amount,
       currency: 'lkr',
       metadata: {
@@ -585,7 +686,17 @@ export const createRentPaymentIntent = async (req, res) => {
         userId: req.user._id.toString()
       },
       payment_method_types: ['card'],
-    });
+    };
+
+    // If provider has connected their Stripe account and completed onboarding, split the payment (2% platform commission)
+    if (providerProfile && providerProfile.stripeAccountId && providerProfile.stripeOnboardingComplete) {
+      paymentIntentOptions.application_fee_amount = Math.round(amount * 0.02); // 2% platform fee
+      paymentIntentOptions.transfer_data = {
+        destination: providerProfile.stripeAccountId,
+      };
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentOptions);
 
     res.json({
       clientSecret: paymentIntent.client_secret,
@@ -691,6 +802,99 @@ export const confirmRentPayment = async (req, res) => {
 
   } catch (error) {
     console.error('Confirm Rent Payment Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Create Stripe Payment Intent to Pay Platform Commission Debt
+// @route   POST /api/payments/commission/create-intent
+// @access  Private (Provider)
+export const createCommissionPaymentIntent = async (req, res) => {
+  try {
+    const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+    const providerProfile = await ProviderProfile.findOne({ user: req.user._id });
+
+    if (!providerProfile || !providerProfile.unpaidCommission || providerProfile.unpaidCommission <= 0) {
+      return res.status(400).json({ message: 'No outstanding commission balance to pay.' });
+    }
+
+    // Amount in cents
+    const amount = Math.round(providerProfile.unpaidCommission * 100);
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: 'lkr',
+      metadata: {
+        paymentType: 'platform_commission_settlement',
+        providerId: req.user._id.toString(),
+        amount: providerProfile.unpaidCommission.toString()
+      },
+      payment_method_types: ['card'],
+    });
+
+    res.json({
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      amount: providerProfile.unpaidCommission
+    });
+
+  } catch (error) {
+    console.error('Create Commission Payment Intent Error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Confirm Platform Commission Repayment
+// @route   POST /api/payments/commission/confirm
+// @access  Private (Provider)
+export const confirmCommissionPayment = async (req, res) => {
+  const { paymentIntentId } = req.body;
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === 'succeeded') {
+      const { providerId, amount } = paymentIntent.metadata;
+
+      const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+      const User = (await import('../models/User.js')).default;
+
+      const providerProfile = await ProviderProfile.findOne({ user: providerId });
+      const user = await User.findById(providerId);
+
+      if (!providerProfile || !user) {
+        return res.status(404).json({ message: 'Provider profile or user not found' });
+      }
+
+      // Reset unpaid balance
+      providerProfile.unpaidCommission = 0;
+      await providerProfile.save();
+
+      // Reset Warning Count & Unsuspend if suspended
+      if (user.status === 'suspended') {
+        user.status = 'active';
+      }
+      user.warningCount = 0;
+      await user.save();
+
+      // Create Payment Record (payer is provider, payee is platform admin - req.user is provider)
+      const Payment = (await import('../models/Payment.js')).default;
+      const newPayment = await Payment.create({
+        payer: req.user._id,
+        payee: null, // Representing platform admin
+        amount: parseFloat(amount),
+        method: 'stripe',
+        status: 'completed',
+        stripePaymentId: paymentIntent.id
+      });
+
+      res.json({ success: true, message: 'Commission payment confirmed successfully', data: newPayment });
+    } else {
+      res.status(400).json({ message: 'Payment not successful yet' });
+    }
+
+  } catch (error) {
+    console.error('Confirm Commission Payment Error:', error);
     res.status(500).json({ message: error.message });
   }
 };

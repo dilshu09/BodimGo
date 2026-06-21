@@ -80,6 +80,19 @@ export const markInvoiceAsPaid = async (req, res) => {
         invoice.paidAt = Date.now();
         await invoice.save();
 
+        // Update Provider's unpaid commission debt (2% of manual invoice amount)
+        try {
+            const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+            const providerProfile = await ProviderProfile.findOne({ user: req.user._id });
+            if (providerProfile) {
+                const commission = invoice.totalAmount * 0.02;
+                providerProfile.unpaidCommission = (providerProfile.unpaidCommission || 0) + commission;
+                await providerProfile.save();
+            }
+        } catch (profileErr) {
+            console.error("Failed to update provider commission balance on manual invoice pay:", profileErr);
+        }
+
         // Check if there is an associated pending payment slip for this invoice
         const Payment = (await import('../models/Payment.js')).default;
         const User = (await import('../models/User.js')).default;

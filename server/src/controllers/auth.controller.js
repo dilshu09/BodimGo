@@ -230,7 +230,8 @@ export const getProfile = async (req, res) => {
           bio: providerProfile.bio, // Using 'bio' as Address/Desc based on UI
           payoutSettings: providerProfile.payoutSettings,
           stripeAccountId: providerProfile.stripeAccountId,
-          stripeOnboardingComplete: providerProfile.stripeOnboardingComplete
+          stripeOnboardingComplete: providerProfile.stripeOnboardingComplete,
+          unpaidCommission: providerProfile.unpaidCommission || 0
         };
       }
     }
@@ -299,7 +300,8 @@ export const updateProfile = async (req, res) => {
         ...updatedProfile,
         businessName: providerProfile.businessName,
         bio: providerProfile.bio,
-        payoutSettings: providerProfile.payoutSettings
+        payoutSettings: providerProfile.payoutSettings,
+        unpaidCommission: providerProfile.unpaidCommission || 0
       };
     }
 

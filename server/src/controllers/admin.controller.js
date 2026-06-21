@@ -217,14 +217,14 @@ export const getDashboardStats = async (req, res) => {
         { $match: { paymentStatus: 'paid' } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } }
       ]);
-      const totalRev = (totalRevResult.length > 0 ? totalRevResult[0].total : 0) * 0.05;
+      const totalRev = (totalRevResult.length > 0 ? totalRevResult[0].total : 0) * 0.02;
 
       // Revenue up to last month
       const prevRevResult = await Booking.aggregate([
         { $match: { paymentStatus: 'paid', createdAt: { $lt: monthAgo } } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } }
       ]);
-      const prevRev = (prevRevResult.length > 0 ? prevRevResult[0].total : 0) * 0.05;
+      const prevRev = (prevRevResult.length > 0 ? prevRevResult[0].total : 0) * 0.02;
 
       if (prevRev === 0) return totalRev > 0 ? 100 : 0;
       return Math.round(((totalRev - prevRev) / prevRev) * 100);
@@ -258,7 +258,7 @@ export const getDashboardStats = async (req, res) => {
       { $group: { _id: null, total: { $sum: "$totalAmount" } } }
     ]);
     const totalVolume = revenueResult.length > 0 ? revenueResult[0].total : 0;
-    const revenue = totalVolume * 0.05; // 5% Platform Commission
+    const revenue = totalVolume * 0.02; // 2% Platform Commission
     const revenueGrowth = await calculateRevenueGrowth();
 
 

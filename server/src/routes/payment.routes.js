@@ -9,7 +9,9 @@ import {
     getPaymentStats,
     recordManualPayment,
     createRentPaymentIntent,
-    confirmRentPayment
+    confirmRentPayment,
+    createCommissionPaymentIntent,
+    confirmCommissionPayment
 } from '../controllers/payment.controller.js';
 import { protect, authorize } from '../middleware/auth.middleware.js';
 
@@ -28,6 +30,10 @@ router.post('/proof', protect, (await import('../controllers/payment.controller.
 router.post('/connect/create-account', protect, authorize('provider'), createConnectAccount);
 router.post('/connect/onboarding-link', protect, authorize('provider'), getAccountLink);
 router.get('/connect/status', protect, authorize('provider'), getPaymentStatus);
+
+// Commission Payout Debt Clearing
+router.post('/commission/create-intent', protect, authorize('provider'), createCommissionPaymentIntent);
+router.post('/commission/confirm', protect, authorize('provider'), confirmCommissionPayment);
 
 // Analytics & History
 router.get('/history', protect, authorize('provider'), getPaymentHistory);

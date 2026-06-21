@@ -3,11 +3,17 @@ import { Lock, Bell, DollarSign, Shield, X, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import api from "../services/api";
+import { loadStripe } from '@stripe/stripe-js';
+import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
 
-export default function SettingsPage() {
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
+function SettingsPageContent() {
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [showRepayModal, setShowRepayModal] = useState(false);
 
   // Profile Form Data
   const [formData, setFormData] = useState({
@@ -19,7 +25,12 @@ export default function SettingsPage() {
     profileImage: "",
     stripeAccountId: "",
     stripeOnboardingComplete: false,
-    twoFactorEnabled: false
+    twoFactorEnabled: false,
+    bankName: "",
+    branchName: "",
+    accountHolderName: "",
+    accountNumber: "",
+    unpaidCommission: 0
   });
 
   // Password Form Data
@@ -55,7 +66,12 @@ export default function SettingsPage() {
         profileImage: data.profileImage || "",
         stripeAccountId: data.stripeAccountId || "",
         stripeOnboardingComplete: data.stripeOnboardingComplete || false,
-        twoFactorEnabled: data.twoFactorEnabled || false
+        twoFactorEnabled: data.twoFactorEnabled || false,
+        bankName: data.payoutSettings?.bankName || "",
+        branchName: data.payoutSettings?.branchName || "",
+        accountHolderName: data.payoutSettings?.accountHolderName || "",
+        accountNumber: data.payoutSettings?.accountNumber || "",
+        unpaidCommission: data.unpaidCommission || 0
       });
       setTwoFactorEnabled(data.twoFactorEnabled || false);
     } catch (error) {
@@ -579,6 +595,129 @@ export default function SettingsPage() {
                 )}
               </div>
             </div>
+
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <DollarSign size={20} className="text-primary" />
+                Direct Bank Transfer (Manual Payouts)
+              </h3>
+
+              <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-800/50 space-y-4">
+                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                  If Stripe is not active or supported in your region, provide your local bank details to receive manual payouts directly to your account.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      Bank Name
+                    </label>
+                    <input
+                      type="text"
+                      name="bankName"
+                      value={formData.bankName}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Commercial Bank of Ceylon"
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      Branch Name
+                    </label>
+                    <input
+                      type="text"
+                      name="branchName"
+                      value={formData.branchName}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Colombo 03"
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      Account Holder Name
+                    </label>
+                    <input
+                      type="text"
+                      name="accountHolderName"
+                      value={formData.accountHolderName}
+                      onChange={handleInputChange}
+                      placeholder="e.g. A. B. C. Perera"
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-900 dark:text-white mb-2">
+                      Account Number
+                    </label>
+                    <input
+                      type="text"
+                      name="accountNumber"
+                      value={formData.accountNumber}
+                      onChange={handleInputChange}
+                      placeholder="e.g. 10002345678"
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-primary bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={saveProfile}
+                    disabled={saving}
+                    className={`px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium shadow-md ${saving ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  >
+                    {saving ? 'Saving...' : 'Save Bank Details'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                <DollarSign size={20} className="text-primary" />
+                Unpaid Platform Commission
+              </h3>
+
+              <div className="p-6 border border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-800/50 space-y-4">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div>
+                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
+                      Accrued commission balance from manual payments (2%). If unpaid balance exceeds LKR 2,000, warnings will be sent, and exceeding LKR 5,000 results in temporary account suspension.
+                    </p>
+                    <div className="mt-3 flex items-baseline gap-2">
+                      <span className="text-2xl font-black text-slate-900 dark:text-white">LKR {formData.unpaidCommission.toLocaleString()}</span>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        formData.unpaidCommission >= 5000 
+                          ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' 
+                          : formData.unpaidCommission >= 2000 
+                            ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' 
+                            : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                      }`}>
+                        {formData.unpaidCommission >= 5000 
+                          ? 'Suspension Limit Reached' 
+                          : formData.unpaidCommission >= 2000 
+                            ? 'Warning Limit Reached' 
+                            : 'Good Standing'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {formData.unpaidCommission > 0 && (
+                    <button
+                      onClick={() => setShowRepayModal(true)}
+                      className="px-6 py-3 bg-primary text-white rounded-lg font-bold hover:bg-primary/90 transition-all shadow-md cursor-pointer"
+                    >
+                      Pay Commission Balance
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -624,6 +763,173 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Commission Repayment Modal */}
+      {showRepayModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 relative border border-transparent dark:border-slate-800 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setShowRepayModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-black dark:hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+            <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white flex items-center gap-2">
+              <DollarSign className="text-primary" /> Pay Commission
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-6 text-sm">
+              Repay your platform commission balance of <span className="font-bold text-slate-900 dark:text-white">LKR {formData.unpaidCommission.toLocaleString()}</span>. This will immediately restore your account standing.
+            </p>
+            <CommissionPaymentForm
+              amount={formData.unpaidCommission}
+              onClose={() => setShowRepayModal(false)}
+              onSuccess={() => {
+                setShowRepayModal(false);
+                fetchProfile();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+const CommissionPaymentForm = ({ amount, onClose, onSuccess }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [processing, setProcessing] = useState(false);
+  const [clientSecret, setClientSecret] = useState('');
+  const [loadingSecret, setLoadingSecret] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchIntent = async () => {
+      try {
+        const res = await api.post('/payments/commission/create-intent');
+        setClientSecret(res.data.clientSecret);
+      } catch (err) {
+        console.error("Failed to create commission payment intent:", err);
+        setError(err.response?.data?.message || "Failed to initialize payment gateway.");
+        toast.error("Failed to load payment gateway");
+      } finally {
+        setLoadingSecret(false);
+      }
+    };
+    fetchIntent();
+  }, []);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!stripe || !elements || !clientSecret) return;
+
+    setProcessing(true);
+    setError(null);
+
+    try {
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: elements.getElement(CardElement),
+        },
+      });
+
+      if (result.error) {
+        setError(result.error.message);
+        toast.error(result.error.message);
+        setProcessing(false);
+      } else if (result.paymentIntent.status === 'succeeded') {
+        try {
+          await api.post('/payments/commission/confirm', {
+            paymentIntentId: result.paymentIntent.id
+          });
+          toast.success("Platform commission paid successfully!");
+          onSuccess();
+        } catch (confirmError) {
+          console.error("Backend payment confirmation failed:", confirmError);
+          toast.error("Payment succeeded but database failed to update.");
+          setProcessing(false);
+        }
+      } else {
+        toast.error("Payment did not succeed.");
+        setProcessing(false);
+      }
+    } catch (err) {
+      console.error("Stripe payment error:", err);
+      setError(err.message);
+      toast.error("Payment processing error.");
+      setProcessing(false);
+    }
+  };
+
+  if (loadingSecret) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-3"></div>
+        <p className="text-sm text-slate-500">Loading payment gateway...</p>
+      </div>
+    );
+  }
+
+  if (error && !clientSecret) {
+    return (
+      <div className="text-center py-6">
+        <p className="text-red-500 text-sm mb-4">{error}</p>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-sm"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-4 border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-850 rounded-xl">
+        <CardElement options={{
+          style: {
+            base: {
+              fontSize: '16px',
+              color: '#0f172a',
+              fontFamily: 'Inter, sans-serif',
+              '::placeholder': { color: '#94a3b8' },
+            },
+            invalid: { color: '#ef4444' },
+          },
+        }} />
+      </div>
+      {error && <div className="text-red-500 text-xs font-medium">{error}</div>}
+      
+      <div className="flex gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          disabled={processing}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={!stripe || processing || !clientSecret}
+          className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {processing ? (
+            <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span> Processing...</>
+          ) : (
+            `Pay LKR ${amount.toLocaleString()}`
+          )}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default function SettingsPage() {
+  return (
+    <Elements stripe={stripePromise}>
+      <SettingsPageContent />
+    </Elements>
   );
 }

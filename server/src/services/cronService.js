@@ -121,5 +121,103 @@ export const startCronJobs = () => {
     }
   });
 
+  // Run daily check for unpaid provider platform commissions (at 01:00 AM)
+  cron.schedule('0 1 * * *', async () => {
+    console.log('🔄 Running daily provider commission check...');
+    try {
+      const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+      const User = (await import('../models/User.js')).default;
+      const Notification = (await import('../models/Notification.js')).default;
+      const { sendEmail } = await import('../utils/email.service.js');
+
+      // Find all provider profiles with unpaid commissions > 0
+      const profiles = await ProviderProfile.find({ unpaidCommission: { $gt: 0 } }).populate('user');
+
+      for (const profile of profiles) {
+        const user = profile.user;
+        if (!user) continue;
+
+        // Skip already suspended users
+        if (user.status === 'suspended') continue;
+
+        const debt = profile.unpaidCommission;
+
+        // 1. Suspension: Debt >= 5000 or Warning Count >= 2
+        if (debt >= 5000 || user.warningCount >= 2) {
+          console.log(`Suspending provider ${user.name} (${user.email}) due to unpaid commission debt of LKR ${debt}`);
+          user.status = 'suspended';
+          await user.save();
+
+          // Send Suspension Email
+          try {
+            await sendEmail(
+              user.email,
+              'URGENT: BodimGo Provider Account Suspended',
+              `Dear ${user.name},\n\nYour provider account has been temporarily suspended due to unpaid platform commission fees totaling LKR ${debt.toLocaleString()}.\n\nYour active listings have been hidden, and you will not be able to log in until the balance is paid.\n\nPlease log in to clear your balance via card payment to reactivate your account immediately.\n\nRegards,\nBodimGo Administration`
+            );
+          } catch (emailErr) {
+            console.error("Failed to send suspension email:", emailErr);
+          }
+
+          // Send notification
+          try {
+            const notification = await Notification.create({
+              recipient: user._id,
+              type: 'account_suspended',
+              title: 'Account Suspended',
+              message: `Your account has been suspended due to LKR ${debt.toLocaleString()} unpaid platform fees.`,
+              link: '/settings'
+            });
+            if (io) {
+              io.to(user._id.toString()).emit('new-notification', notification);
+            }
+          } catch (notifErr) {
+            console.error("Failed to create suspension notification:", notifErr);
+          }
+        }
+        // 2. Warning: Debt >= 2000
+        else if (debt >= 2000) {
+          console.log(`Warning provider ${user.name} (${user.email}) for unpaid commission debt of LKR ${debt}`);
+          user.warningCount = (user.warningCount || 0) + 1;
+          user.warningHistory.push({
+            reason: `Unpaid platform commission debt of LKR ${debt.toLocaleString()}`,
+            adminId: null, // System warning
+            date: new Date()
+          });
+          await user.save();
+
+          // Send Warning Email
+          try {
+            await sendEmail(
+              user.email,
+              'Warning: Unpaid Platform Commission Debt',
+              `Dear ${user.name},\n\nThis is a warning regarding your unpaid platform commission fees of LKR ${debt.toLocaleString()}.\n\nPlatform fees must be settled to keep your account in good standing. Failure to pay outstanding fees will result in temporary suspension of your account and removal of your active listings.\n\nPlease log in to your settings portal to clear this balance.\n\nRegards,\nBodimGo Administration`
+            );
+          } catch (emailErr) {
+            console.error("Failed to send warning email:", emailErr);
+          }
+
+          // Send notification
+          try {
+            const notification = await Notification.create({
+              recipient: user._id,
+              type: 'payment_reminder',
+              title: 'Warning: Unpaid Platform Fees',
+              message: `You have received a warning due to LKR ${debt.toLocaleString()} unpaid platform fees.`,
+              link: '/settings'
+            });
+            if (io) {
+              io.to(user._id.toString()).emit('new-notification', notification);
+            }
+          } catch (notifErr) {
+            console.error("Failed to create warning notification:", notifErr);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Error in daily commission check job:', err);
+    }
+  });
+
   console.log('✅ Cron Jobs Scheduled');
 };

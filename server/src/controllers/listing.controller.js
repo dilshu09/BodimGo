@@ -188,6 +188,26 @@ export const getListings = async (req, res) => {
       const facilitiesArray = facilities.split(',').map(f => f.trim());
       matchStage.facilities = { $all: facilitiesArray };
     }
+    // Determine sorting logic: default to 'best reviews on top' if no filters/sorting applied
+    const hasFilters = !!(
+      search ||
+      gender ||
+      minPrice ||
+      maxPrice ||
+      type ||
+      city ||
+      facilities ||
+      availableOnly === 'true'
+    );
+
+    let sortStage = { createdAt: -1 };
+    if (sortBy === 'rating') {
+      sortStage = { 'stats.averageRating': -1, 'stats.reviewCount': -1, createdAt: -1 };
+    } else if (sortBy === 'available') {
+      sortStage = { hasAvailability: -1, createdAt: -1 };
+    } else if (!hasFilters && !sortBy) {
+      sortStage = { 'stats.averageRating': -1, 'stats.reviewCount': -1, createdAt: -1 };
+    }
 
     const listings = await Listing.aggregate([
       { $match: matchStage },
@@ -204,11 +224,7 @@ export const getListings = async (req, res) => {
         }
       },
       {
-        $sort: sortBy === 'rating' 
-          ? { 'stats.averageRating': -1, createdAt: -1 } 
-          : sortBy === 'available'
-          ? { hasAvailability: -1, createdAt: -1 }
-          : { createdAt: -1 }
+        $sort: sortStage
       },
       // Lookup Provider (Populate replacement)
       {

@@ -26,6 +26,7 @@ const ProviderProfileSchema = new mongoose.Schema({
     accountHolderName: { type: String },
     accountNumber: { type: String }
   },
+  unpaidCommission: { type: Number, default: 0 },
 
   reputationScore: { type: Number, default: 0 },
   responseRate: { type: Number, default: 0 },
