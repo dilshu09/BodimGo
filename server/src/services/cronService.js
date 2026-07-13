@@ -128,7 +128,7 @@ export const startCronJobs = () => {
       const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
       const User = (await import('../models/User.js')).default;
       const Notification = (await import('../models/Notification.js')).default;
-      const { sendEmail } = await import('../utils/email.service.js');
+      const { sendEmail } = await import('../utils/emailService.js');
 
       // Find all provider profiles with unpaid commissions > 0
       const profiles = await ProviderProfile.find({ unpaidCommission: { $gt: 0 } }).populate('user');

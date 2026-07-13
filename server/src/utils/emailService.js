@@ -1,23 +1,53 @@
 
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
 dotenv.config();
 
+// Force Node.js to prefer IPv4 DNS resolution (resolves connection timeouts on cloud hosts like Render)
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder('ipv4first');
+}
+
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true, // Use SSL/TLS directly
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
 
-export const sendEmail = async ({ to, subject, html }) => {
+export const sendEmail = async (options, subject, textOrHtml) => {
   try {
+    let to, emailSubject, emailHtml, emailText;
+
+    if (options && typeof options === 'object' && !Array.isArray(options)) {
+      // Called with object format: sendEmail({ to, subject, html })
+      to = options.to;
+      emailSubject = options.subject;
+      emailHtml = options.html;
+      emailText = options.text;
+    } else {
+      // Called with positional format: sendEmail(to, subject, text/html)
+      to = options;
+      emailSubject = subject;
+      // If textOrHtml starts with HTML tags or is longer HTML text, treat as html
+      if (textOrHtml && (textOrHtml.trim().startsWith('<') || textOrHtml.includes('</'))) {
+        emailHtml = textOrHtml;
+      } else {
+        emailText = textOrHtml;
+      }
+    }
+
     const mailOptions = {
-      from: process.env.EMAIL_FROM,
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
       to,
-      subject,
-      html,
+      subject: emailSubject,
+      html: emailHtml,
+      text: emailText,
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -29,6 +59,7 @@ export const sendEmail = async ({ to, subject, html }) => {
     // In prod, you might want a retry queue
   }
 };
+
 
 export const sendBookingRequestEmail = async (providerEmail, providerName, bookingDetails, acceptLink, rejectLink) => {
   const html = `

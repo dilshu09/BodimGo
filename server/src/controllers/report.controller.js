@@ -1,6 +1,6 @@
 import Report from '../models/Report.js';
 import Listing from '../models/Listing.js';
-import { sendEmail } from '../utils/email.service.js';
+import { sendEmail } from '../utils/emailService.js';
 
 // @desc    Create a report
 // @route   POST /api/reports

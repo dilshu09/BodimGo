@@ -34,6 +34,8 @@ import expenseRoutes from "./routes/expense.routes.js";
 import financeRoutes from "./routes/finance.routes.js";
 import dashboardRoutes from "./routes/dashboard.routes.js";
 import { startCronJobs } from "./services/cronService.js";
+import { errorHandler } from "./middleware/error.middleware.js";
+
 
 import morgan from 'morgan';
 import fs from 'fs';
@@ -109,25 +111,16 @@ app.use("/api/invoices", invoiceRoutes);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/finance", financeRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-// Temporary Debug Route to Make Admin
-app.get("/make-admin/:email", async (req, res) => {
-  try {
-    const User = await import('./models/User.js').then(m => m.default);
-    const user = await User.findOne({ email: req.params.email });
-    if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.role = "admin";
-    await user.save();
-    res.json({ message: `Success! ${user.email} is now an ADMIN. Please Logout and Login again.` });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+
 
 // Basic Route
 app.get("/", (req, res) => {
   res.send("BodimGo API Server Running");
 });
+
+// Global Error Handler Middleware (must be registered after all routes)
+app.use(errorHandler);
 
 // Database Connection
 mongoose

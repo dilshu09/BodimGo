@@ -3,7 +3,7 @@ import ProviderProfile from '../models/ProviderProfile.js';
 import Listing from '../models/Listing.js';
 import Booking from '../models/Booking.js';
 import Payment from '../models/Payment.js';
-import { sendEmail } from '../utils/email.service.js';
+import { sendEmail } from '../utils/emailService.js';
 
 // @desc    Get all users (with filters)
 // @route   GET /api/admin/users

@@ -1,7 +1,7 @@
 import User from '../models/User.js';
 import ProviderProfile from '../models/ProviderProfile.js';
 import SeekerProfile from '../models/SeekerProfile.js';
-import { sendEmail } from '../utils/email.service.js';
+import { sendEmail } from '../utils/emailService.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
