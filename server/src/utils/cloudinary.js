@@ -20,6 +20,7 @@ const __dirname = path.dirname(__filename);
  * @returns {Promise<string>} Cloudinary Secure URL
  */
 export const uploadToCloudinary = async (localUrl) => {
+    let filePathToDelete = null;
     try {
         if (!localUrl || typeof localUrl !== 'string') return localUrl;
         if (localUrl.includes('cloudinary.com')) return localUrl; // Already uploaded
@@ -51,35 +52,26 @@ export const uploadToCloudinary = async (localUrl) => {
 
         console.log(`[Cloudinary] Processing file: ${filename}`);
         
+        let activePath = filePath;
         if (!fs.existsSync(filePath)) {
             // Check fallback for src/uploads
             const fallbackPath = path.resolve(__dirname, '../../src/uploads', filename);
             if(fs.existsSync(fallbackPath)) {
                  console.log(`[Cloudinary] Found at fallback: ${fallbackPath}`);
-                 const result = await cloudinary.uploader.upload(fallbackPath, {
-                    folder: 'bodimgo_listings',
-                    resource_type: 'auto'
-                });
-                try { fs.unlinkSync(fallbackPath); } catch (e) {}
-                return result.secure_url;
+                 activePath = fallbackPath;
+            } else {
+                 console.error(`[Cloudinary] File NOT found at: ${filePath}`);
+                 throw new Error(`File not found on server: ${filename}`);
             }
-
-            console.error(`[Cloudinary] File NOT found at: ${filePath}`);
-            throw new Error(`File not found on server: ${filename}`);
         }
 
+        filePathToDelete = activePath;
+
         // Upload
-        const result = await cloudinary.uploader.upload(filePath, {
+        const result = await cloudinary.uploader.upload(activePath, {
             folder: 'bodimgo_listings',
             resource_type: 'auto'
         });
-
-        // Delete local file to save space
-        try {
-            fs.unlinkSync(filePath);
-        } catch (err) {
-            console.error("Failed to delete local file:", err);
-        }
 
         return result.secure_url;
 
@@ -87,5 +79,15 @@ export const uploadToCloudinary = async (localUrl) => {
         console.error("Cloudinary Upload Error:", error);
         // THROW to fail the request, so user knows it failed!
         throw new Error(`Cloudinary Upload Failed: ${error.message}`);
+    } finally {
+        // ALWAYS delete the local file if one was determined to be uploaded
+        if (filePathToDelete && fs.existsSync(filePathToDelete)) {
+            try {
+                fs.unlinkSync(filePathToDelete);
+                console.log(`[Cloudinary] Local file cleaned up: ${filePathToDelete}`);
+            } catch (err) {
+                console.error("Failed to delete local file:", err);
+            }
+        }
     }
 };
