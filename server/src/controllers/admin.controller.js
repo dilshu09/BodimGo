@@ -211,20 +211,37 @@ export const getDashboardStats = async (req, res) => {
     const calculateRevenueGrowth = async () => {
       const now = new Date();
       const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      const Invoice = (await import('../models/Invoice.js')).default;
 
-      // Total Revenue (All Time)
-      const totalRevResult = await Booking.aggregate([
+      // Booking Revenue (All Time)
+      const bookingRevResult = await Booking.aggregate([
         { $match: { paymentStatus: 'paid' } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } }
       ]);
-      const totalRev = (totalRevResult.length > 0 ? totalRevResult[0].total : 0) * 0.02;
+      const bookingRev = (bookingRevResult.length > 0 ? bookingRevResult[0].total : 0) * 0.02;
 
-      // Revenue up to last month
-      const prevRevResult = await Booking.aggregate([
+      // Invoice Revenue (All Time)
+      const invoiceRevResult = await Invoice.aggregate([
+        { $match: { status: 'paid' } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+      ]);
+      const invoiceRev = (invoiceRevResult.length > 0 ? invoiceRevResult[0].total : 0) * 0.02;
+      const totalRev = bookingRev + invoiceRev;
+
+      // Booking Revenue up to last month
+      const prevBookingRevResult = await Booking.aggregate([
         { $match: { paymentStatus: 'paid', createdAt: { $lt: monthAgo } } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } }
       ]);
-      const prevRev = (prevRevResult.length > 0 ? prevRevResult[0].total : 0) * 0.02;
+      const prevBookingRev = (prevBookingRevResult.length > 0 ? prevBookingRevResult[0].total : 0) * 0.02;
+
+      // Invoice Revenue up to last month
+      const prevInvoiceRevResult = await Invoice.aggregate([
+        { $match: { status: 'paid', createdAt: { $lt: monthAgo } } },
+        { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+      ]);
+      const prevInvoiceRev = (prevInvoiceRevResult.length > 0 ? prevInvoiceRevResult[0].total : 0) * 0.02;
+      const prevRev = prevBookingRev + prevInvoiceRev;
 
       if (prevRev === 0) return totalRev > 0 ? 100 : 0;
       return Math.round(((totalRev - prevRev) / prevRev) * 100);
@@ -253,12 +270,20 @@ export const getDashboardStats = async (req, res) => {
     const pendingGrowth = hiddenListingsGrowth;
 
     // 2. Revenue
-    const revenueResult = await Booking.aggregate([
+    const Invoice = (await import('../models/Invoice.js')).default;
+    const bookingRevResult = await Booking.aggregate([
       { $match: { paymentStatus: 'paid' } },
       { $group: { _id: null, total: { $sum: "$totalAmount" } } }
     ]);
-    const totalVolume = revenueResult.length > 0 ? revenueResult[0].total : 0;
-    const revenue = totalVolume * 0.02; // 2% Platform Commission
+    const bookingVolume = bookingRevResult.length > 0 ? bookingRevResult[0].total : 0;
+
+    const invoiceRevResult = await Invoice.aggregate([
+      { $match: { status: 'paid' } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+    ]);
+    const invoiceVolume = invoiceRevResult.length > 0 ? invoiceRevResult[0].total : 0;
+
+    const revenue = (bookingVolume + invoiceVolume) * 0.02; // 2% Platform Commission (Accrued)
     const revenueGrowth = await calculateRevenueGrowth();
 
 

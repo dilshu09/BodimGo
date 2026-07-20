@@ -399,7 +399,8 @@ const AddListing = () => {
 
         // Determine Final Status
         // Use statusOverride if provided (for Save Draft), otherwise default based on flagging
-        const finalStatus = statusOverride || (isFlagged ? 'hidden_by_audit' : 'active');
+        const statusVal = typeof statusOverride === 'string' ? statusOverride : null;
+        const finalStatus = statusVal || (isFlagged ? 'hidden_by_audit' : 'active');
 
         // Attach Audit Log if flagged
         if (isFlagged) {
@@ -511,7 +512,7 @@ const AddListing = () => {
                             {loading ? <Loader className="animate-spin" size={18} /> : <Save size={18} />}
                             Save Draft
                         </button>
-                        <button onClick={currentStep === 7 ? handlePublish : nextStep} disabled={loading || verifying} className={`btn-primary px-8 transition-all ${currentStep === 7 ? 'bg-green-600 hover:bg-green-700' : ''}`}>
+                        <button onClick={nextStep} disabled={loading || verifying} className={`btn-primary px-8 transition-all ${currentStep === 7 ? 'bg-green-600 hover:bg-green-700' : ''}`}>
                             {getNextButtonText()}
                         </button>
                     </div>

@@ -80,11 +80,11 @@ const Support = () => {
         },
         {
             question: "My listing was flagged/reported as fake.",
-            answer: "We take reports seriously. Please submit a 'Legal' ticket with your property ownership documents (Deed/Utility Bill). If verified, the flag will be removed immediately."
+            answer: "We take reports seriously. Please submit a 'Legal' ticket describing your property verification details. If the admin needs document verification, they will contact you directly with instructions on how to submit them."
         },
         {
             question: "How do I report a fake review or user?",
-            answer: "Navigate to the user's profile or the review section and click the 'Report' flag icon. Our safety team investigates all reports within 24 hours."
+            answer: "To report inappropriate listings, navigate to the listing detail page and click the 'Report' flag icon. For fake reviews or users, please submit a support ticket here with the 'General' category detailing the issue."
         },
         {
             question: "Why was my account suspended?",
