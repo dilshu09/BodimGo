@@ -157,10 +157,19 @@ const AdminUserManagement = () => {
     }
   };
 
-  const openViewModal = (user) => {
-    setSelectedUser(user);
-    setIsViewModalOpen(true);
+  const openViewModal = async (user) => {
     setOpenMenu(null);
+    const loadId = toast.loading("Loading details...");
+    try {
+      const res = await api.get(`/admin/users/${user._id}`);
+      setSelectedUser(res.data);
+      setIsViewModalOpen(true);
+      toast.dismiss(loadId);
+    } catch (err) {
+      console.error(err);
+      toast.dismiss(loadId);
+      toast.error("Failed to load user details");
+    }
   };
 
   const openEditModal = (user) => {
@@ -412,6 +421,35 @@ const AdminUserManagement = () => {
                 <label className="text-sm text-gray-500">Verified</label>
                 <p className="font-medium">{selectedUser.isVerified ? "Yes" : "No"}</p>
               </div>
+              {selectedUser.role === 'provider' && (
+                <div>
+                  <label className="text-sm text-gray-500 font-bold">Unpaid Platform Commission</label>
+                  <p className="font-bold text-red-600">LKR {selectedUser.unpaidCommission?.toLocaleString() || '0'}</p>
+                </div>
+              )}
+               {selectedUser.role === 'provider' && selectedUser.payoutSettings && (
+                <div className="border-t border-neutral-200 pt-3 mt-3 space-y-2">
+                  <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-wide">Payout Bank Details</h4>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-neutral-400 block font-semibold">Bank</span>
+                      <p className="font-bold text-neutral-800">{selectedUser.payoutSettings.bankName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 block font-semibold">Branch</span>
+                      <p className="font-bold text-neutral-800">{selectedUser.payoutSettings.branchName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 block font-semibold">Holder Name</span>
+                      <p className="font-bold text-neutral-800">{selectedUser.payoutSettings.accountHolderName || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-neutral-400 block font-semibold">Account Number</span>
+                      <p className="font-bold text-neutral-800 font-mono">{selectedUser.payoutSettings.accountNumber || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="text-sm text-gray-500">Joined Date</label>
                 <p className="font-medium">{getJoinDate(selectedUser.createdAt)}</p>

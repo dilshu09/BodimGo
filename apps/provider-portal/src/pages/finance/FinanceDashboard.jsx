@@ -17,10 +17,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 export default function FinanceDashboard() {
   const [statsData, setStatsData] = useState({
     currentMonthRevenue: 0,
+    currentMonthExpenses: 0,
+    currentMonthNetProfit: 0,
     totalRevenue: 0,
     totalExpenses: 0,
     netProfit: 0
   });
+  const [timePeriod, setTimePeriod] = useState('month');
   const [recentTransactions, setRecentTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
@@ -121,9 +124,9 @@ export default function FinanceDashboard() {
 
   const stats = [
     {
-      label: "Total Revenue (This Month)",
-      value: statsData.currentMonthRevenue.toLocaleString(),
-      change: "Current",
+      label: timePeriod === 'month' ? "Revenue (This Month)" : "Revenue (All Time)",
+      value: timePeriod === 'month' ? statsData.currentMonthRevenue.toLocaleString() : statsData.totalRevenue.toLocaleString(),
+      change: timePeriod === 'month' ? "Current Month" : "All Time Total",
       icon: DollarSign,
       trend: "up",
       bg: "bg-blue-50",
@@ -132,9 +135,9 @@ export default function FinanceDashboard() {
       hoverText: "group-hover:text-blue-600",
     },
     {
-      label: "Total Expenses",
-      value: statsData.totalExpenses.toLocaleString(),
-      change: "All Time",
+      label: timePeriod === 'month' ? "Expenses (This Month)" : "Expenses (All Time)",
+      value: timePeriod === 'month' ? statsData.currentMonthExpenses.toLocaleString() : statsData.totalExpenses.toLocaleString(),
+      change: timePeriod === 'month' ? "Current Month" : "All Time Total",
       icon: TrendingDown,
       trend: "down",
       bg: "bg-red-50",
@@ -143,15 +146,15 @@ export default function FinanceDashboard() {
       hoverText: "group-hover:text-primary",
     },
     {
-      label: "Net Profit",
-      value: statsData.netProfit.toLocaleString(),
+      label: timePeriod === 'month' ? "Net Profit (This Month)" : "Net Profit (All Time)",
+      value: timePeriod === 'month' ? statsData.currentMonthNetProfit.toLocaleString() : statsData.netProfit.toLocaleString(),
       change: "Revenue - Expenses",
       icon: TrendingUp,
-      trend: statsData.netProfit >= 0 ? "up" : "down",
-      bg: statsData.netProfit >= 0 ? "bg-green-50" : "bg-red-50",
-      textColor: statsData.netProfit >= 0 ? "text-green-600" : "text-primary",
-      hoverBorder: statsData.netProfit >= 0 ? "hover:border-green-500" : "hover:border-primary",
-      hoverText: statsData.netProfit >= 0 ? "group-hover:text-green-600" : "group-hover:text-primary",
+      trend: (timePeriod === 'month' ? statsData.currentMonthNetProfit : statsData.netProfit) >= 0 ? "up" : "down",
+      bg: (timePeriod === 'month' ? statsData.currentMonthNetProfit : statsData.netProfit) >= 0 ? "bg-green-50" : "bg-red-50",
+      textColor: (timePeriod === 'month' ? statsData.currentMonthNetProfit : statsData.netProfit) >= 0 ? "text-green-600" : "text-primary",
+      hoverBorder: (timePeriod === 'month' ? statsData.currentMonthNetProfit : statsData.netProfit) >= 0 ? "hover:border-green-500" : "hover:border-primary",
+      hoverText: (timePeriod === 'month' ? statsData.currentMonthNetProfit : statsData.netProfit) >= 0 ? "group-hover:text-green-600" : "group-hover:text-primary",
     },
     {
       label: "Visual Breakdown",
@@ -170,19 +173,35 @@ export default function FinanceDashboard() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <div className="mb-8 flex justify-between items-center">
+      <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Finance Dashboard</h2>
           <p className="text-slate-600 dark:text-slate-400 mt-1">
             Your financial overview and transactions
           </p>
         </div>
-        <button
-          onClick={() => setShowExpenseModal(true)}
-          className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center gap-2 font-semibold transition-colors shadow-sm cursor-pointer"
-        >
-          <TrendingDown size={18} /> Record Expense
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 flex">
+            <button
+              onClick={() => setTimePeriod('month')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${timePeriod === 'month' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              This Month
+            </button>
+            <button
+              onClick={() => setTimePeriod('all')}
+              className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${timePeriod === 'all' ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+            >
+              All Time
+            </button>
+          </div>
+          <button
+            onClick={() => setShowExpenseModal(true)}
+            className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center gap-2 font-semibold transition-colors shadow-sm cursor-pointer"
+          >
+            <TrendingDown size={18} /> Record Expense
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

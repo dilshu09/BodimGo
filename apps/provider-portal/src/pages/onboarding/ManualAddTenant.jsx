@@ -38,7 +38,7 @@ const ManualAddTenant = () => {
             try {
                 // Fetch Published listings
                 const resListings = await api.get('/listings/my');
-                setListings(resListings.data.data.filter(l => l.status === 'Published') || []);
+                setListings(resListings.data.data || []);
 
                 // Fetch Agreement Templates
                 const resTemplates = await api.get('/agreements/templates');
@@ -163,7 +163,7 @@ const ManualAddTenant = () => {
                                         <option value="">-- Select Room --</option>
                                         {availableRooms.map(r => (
                                             <option key={r._id} value={r._id}>
-                                                {r.name} ({r.type}) - LKR {r.price}
+                                                {r.name} ({r.type}) - LKR {r.price} [{r.status || 'Available'}]
                                             </option>
                                         ))}
                                     </select>

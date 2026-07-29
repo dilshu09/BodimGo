@@ -1,4 +1,5 @@
 import Stripe from 'stripe';
+import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
 import User from '../models/User.js'; // Added User import
 import Payment from '../models/Payment.js';
@@ -512,11 +513,31 @@ export const getPaymentStats = async (req, res) => {
       }
     ]);
 
+    // Current Month Expenses
+    const currentMonthExpenses = await Expense.aggregate([
+      {
+        $match: {
+          provider: req.user._id,
+          date: { $gte: startOfMonth }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$amount' }
+        }
+      }
+    ]);
+
     const totalExpenseAmount = totalExpenses[0]?.total || 0;
+    const currentMonthExpenseAmount = currentMonthExpenses[0]?.total || 0;
     const totalRevenueAmount = totalRevenue[0]?.total || 0;
+    const currentMonthRevenueAmount = currentMonthRevenue[0]?.total || 0;
 
     res.json({
-      currentMonthRevenue: currentMonthRevenue[0]?.total || 0,
+      currentMonthRevenue: currentMonthRevenueAmount,
+      currentMonthExpenses: currentMonthExpenseAmount,
+      currentMonthNetProfit: currentMonthRevenueAmount - currentMonthExpenseAmount,
       totalRevenue: totalRevenueAmount,
       totalExpenses: totalExpenseAmount,
       netProfit: totalRevenueAmount - totalExpenseAmount
@@ -851,47 +872,60 @@ export const confirmCommissionPayment = async (req, res) => {
   const { paymentIntentId } = req.body;
 
   try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
+    const User = (await import('../models/User.js')).default;
 
-    if (paymentIntent.status === 'succeeded') {
-      const { providerId, amount } = paymentIntent.metadata;
+    let providerId, amount, stripePaymentId;
 
-      const ProviderProfile = (await import('../models/ProviderProfile.js')).default;
-      const User = (await import('../models/User.js')).default;
-
-      const providerProfile = await ProviderProfile.findOne({ user: providerId });
-      const user = await User.findById(providerId);
-
-      if (!providerProfile || !user) {
-        return res.status(404).json({ message: 'Provider profile or user not found' });
-      }
-
-      // Reset unpaid balance
-      providerProfile.unpaidCommission = 0;
-      await providerProfile.save();
-
-      // Reset Warning Count & Unsuspend if suspended
-      if (user.status === 'suspended') {
-        user.status = 'active';
-      }
-      user.warningCount = 0;
-      await user.save();
-
-      // Create Payment Record (payer is provider, payee is platform admin - req.user is provider)
-      const Payment = (await import('../models/Payment.js')).default;
-      const newPayment = await Payment.create({
-        payer: req.user._id,
-        payee: null, // Representing platform admin
-        amount: parseFloat(amount),
-        method: 'stripe',
-        status: 'completed',
-        stripePaymentId: paymentIntent.id
-      });
-
-      res.json({ success: true, message: 'Commission payment confirmed successfully', data: newPayment });
+    if (paymentIntentId.startsWith('mock_')) {
+      providerId = req.user._id;
+      const profile = await ProviderProfile.findOne({ user: req.user._id });
+      amount = profile ? profile.unpaidCommission : 0;
+      stripePaymentId = paymentIntentId;
     } else {
-      res.status(400).json({ message: 'Payment not successful yet' });
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: 'Payment not successful yet' });
+      }
+      providerId = paymentIntent.metadata.providerId;
+      amount = paymentIntent.metadata.amount;
+      stripePaymentId = paymentIntent.id;
     }
+
+    const providerProfile = await ProviderProfile.findOne({ user: providerId });
+    const user = await User.findById(providerId);
+
+    if (!providerProfile || !user) {
+      return res.status(404).json({ message: 'Provider profile or user not found' });
+    }
+
+    // Reset unpaid balance
+    providerProfile.unpaidCommission = 0;
+    await providerProfile.save();
+
+    // Reset Warning Count & Unsuspend if suspended
+    if (user.status === 'suspended') {
+      user.status = 'active';
+    }
+    user.warningCount = 0;
+    await user.save();
+
+    // Find platform admin to set as payee
+    const adminUser = await User.findOne({ role: 'admin' });
+    const payeeId = adminUser ? adminUser._id : new mongoose.Types.ObjectId();
+
+    // Create Payment Record (payer is provider, payee is platform admin - req.user is provider)
+    const Payment = (await import('../models/Payment.js')).default;
+    const newPayment = await Payment.create({
+      payer: req.user._id,
+      payee: payeeId,
+      amount: parseFloat(amount),
+      method: 'stripe',
+      status: 'completed',
+      stripePaymentId: stripePaymentId
+    });
+
+    res.json({ success: true, message: 'Commission payment confirmed successfully', data: newPayment });
 
   } catch (error) {
     console.error('Confirm Commission Payment Error:', error);

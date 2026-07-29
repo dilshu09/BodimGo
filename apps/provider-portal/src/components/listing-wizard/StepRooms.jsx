@@ -202,6 +202,17 @@ const StepRooms = ({ data, update }) => {
                                     <option value="Maintenance">Maintenance</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="text-xs font-bold text-neutral-500 dark:text-slate-400 uppercase tracking-wider mb-1 block">Bathroom Type</label>
+                                <select
+                                    value={room.features?.bathroomType || 'Shared'}
+                                    onChange={(e) => updateRoom(room._id || room.id, 'features', { ...(room.features || {}), bathroomType: e.target.value })}
+                                    className="input-field dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                >
+                                    <option value="Shared">Shared</option>
+                                    <option value="Attached">Attached</option>
+                                </select>
+                            </div>
                         </div>
 
                         {/* Room Warning */}

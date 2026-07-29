@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { BedDouble, ChevronUp, ChevronDown, Hotel, MapPin, Users, DollarSign } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import api from "../../services/api";
 
 export default function AvailabilityPage() {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -130,7 +132,10 @@ export default function AvailabilityPage() {
                           </div>
                         </div>
 
-                        <button className="w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold rounded-lg hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors">
+                        <button
+                          onClick={() => navigate(`/listings/${listing.id}`)}
+                          className="w-full py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-bold rounded-lg hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors"
+                        >
                           Manage Listing
                         </button>
                       </div>

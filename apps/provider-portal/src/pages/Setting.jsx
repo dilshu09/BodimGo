@@ -805,6 +805,23 @@ const CommissionPaymentForm = ({ amount, onClose, onSuccess }) => {
   const [loadingSecret, setLoadingSecret] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleSimulate = async () => {
+    setProcessing(true);
+    setError(null);
+    try {
+      const mockIntentId = `mock_${Date.now()}`;
+      await api.post('/payments/commission/confirm', {
+        paymentIntentId: mockIntentId
+      });
+      toast.success("Dev Mode: Platform commission paid successfully!");
+      onSuccess();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to simulate payment confirmation");
+      setProcessing(false);
+    }
+  };
+
   if (!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY) {
     return (
       <div className="text-center py-6">
@@ -822,6 +839,12 @@ const CommissionPaymentForm = ({ amount, onClose, onSuccess }) => {
   }
 
   useEffect(() => {
+    if (amount < 200) {
+      setClientSecret('mock_secret');
+      setLoadingSecret(false);
+      return;
+    }
+
     const fetchIntent = async () => {
       try {
         const res = await api.post('/payments/commission/create-intent');
@@ -835,7 +858,7 @@ const CommissionPaymentForm = ({ amount, onClose, onSuccess }) => {
       }
     };
     fetchIntent();
-  }, []);
+  }, [amount]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -892,18 +915,33 @@ const CommissionPaymentForm = ({ amount, onClose, onSuccess }) => {
     return (
       <div className="text-center py-6">
         <p className="text-red-500 text-sm mb-4">{error}</p>
-        <button
-          onClick={onClose}
-          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-sm"
-        >
-          Close
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg text-sm"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onClick={handleSimulate}
+            disabled={processing}
+            className="flex-1 px-4 py-2.5 bg-emerald-650 text-white rounded-lg text-sm font-bold transition-all disabled:opacity-50 hover:bg-emerald-700 bg-emerald-600"
+          >
+            {processing ? 'Processing...' : 'Simulate Success (Dev)'}
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {amount < 200 && (
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-xl text-amber-700 dark:text-amber-400 text-xs font-semibold">
+          Amount is below Stripe's minimum charge limit (LKR 200). Online card payment is disabled. Please use the green button below to simulate successful payment and test your portal database.
+        </div>
+      )}
       <div className="p-4 border border-slate-200 dark:border-slate-750 bg-slate-50 dark:bg-slate-850 rounded-xl">
         <CardElement options={{
           style: {
@@ -919,25 +957,35 @@ const CommissionPaymentForm = ({ amount, onClose, onSuccess }) => {
       </div>
       {error && <div className="text-red-500 text-xs font-medium">{error}</div>}
       
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-col gap-2 pt-2">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+            disabled={processing}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={!stripe || processing || !clientSecret}
+            className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {processing ? (
+              <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span> Processing...</>
+            ) : (
+              `Pay LKR ${amount.toLocaleString()}`
+            )}
+          </button>
+        </div>
         <button
           type="button"
-          onClick={onClose}
-          className="flex-1 py-3 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          onClick={handleSimulate}
           disabled={processing}
+          className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-all disabled:opacity-50 text-xs shadow-sm cursor-pointer"
         >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={!stripe || processing || !clientSecret}
-          className="flex-1 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {processing ? (
-            <><span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></span> Processing...</>
-          ) : (
-            `Pay LKR ${amount.toLocaleString()}`
-          )}
+          {processing ? 'Processing simulation...' : 'Simulate Payment (Dev Mode)'}
         </button>
       </div>
     </form>

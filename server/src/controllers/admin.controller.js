@@ -10,8 +10,29 @@ import { sendEmail } from '../utils/emailService.js';
 // @access  Private/Admin
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-passwordHash').sort({ createdAt: -1 });
-    res.json(users);
+    const users = await User.find().select('-passwordHash').sort({ createdAt: -1 }).lean();
+
+    const providerIds = users.filter(u => u.role === 'provider').map(u => u._id);
+    const profiles = await ProviderProfile.find({ user: { $in: providerIds } }).select('user unpaidCommission verificationStatus').lean();
+
+    const profileMap = {};
+    profiles.forEach(p => {
+      profileMap[p.user.toString()] = p;
+    });
+
+    const usersWithProfile = users.map(u => {
+      if (u.role === 'provider') {
+        const profile = profileMap[u._id.toString()];
+        return {
+          ...u,
+          unpaidCommission: profile ? profile.unpaidCommission || 0 : 0,
+          verificationStatus: profile ? profile.verificationStatus : 'not_submitted'
+        };
+      }
+      return u;
+    });
+
+    res.json(usersWithProfile);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -389,10 +410,21 @@ export const deleteUser = async (req, res) => {
 // @access  Private/Admin
 export const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-passwordHash');
+    const user = await User.findById(req.params.id).select('-passwordHash').lean();
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+
+    if (user.role === 'provider') {
+      const profile = await ProviderProfile.findOne({ user: user._id }).lean();
+      return res.json({
+        ...user,
+        unpaidCommission: profile ? profile.unpaidCommission || 0 : 0,
+        verificationStatus: profile ? profile.verificationStatus : 'not_submitted',
+        payoutSettings: profile ? profile.payoutSettings : null
+      });
+    }
+
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });

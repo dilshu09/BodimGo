@@ -204,7 +204,7 @@ export default function InvoicesPage() {
                   <option value="">Select a tenant...</option>
                   {tenants.map(t => (
                     <option key={t._id} value={t._id}>
-                      {t.name} ({t.roomId ? `Room ${t.roomId}` : 'No Room'})
+                      {t.name} ({t.roomName ? `Room ${t.roomName}` : 'No Room'})
                     </option>
                   ))}
                 </select>

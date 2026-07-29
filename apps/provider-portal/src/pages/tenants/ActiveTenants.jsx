@@ -55,10 +55,9 @@ export default function ActiveTenantsPage() {
         paymentHistory: t.paymentHistory || []
       }));
 
-      // Filter: Show only active tenant records, excluding pending tenant approvals
+      // Filter: Show only active tenant records (status is Active)
       const activeTenantsList = formattedTenants.filter(t => {
-        const s = t.status.toLowerCase();
-        return s !== 'moved out' && s !== 'evicted' && s !== 'pending';
+        return t.status.toLowerCase() === 'active';
       });
 
       setTenants(formattedTenants);
